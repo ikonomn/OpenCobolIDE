@@ -1,4 +1,5 @@
-# Runtime libraries below are bundled in open_cobol_ide/extlibs.  PyQt5 is
+# Legacy pure-Python runtime libraries are bundled in open_cobol_ide/extlibs.
+# PyQt5 is
 # deliberately installed by the distribution so its native dependencies match
 # the host system (Debian/Ubuntu package: python3-pyqt5).
 PyQt5>=5.15,<6

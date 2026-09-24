@@ -1,28 +1,21 @@
-Report bugs or ask a question
------------------------------
+Contributing
+============
 
-You can report bugs or ask question on our `bug tracker`_.
+This repository maintains OpenCobolIDE 4.7.6 for modern Python, PyQt5, and
+Debian-family Linux distributions. It is not a new upstream release.
 
-Since v4.3.1, you can report a bug from within the IDE (? -> Report a bug). The first time
-you use it, it will prompt you for your github credentials in order to generate a personal
-access token that is needed to submit a bug report using your credentials. This tool
-will automatically send the system information and the application log, you just have
-to write a short title and description.
+Report problems at:
 
+https://github.com/ikonomn/OpenCobolIDE/issues
 
-Submitting pull requests:
--------------------------
+When submitting a change:
 
-Pull Requests are great!
+1. Create a focused branch from ``modern-python``.
+2. Keep changes compatible with Python 3.8 or newer and PyQt5 5.15.
+3. Add or update tests when changing behavior.
+4. Run ``python3 -m pytest`` when the test dependencies are installed.
+5. Submit the pull request against ``modern-python``.
 
-1. Fork the Repo on github.
-2. Create a feature or a bugfix branch before you start coding.
-3. If you are adding functionality or fixing a bug, please add a test!
-4. Add your name to AUTHORS.rst
-5. Push to your fork and submit a pull request to **the master branch**.
-
-Please use **PEP8** to style your code (PEP8 compliance is tested Travis CI)::
-
-    python setup.py test -a "--pep8 -m pep8"
-
-.. _bug tracker: https://github.com/OpenCobolIDE/OpenCobolIDE/issues?state=open
+Changes specific to Windows or macOS are outside the scope of this maintained
+branch. The ``codex/legacy-cross-platform-backup`` branch preserves the former
+cross-platform build files.

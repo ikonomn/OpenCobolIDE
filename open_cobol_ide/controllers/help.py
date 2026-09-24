@@ -10,8 +10,8 @@ class HelpController(Controller):
     """
     Controls the ? menu: show help contents and about dialog.
     """
-    #: url of the documentation on readthedocs
-    help_url = 'http://opencobolide.readthedocs.org/en/latest/'
+    #: documentation for this compatibility-maintained release
+    help_url = 'https://github.com/ikonomn/OpenCobolIDE#readme'
 
     def __init__(self, app):
         super().__init__(app)

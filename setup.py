@@ -7,7 +7,6 @@ You will need to install PyQt5 and GnuCOBOL on your own.
 """
 import sys
 from setuptools import setup, find_packages
-from setuptools.command.test import test as TestCommand
 from open_cobol_ide import __version__
 
 try:
@@ -18,34 +17,12 @@ except ImportError:
     cmdclass = {}
 
 
-class PyTest(TestCommand):
-    user_options = [('pytest-args=', 'a', "Arguments to pass to py.test")]
-
-    def initialize_options(self):
-        TestCommand.initialize_options(self)
-        self.pytest_args = []
-
-    def run_tests(self):
-        # import here, cause outside the eggs aren't loaded
-        import pytest
-        if self.pytest_args:
-            self.pytest_args = self.pytest_args.replace('"', '').split(' ')
-        else:
-            self.pytest_args = []
-        print('running test command: py.test "%s"' % ' '.join(
-            self.pytest_args))
-        errno = pytest.main(self.pytest_args)
-        sys.exit(errno)
-
-cmdclass['test'] = PyTest
-
-
 DESCRIPTION = ('OpenCobolIDE 4.7.6 legacy release updated to run on modern '
                'Python')
 
 # get long description
-with open('README.rst', 'r', encoding='utf-8') as readme:
-    if 'bdist_deb' in sys.argv or 'sdist_dsc' in sys.argv or 'bdist_rpm' in sys.argv:
+with open('README.md', 'r', encoding='utf-8') as readme:
+    if 'bdist_deb' in sys.argv or 'sdist_dsc' in sys.argv:
         LONG_DESC = DESCRIPTION + ' based on GnuCOBOL and PyQode'
     else:
         LONG_DESC = readme.read()
@@ -62,32 +39,28 @@ setup(
     name='OpenCobolIDE',
     version=__version__,
     keywords=['Cobol; OpenCobol; IDE'],
-    url='https://github.com/OpenCobolIDE/OpenCobolIDE',
+    url='https://github.com/ikonomn/OpenCobolIDE',
     license='GPL v3',
     author='Colin Duquesnoy',
     author_email='colin.duquesnoy@gmail.com',
     description=DESCRIPTION,
     long_description=LONG_DESC,
+    long_description_content_type='text/markdown',
     packages=[p for p in find_packages() if 'test' not in p],
     data_files=data_files,
     include_package_data=True,
     install_requires=['PyQt5>=5.15,<6'],
-    entry_points={'gui_scripts': ['opencobolide = open_cobol_ide.main:main'],
-                  'console_scripts':
-                  ['opencobolide-console = open_cobol_ide.main:main']
-                  if sys.platform == 'win32' else []},
+    entry_points={
+        'gui_scripts': ['opencobolide = open_cobol_ide.main:main']},
     cmdclass=cmdclass,
     zip_safe=False,
     python_requires='>=3.8',
-    tests_require=['pytest-cov', 'pytest-pep8', 'pytest'],
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Environment :: X11 Applications :: Qt',
-        'Environment :: Win32 (MS Windows)',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: GNU General Public License v3 or later '
         '(GPLv3+)',
-        'Operating System :: Microsoft :: Windows',
         'Operating System :: POSIX :: Linux',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3 :: Only',

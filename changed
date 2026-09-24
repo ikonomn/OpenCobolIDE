@@ -1,0 +1,62 @@
+OpenCobolIDE 4.7.6 modern Debian maintenance cleanup
+====================================================
+
+Purpose
+-------
+
+This cleanup makes the modern-python branch a focused Debian-family Linux
+repository. The repository remains based on the original OpenCobolIDE 4.7.6
+code and is not a new upstream release.
+
+Backup
+------
+
+The state before this cleanup is preserved in the branch:
+
+    codex/legacy-cross-platform-backup
+
+That branch retains the former Windows and macOS build scripts, platform
+assets, Windows GnuCOBOL submodule reference, RPM configuration, and legacy CI
+configuration.
+
+Additions and updates
+---------------------
+
+* Made README.md the packaging long description and declared Markdown format.
+* Included Markdown files in source distributions.
+* Included this change record and excluded generated Python bytecode from
+  source distributions.
+* Updated the functional test to open README.md.
+* Updated project, help, issue-reporting, and Debian package URLs to the
+  maintained ikonomn/OpenCobolIDE repository.
+* Updated Debian build prerequisites and maintainer metadata.
+* Replaced obsolete installation and contribution documentation with guidance
+  for Debian-family Linux, Python 3.8+, PyQt5 5.15+, and GnuCOBOL.
+* Marked remaining cross-platform feature documentation and upstream release
+  notes as historical rather than supported build targets.
+* Removed deprecated setuptools test-command integration.
+* Added this change record.
+
+Removals
+--------
+
+* Removed the obsolete Travis CI configuration for Ubuntu Trusty, Python 3.4,
+  PyQt4, and OpenCOBOL.
+* Removed Windows and macOS release scripts and launcher files.
+* Removed the Windows GnuCOBOL submodule reference.
+* Removed macOS and Windows packaging assets that are not installed by the
+  Debian package.
+* Removed obsolete RPM packaging configuration.
+* Removed bundled dependency test suites, test certificates, and test keys
+  that are not needed at runtime.
+* Removed the Python enum backport because Python 3.8+ provides enum.
+
+Files intentionally retained
+----------------------------
+
+The bundled PyQode, Pygments, QCrash, QDarkStyle, Keyring, and future modules
+remain because application code still imports them. Further dependency
+replacement should be handled separately and tested as an application change.
+The small platform-specific Keyring backend modules are also retained because
+the legacy Keyring loader discovers them dynamically even when they are not
+usable on the current operating system.

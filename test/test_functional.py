@@ -17,7 +17,7 @@ from open_cobol_ide.settings import Settings
 
 path_ok = os.path.join(os.getcwd(), 'test', 'testfiles', 'HelloWorld.cbl')
 path_ko = os.path.join(os.getcwd(), 'test', 'testfiles', 'MALFORMED.cbl')
-path_txt = os.path.join(os.getcwd(), 'README.rst')
+path_txt = os.path.join(os.getcwd(), 'README.md')
 path_interactive = os.path.join(os.getcwd(), 'test', 'testfiles',
                                 'TEST-PRINTER.cbl')
 

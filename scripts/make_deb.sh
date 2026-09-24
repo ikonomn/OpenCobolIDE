@@ -5,7 +5,7 @@ set -euo pipefail
 #
 # Execute the following commands to setup your environment:
 #
-# sudo apt install python3-pip python3-all debhelper devscripts python3-stdeb
+# sudo apt install python3-pip python3-all debhelper dh-python devscripts python3-stdeb
 #
 cd "$(dirname "$0")/.."
 
