@@ -23,7 +23,7 @@ Installation
 
 Install the downloaded package with::
 
-    sudo apt install ./opencobolide_4.7.6+modern4_all.deb
+    sudo apt install ./opencobolide_4.7.6+modern5_all.deb
 
 If GnuCOBOL must be installed separately, run::
 

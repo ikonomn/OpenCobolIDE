@@ -55,13 +55,13 @@ cobc --version
 Download:
 
 ```text
-opencobolide_4.7.6+modern4_all.deb
+opencobolide_4.7.6+modern5_all.deb
 ```
 
 Open a terminal in the directory containing the downloaded file and install it with:
 
 ```bash
-sudo apt install ./opencobolide_4.7.6+modern4_all.deb
+sudo apt install ./opencobolide_4.7.6+modern5_all.deb
 ```
 
 Using `apt` is recommended because it resolves missing dependencies automatically.
@@ -85,7 +85,7 @@ sudo apt remove opencobolide
 SHA-256:
 
 ```text
-d7cf7a9143020b7f4e7216884321c6f9b38cd4e7eb2543301689b180fb89e71d
+897744f8552dffb5febb14bc27603e7b5394f3b1a4bbe791b875a44bbd8fbf45
 ```
 
 ## Testing
@@ -96,7 +96,7 @@ This package was built and tested on a Debian-based Linux system with:
 - PyQt5 5.15
 - GnuCOBOL 3.1.2
 
-The package was also checked with Debian Lintian and tested through a simulated `apt` installation.
+The package was also checked with Debian Lintian, verified through a simulated `apt` installation, and checked for correct runtime dependency declarations and package permissions.
 
 ## Attribution and Development Assistance
 

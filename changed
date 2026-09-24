@@ -33,6 +33,13 @@ Additions and updates
   destination, author, and maintainer attribution.
 * Updated Debian build prerequisites without claiming new ownership or
   maintainership.
+* Replaced the obsolete stdeb build path with a direct dpkg-deb staging build,
+  avoiding the unavailable dh-python build dependency while preserving apt
+  runtime dependency declarations.
+* Normalized Debian package permissions, added Debian copyright metadata, and
+  added an opencobolide(1) manual page for Lintian compliance.
+* Built and verified the ``4.7.6+modern5`` Debian package with explicit Python
+  3.8+, PyQt5 5.15+, and GnuCOBOL runtime dependencies.
 * Replaced obsolete installation and contribution documentation with guidance
   for Debian-family Linux, Python 3.8+, PyQt5 5.15+, and GnuCOBOL.
 * Marked remaining cross-platform feature documentation and upstream release
