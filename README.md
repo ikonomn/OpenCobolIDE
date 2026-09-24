@@ -103,3 +103,11 @@ The package was also checked with Debian Lintian, verified through a simulated `
 The modernization, Python and PyQt5 compatibility fixes, Debian packaging, and testing were completed with assistance from OpenAI Codex.
 
 This project remains based on the original OpenCobolIDE 4.7.6 source code and retains its original authorship and maintainer attribution. This compatibility package is not an official continuation, a transfer of ownership, or a new upstream release.
+
+### Disclaimer
+
+This is an unofficial, community-maintained compatibility build provided for testing and convenience. It is supplied **as is**, without any warranty or guarantee that it will work correctly on every system.
+
+Use this software and the provided Debian package at your own risk. The original developers, contributors, package maintainer, and development-assistance providers accept no responsibility or liability for data loss, system damage, compilation errors, security issues, interrupted work, or any other consequences resulting from installing or using this software.
+
+Always back up important source code, configuration, and project files before installation or use. This disclaimer does not replace or modify the terms of the GNU General Public License under which OpenCobolIDE is distributed.
