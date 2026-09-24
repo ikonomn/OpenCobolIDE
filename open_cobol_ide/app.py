@@ -13,7 +13,7 @@ import sys
 from pyqode.qt import QtCore, QtWidgets, QT_API, PYQT5_API, PYSIDE_API
 import qcrash.api as qcrash
 
-from open_cobol_ide import __version__, logger, system
+from open_cobol_ide import __display_version__, __version__, logger, system
 from open_cobol_ide.controllers import (
     CobolController, EditController, FileController, HelpController,
     HomeController, ViewController)
@@ -74,7 +74,7 @@ class Application(QtCore.QObject):
             files = []
         _logger().info('files to open: %r' % files)
         self.name = 'OpenCobolIDE'
-        self.version = __version__
+        self.version = __display_version__
         self.title = '%s %s' % (self.name, self.version)
 
         self.apply_mimetypes_preferences()
@@ -195,7 +195,7 @@ class Application(QtCore.QObject):
 
         # show runtime env
         if args.runtime_env:
-            print('OpenCobolIDE %s' % __version__)
+            print('OpenCobolIDE %s' % __display_version__)
             for k, v in sorted(DlgAbout.get_runtime_env().items(),
                                key=lambda x: x[0]):
                 print('%s %s' % (k, v))

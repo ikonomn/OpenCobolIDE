@@ -1,7 +1,9 @@
 OpenCobolIDE
 ------------
 
-**OpenCobolIDE is no longer maintained**, see https://github.com/OpenCobolIDE/OpenCobolIDE/issues/439
+This is the legacy OpenCobolIDE 4.7.6 release, updated to run on modern Python
+and current Debian-family Linux systems. It is a compatibility-maintained
+version, not a new upstream OpenCobolIDE feature release.
 
 Features:
 ---------
@@ -32,8 +34,8 @@ Dependencies
 ------------
 
 - `GnuCOBOL`_
-- `Python3`_ >= 3.3
-- `PyQt5`_ (preferred) or `PyQt4`_
+- `Python3`_ >= 3.8
+- `PyQt5`_ >= 5.15
 - `setuptools`_
 
 *Starting from v4.7, the following pure python dependencies are bundled with OCIDE (this makes packaging easier):*
@@ -55,13 +57,22 @@ GNU/Linux
 
 *Note: starting from v4.6.2, the installed executable name is lowercase: opencobolide*
 
-Ubuntu
-++++++
+Debian and Ubuntu
++++++++++++++++++
 
-A debian package is available here: https://launchpad.net/cobcide/+download
+Install the native dependencies, then install OpenCobolIDE from this checkout::
 
-This package should work on any Ubuntu version >= 14.04 and on any version
-derived from Ubuntu.
+    sudo apt update
+    sudo apt install gnucobol python3-pyqt5 python3-pip
+    python3 -m pip install --user --no-deps .
+
+On distributions that enforce PEP 668, use a virtual environment with PyQt5
+installed from pip instead::
+
+    sudo apt install gnucobol python3-venv
+    python3 -m venv ~/.venvs/opencobolide
+    ~/.venvs/opencobolide/bin/pip install .
+    ~/.venvs/opencobolide/bin/opencobolide
 
 Fedora
 ++++++
@@ -90,14 +101,13 @@ OpenCobolIDE is up in the KaOs Community Packages (KCP)::
 Other distributions
 +++++++++++++++++++
 
-Install Python3, PyQt5, GnuCOBOL and pip for Python3 using your package manager, then run the following commands::
+Install Python3, PyQt5, GnuCOBOL and pip for Python3 using your package manager, then run::
 
-    sudo pip3 install OpenCobolIDE --upgrade
+    python3 -m pip install --user --no-deps .
 
 
-Note that if you have both PyQt5 and PyQt4 on your system, the IDE will use
-PyQt5 by default. To force the use of PyQt4, you should set the
-``QT_API`` environment variable to ``pyqt4``.
+PyQt4 is no longer supported because it is not available on current Debian or
+Ubuntu releases.
 
 
 Windows

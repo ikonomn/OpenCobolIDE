@@ -8,13 +8,19 @@ import sys
 
 def override_sys_path():
     """
-    Prepend extlibs folder to sys.path.
+    Add the bundled, pure-Python dependencies as a fallback.
+
+    This directory also contains compatibility modules which predate modern
+    Python.  Appending it is important: prepending it makes the old ``enum``
+    backport shadow Python's standard library and prevents the application
+    from starting on Python 3.6 and newer.
     """
     import open_cobol_ide
     extlibs_pth = os.path.join(
         os.path.dirname(open_cobol_ide.__file__),
         'extlibs')
-    sys.path.insert(0, extlibs_pth)
+    if extlibs_pth not in sys.path:
+        sys.path.append(extlibs_pth)
     os.environ['OCIDE_EXTLIBS_PATH'] = extlibs_pth
     import pyqode.core
 

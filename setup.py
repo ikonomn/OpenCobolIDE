@@ -2,7 +2,7 @@
 """
 Setup script for OpenCobolIDE
 
-You will need to install PyQt4 (or PyQt5) and GnuCOBOL on your own.
+You will need to install PyQt5 and GnuCOBOL on your own.
 
 """
 import sys
@@ -40,10 +40,11 @@ class PyTest(TestCommand):
 cmdclass['test'] = PyTest
 
 
-DESCRIPTION = 'A simple COBOL IDE'
+DESCRIPTION = ('OpenCobolIDE 4.7.6 legacy release updated to run on modern '
+               'Python')
 
 # get long description
-with open('README.rst', 'r') as readme:
+with open('README.rst', 'r', encoding='utf-8') as readme:
     if 'bdist_deb' in sys.argv or 'sdist_dsc' in sys.argv or 'bdist_rpm' in sys.argv:
         LONG_DESC = DESCRIPTION + ' based on GnuCOBOL and PyQode'
     else:
@@ -55,10 +56,6 @@ if sys.platform == 'linux':
     data_files.append(('/usr/share/applications',
                        ['share/OpenCobolIDE.desktop']))
     data_files.append(('/usr/share/pixmaps', ['share/OpenCobolIDE.png']))
-
-
-if 'bdist_wheel' in sys.argv:
-    raise RuntimeError("This setup.py does not support wheels")
 
 
 setup(
@@ -74,12 +71,14 @@ setup(
     packages=[p for p in find_packages() if 'test' not in p],
     data_files=data_files,
     include_package_data=True,
+    install_requires=['PyQt5>=5.15,<6'],
     entry_points={'gui_scripts': ['opencobolide = open_cobol_ide.main:main'],
                   'console_scripts':
                   ['opencobolide-console = open_cobol_ide.main:main']
                   if sys.platform == 'win32' else []},
     cmdclass=cmdclass,
     zip_safe=False,
+    python_requires='>=3.8',
     tests_require=['pytest-cov', 'pytest-pep8', 'pytest'],
     classifiers=[
         'Development Status :: 5 - Production/Stable',
@@ -90,8 +89,7 @@ setup(
         '(GPLv3+)',
         'Operating System :: Microsoft :: Windows',
         'Operating System :: POSIX :: Linux',
-        'Programming Language :: Python :: 3.2',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3 :: Only',
         'Topic :: Text Editors :: Integrated Development Environments (IDE)']
 )

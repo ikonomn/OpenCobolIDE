@@ -456,7 +456,7 @@ class GnuCobolCompiler(QtCore.QObject):
         path, filename = os.path.split(file_path)
         if output_dir is None:
             output_dir = Settings().output_directory
-            original_output_dir = output_dir
+        original_output_dir = output_dir
         if not os.path.isabs(output_dir):
             output_dir = os.path.abspath(os.path.join(path, output_dir))
         if object_files:

@@ -1,10 +1,4 @@
-pygments
-pyqode.core
-pyqode.cobol
-pyqode.qt
-qcrash
-qdarkstyle
-githubpy
-keyring
-pyqode-uic
-pyqt-distutils
+# Runtime libraries below are bundled in open_cobol_ide/extlibs.  PyQt5 is
+# deliberately installed by the distribution so its native dependencies match
+# the host system (Debian/Ubuntu package: python3-pyqt5).
+PyQt5>=5.15,<6

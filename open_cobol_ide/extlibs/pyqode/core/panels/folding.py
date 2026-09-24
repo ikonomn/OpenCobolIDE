@@ -211,7 +211,8 @@ class FoldingPanel(Panel):
     def sizeHint(self):
         """ Returns the widget size hint (based on the editor font size) """
         fm = QtGui.QFontMetricsF(self.editor.font())
-        size_hint = QtCore.QSize(fm.height(), fm.height())
+        height = int(round(fm.height()))
+        size_hint = QtCore.QSize(height, height)
         if size_hint.width() > 16:
             size_hint.setWidth(16)
         return size_hint
@@ -332,12 +333,15 @@ class FoldingPanel(Panel):
             colorA = QtGui.QColor(colorA)
             colorB = QtGui.QColor(colorB)
             tmp = colorA
-            tmp.setRed((tmp.red() * factor) / maxFactor +
-                       (colorB.red() * (maxFactor - factor)) / maxFactor)
-            tmp.setGreen((tmp.green() * factor) / maxFactor +
-                         (colorB.green() * (maxFactor - factor)) / maxFactor)
-            tmp.setBlue((tmp.blue() * factor) / maxFactor +
-                        (colorB.blue() * (maxFactor - factor)) / maxFactor)
+            tmp.setRed(round((tmp.red() * factor +
+                              colorB.red() * (maxFactor - factor)) /
+                             maxFactor))
+            tmp.setGreen(round((tmp.green() * factor +
+                                colorB.green() * (maxFactor - factor)) /
+                               maxFactor))
+            tmp.setBlue(round((tmp.blue() * factor +
+                               colorB.blue() * (maxFactor - factor)) /
+                              maxFactor))
             return tmp
 
         pal = QtWidgets.QApplication.instance().palette()
@@ -354,7 +358,7 @@ class FoldingPanel(Panel):
         :param collapsed: Whether the trigger is collapsed or not.
         :param painter: QPainter
         """
-        rect = QtCore.QRect(0, top, self.sizeHint().width(),
+        rect = QtCore.QRect(0, int(round(top)), self.sizeHint().width(),
                             self.sizeHint().height())
         if self._native:
             if os.environ['QT_API'].lower() not in PYQT5_API:

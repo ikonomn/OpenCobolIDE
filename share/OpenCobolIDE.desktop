@@ -1,11 +1,10 @@
 [Desktop Entry]
-Encoding=UTF-8
 Name=OpenCobolIDE
-Comment=A simple lightweight cobol IDE based on OpenCobol
+Comment=OpenCobolIDE 4.7.6 updated for modern Python
 TryExec=opencobolide
 Exec=opencobolide %F
 Terminal=false
 Type=Application
-Icon=/usr/share/pixmaps/OpenCobolIDE.png
+Icon=OpenCobolIDE
 Categories=Development;IDE;
 MimeType=text/x-cobol;

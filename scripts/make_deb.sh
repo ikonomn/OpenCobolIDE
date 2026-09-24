@@ -1,13 +1,13 @@
-#! /bin/bash
+#!/bin/bash
+set -euo pipefail
 
-# This script is meant to be run on Ubuntu 14.04.
+# Build a Debian-family binary package using the active Python 3 interpreter.
 #
 # Execute the following commands to setup your environment:
 #
-# sudo apt-get install python3-pip python3-all debhelper devscripts
-# sudo pip3 install stdeb
+# sudo apt install python3-pip python3-all debhelper devscripts python3-stdeb
 #
-pushd ..
+cd "$(dirname "$0")/.."
 
-export DEB_BUILD_OPTIONS=nocheck debuild
-python3.4 setup.py --command-packages=stdeb.command bdist_deb
+export DEB_BUILD_OPTIONS=nocheck
+python3 setup.py --command-packages=stdeb.command bdist_deb

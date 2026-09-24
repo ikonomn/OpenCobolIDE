@@ -15,10 +15,32 @@ from pyqode.qt import QtGui
 windows = platform.system() == 'Windows'
 darwin = platform.system() == 'Darwin'
 linux = platform.system() == 'Linux'
-if linux:
-    ubuntu = platform.linux_distribution()[0].lower() == 'ubuntu'
-else:
-    ubuntu = False
+
+
+def _linux_distribution():
+    """Return the distribution ID without optional third-party modules.
+
+    ``platform.linux_distribution`` was removed in Python 3.8.  Debian and
+    its derivatives provide os-release on every currently supported release.
+    """
+    if not linux:
+        return ''
+    try:
+        data = platform.freedesktop_os_release()
+    except (AttributeError, OSError):
+        data = {}
+        try:
+            with open('/etc/os-release', encoding='utf-8') as stream:
+                for line in stream:
+                    key, separator, value = line.rstrip().partition('=')
+                    if separator:
+                        data[key] = value.strip('"')
+        except OSError:
+            pass
+    return data.get('ID', '')
+
+
+ubuntu = _linux_distribution() == 'ubuntu'
 
 
 def _mkdir(func):
@@ -152,7 +174,7 @@ def shell_split(string):
 
 
 def get_system_infos():
-    from open_cobol_ide import __version__
+    from open_cobol_ide import __display_version__
     from open_cobol_ide.compilers import GnuCobolCompiler
     from pyqode.qt import QtCore
     import pyqode.core
@@ -168,14 +190,15 @@ def get_system_infos():
 
     def get_linux_distro():
         try:
-            out = str(subprocess.check_output(['lsb_release', '-i']),
-                      locale.getpreferredencoding())
-        except OSError:
-            distro = platform.linux_distribution()[0]
+            out = subprocess.check_output(
+                ['lsb_release', '-is'], text=True,
+                encoding=locale.getpreferredencoding(False)).strip()
+        except (OSError, subprocess.CalledProcessError):
+            distro = _linux_distribution()
             if not distro:
                 distro = 'linux distribution not found'
         else:
-            distro = out.split(':')[1].strip()
+            distro = out
         return distro
 
     system_info = platform.system()
@@ -185,7 +208,7 @@ def get_system_infos():
         system_info = 'Mac OS X %s' % platform.mac_ver()[0]
     return '\n'.join([
         'Operating System: %s' % system_info,
-        'OpenCobolIDE: %s' % __version__,
+        'OpenCobolIDE: %s' % __display_version__,
         'GnuCOBOL: %s' % GnuCobolCompiler().get_version(
             include_all=False),
         'Python: %s (%dbits)' % (platform.python_version(), 64

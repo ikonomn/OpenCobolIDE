@@ -6,7 +6,7 @@ import pyqode.cobol
 import pyqode.core
 from pyqode.qt import QtGui, QtCore, QtWidgets
 
-from open_cobol_ide import __version__, logger, system
+from open_cobol_ide import __display_version__, logger, system
 from open_cobol_ide.compilers import GnuCobolCompiler
 from open_cobol_ide.settings import Settings
 from open_cobol_ide.view.forms import dlg_about_ui
@@ -50,7 +50,7 @@ class DlgAbout(QtWidgets.QDialog, dlg_about_ui.Ui_Dialog):
         self.tbwVersions.setVerticalHeaderLabels(self.HEADERS)
         self.tbwVersions.setHorizontalHeaderLabels(['Version'])
         self.tbwVersions.verticalHeader().setStretchLastSection(False)
-        self.labelMain.setText(self.labelMain.text() % __version__)
+        self.labelMain.setText(self.labelMain.text() % __display_version__)
         self.setMinimumWidth(640)
         self.setMinimumHeight(480)
         self.setWindowIcon(QtGui.QIcon.fromTheme(

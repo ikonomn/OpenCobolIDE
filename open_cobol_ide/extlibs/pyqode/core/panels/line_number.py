@@ -113,5 +113,5 @@ class LineNumberPanel(Panel):
                 else:
                     painter.setPen(pen)
                     painter.setFont(font)
-                painter.drawText(-3, top, width, height,
+                painter.drawText(-3, int(round(top)), width, height,
                                  QtCore.Qt.AlignRight, str(line + 1))
