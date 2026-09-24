@@ -1,8 +1,10 @@
 # OpenCobolIDE 4.7.6 for Modern Python on Debian-Based Linux
 
-This package is the original OpenCobolIDE 4.7.6 release, updated to run with modern Python, PyQt5, and current Debian-based Linux distributions.
+This package is the original OpenCobolIDE 4.7.6 release, polished with assistance from OpenAI Codex so it can run with modern Python, PyQt5, and current Debian-based Linux distributions.
 
-It is not a new upstream OpenCobolIDE release and does not add major new IDE features. It is a compatibility-maintained version intended only for Debian-family systems, including Debian, Ubuntu, Linux Mint, and compatible derivatives.
+It is not a new upstream OpenCobolIDE release, does not change the original project ownership or maintainership, and does not add major new IDE features. It is an unofficial compatibility polish intended only for Debian-family systems, including Debian, Ubuntu, Linux Mint, and compatible derivatives.
+
+The original OpenCobolIDE authors and maintainer retain full credit for the project. OpenAI Codex assisted only with the modern Python, PyQt5, Linux compatibility, packaging, and testing work described below.
 
 ## Compatibility Updates
 
@@ -96,8 +98,8 @@ This package was built and tested on a Debian-based Linux system with:
 
 The package was also checked with Debian Lintian and tested through a simulated `apt` installation.
 
-## Development Assistance
+## Attribution and Development Assistance
 
 The modernization, Python and PyQt5 compatibility fixes, Debian packaging, and testing were completed with assistance from OpenAI Codex.
 
-This project remains based on the original OpenCobolIDE 4.7.6 source code. It is not an official continuation or a new upstream release.
+This project remains based on the original OpenCobolIDE 4.7.6 source code and retains its original authorship and maintainer attribution. This compatibility package is not an official continuation, a transfer of ownership, or a new upstream release.

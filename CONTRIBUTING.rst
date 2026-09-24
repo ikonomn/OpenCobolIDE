@@ -1,12 +1,13 @@
 Contributing
 ============
 
-This repository maintains OpenCobolIDE 4.7.6 for modern Python, PyQt5, and
-Debian-family Linux distributions. It is not a new upstream release.
+This repository contains an unofficial compatibility polish of the original
+OpenCobolIDE 4.7.6 release for modern Python, PyQt5, and Debian-family Linux.
+It does not change the original project ownership or maintainer attribution.
 
-Report problems at:
+The original upstream project is:
 
-https://github.com/ikonomn/OpenCobolIDE/issues
+https://github.com/OpenCobolIDE/OpenCobolIDE
 
 When submitting a change:
 
@@ -16,6 +17,10 @@ When submitting a change:
 4. Run ``python3 -m pytest`` when the test dependencies are installed.
 5. Submit the pull request against ``modern-python``.
 
-Changes specific to Windows or macOS are outside the scope of this maintained
+Changes specific to Windows or macOS are outside the scope of this compatibility
 branch. The ``codex/legacy-cross-platform-backup`` branch preserves the former
 cross-platform build files.
+
+The compatibility and packaging work on this branch was completed with
+assistance from OpenAI Codex. It is not represented as an official upstream
+release or a transfer of maintainership.

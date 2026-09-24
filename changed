@@ -5,8 +5,10 @@ Purpose
 -------
 
 This cleanup makes the modern-python branch a focused Debian-family Linux
-repository. The repository remains based on the original OpenCobolIDE 4.7.6
-code and is not a new upstream release.
+compatibility repository. It remains based on the original OpenCobolIDE 4.7.6
+code, retains the original project ownership and maintainer attribution, and is
+not a new upstream release. The compatibility polish was completed with
+assistance from OpenAI Codex.
 
 Backup
 ------
@@ -27,9 +29,10 @@ Additions and updates
 * Included this change record and excluded generated Python bytecode from
   source distributions.
 * Updated the functional test to open README.md.
-* Updated project, help, issue-reporting, and Debian package URLs to the
-  maintained ikonomn/OpenCobolIDE repository.
-* Updated Debian build prerequisites and maintainer metadata.
+* Preserved the original upstream project URL, documentation, issue-reporting
+  destination, author, and maintainer attribution.
+* Updated Debian build prerequisites without claiming new ownership or
+  maintainership.
 * Replaced obsolete installation and contribution documentation with guidance
   for Debian-family Linux, Python 3.8+, PyQt5 5.15+, and GnuCOBOL.
 * Marked remaining cross-platform feature documentation and upstream release

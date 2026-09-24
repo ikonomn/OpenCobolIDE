@@ -32,8 +32,9 @@ def _logger():
 _original_env = os.environ.copy()
 
 
-QCRASH_GH_OWNER = 'ikonomn'
+QCRASH_GH_OWNER = 'OpenCobolIDE'
 QCRASH_GH_REPO = 'OpenCobolIDE'
+QCRASH_EMAIL = 'colin.duquesnoy@gmail.com'
 
 
 class Application(QtCore.QObject):
@@ -58,7 +59,8 @@ class Application(QtCore.QObject):
         qcrash.get_system_information = system.get_system_infos
         qcrash.get_application_log = logger.get_application_log
         qcrash.install_backend(
-            qcrash.backends.GithubBackend(QCRASH_GH_OWNER, QCRASH_GH_REPO))
+            qcrash.backends.GithubBackend(QCRASH_GH_OWNER, QCRASH_GH_REPO),
+            qcrash.backends.EmailBackend(QCRASH_EMAIL, 'OpenCobolIDE'))
         qcrash.set_qsettings(Settings()._settings)
         qcrash.install_except_hook(except_hook=self._report_exception)
         # if hasattr(sys, 'frozen') and sys.platform == 'win32':

@@ -8,8 +8,10 @@ Welcome to OpenCobolIDE documentation!
 OpenCobolIDE is a simple and lightweight COBOL IDE based on the
 `OpenCOBOL/GnuCOBOL`_ compiler and the `pyQode`_ source code editor widget.
 
-This documentation accompanies the compatibility-maintained OpenCobolIDE
-4.7.6 package for modern Python, PyQt5, and Debian-family Linux. References to
+This documentation accompanies an unofficial compatibility polish of
+OpenCobolIDE 4.7.6 for modern Python, PyQt5, and Debian-family Linux, completed
+with assistance from OpenAI Codex. Original ownership and maintainer
+attribution remain unchanged. References to
 other operating systems in feature descriptions and the historical change log
 describe the original upstream release and are not supported build targets.
 
