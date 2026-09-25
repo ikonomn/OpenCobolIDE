@@ -76,7 +76,7 @@ class JuliaLexer(RegexLexer):
             ('(' + '|'.join(builtins) + r')\b',  Name.Builtin),
 
             # backticks
-            (r'`(?s).*?`', String.Backtick),
+            (r'(?s)`.*?`', String.Backtick),
 
             # chars
             (r"'(\\.|\\[0-7]{1,3}|\\x[a-fA-F0-9]{1,3}|\\u[a-fA-F0-9]{1,4}|"
