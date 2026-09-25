@@ -242,7 +242,9 @@ class FileManager(Manager):
                 m.enabled = enable_modes
         # open file and get its content
         try:
-            with open(path, 'Ur', encoding=encoding) as file:
+            # Text mode already enables universal-newline handling on Python 3.
+            # The legacy ``U`` flag was removed in Python 3.11.
+            with open(path, 'r', encoding=encoding) as file:
                 content = file.read()
                 if self.autodetect_eol:
                     self._eol = file.newlines

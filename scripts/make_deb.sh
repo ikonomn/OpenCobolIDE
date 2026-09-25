@@ -12,7 +12,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 package_name="opencobolide"
-package_version="4.7.6+modern6"
+package_version="4.7.6+modern7"
 package_root="build/deb-root"
 output_file="dist/${package_name}_${package_version}_all.deb"
 
@@ -70,10 +70,11 @@ printf '%s\n' \
     '  * Preserve the original OpenCobolIDE authorship and maintainer.' \
     '  * Polish OpenCobolIDE 4.7.6 for modern Python, PyQt5, and Debian Linux.' \
     '  * Fix bundled Pygments regular expressions for Python 3.12.' \
+    '  * Restore file opening on Python 3.11 and newer.' \
     '  * Remove obsolete release assets and runtime-unneeded bundled tests.' \
     '  * Complete compatibility and packaging work with OpenAI Codex assistance.' \
     '' \
-    ' -- OpenCobolIDE compatibility build <noreply@opencobolide.invalid>  Fri, 25 Sep 2026 07:15:00 +0300' \
+    ' -- OpenCobolIDE compatibility build <noreply@opencobolide.invalid>  Fri, 25 Sep 2026 12:00:00 +0300' \
     > "$changelog"
 gzip -n -9 "$changelog"
 

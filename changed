@@ -42,6 +42,8 @@ Additions and updates
   3.8+, PyQt5 5.15+, and GnuCOBOL runtime dependencies.
 * Fixed bundled Pygments regular expressions for Python 3.12 and prepared the
   ``4.7.6+modern6`` Debian package.
+* Replaced the removed Python ``Ur`` file mode with standard text mode, added a
+  file-opening regression test, and prepared the ``4.7.6+modern7`` package.
 * Replaced obsolete installation and contribution documentation with guidance
   for Debian-family Linux, Python 3.8+, PyQt5 5.15+, and GnuCOBOL.
 * Marked remaining cross-platform feature documentation and upstream release
