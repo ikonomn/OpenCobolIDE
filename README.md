@@ -11,6 +11,7 @@ The original OpenCobolIDE authors and maintainer retain full credit for the proj
 - Updated for Python 3.8 and newer.
 - Updated for PyQt5 5.15 and newer.
 - Fixed APIs removed from modern Python.
+- Fixed bundled Pygments regular expressions rejected by Python 3.12.
 - Fixed bundled legacy modules that conflicted with the Python standard library.
 - Fixed PyQt5 drawing, sizing, color, margin, and editor-panel errors.
 - Updated GnuCOBOL detection and compilation support.
@@ -55,13 +56,13 @@ cobc --version
 Download:
 
 ```text
-opencobolide_4.7.6+modern5_all.deb
+opencobolide_4.7.6+modern6_all.deb
 ```
 
 Open a terminal in the directory containing the downloaded file and install it with:
 
 ```bash
-sudo apt install ./opencobolide_4.7.6+modern5_all.deb
+sudo apt install ./opencobolide_4.7.6+modern6_all.deb
 ```
 
 Using `apt` is recommended because it resolves missing dependencies automatically.
@@ -82,17 +83,20 @@ sudo apt remove opencobolide
 
 ## Package Checksum
 
-SHA-256:
+After downloading, calculate the SHA-256 checksum with:
 
-```text
-897744f8552dffb5febb14bc27603e7b5394f3b1a4bbe791b875a44bbd8fbf45
+```bash
+sha256sum opencobolide_4.7.6+modern6_all.deb
 ```
+
+Compare it with the checksum published alongside the GitHub release asset.
 
 ## Testing
 
 This package was built and tested on a Debian-based Linux system with:
 
-- Python 3.10
+- Python 3.10.12 (package build and full application checks)
+- Python 3.12.14 (bundled Pygments compatibility checks)
 - PyQt5 5.15
 - GnuCOBOL 3.1.2
 
