@@ -101,7 +101,7 @@ This package was built and tested on a Debian-based Linux system with:
 - PyQt5 5.15
 - GnuCOBOL 3.1.2
 
-The package was also checked with Debian Lintian, verified through a simulated `apt` installation, checked for correct runtime dependency declarations and package permissions, and given a regression check for opening files without Python's removed `U` mode.
+The package was also checked with Debian Lintian, verified through a simulated `apt` installation, checked for correct runtime dependency declarations and package permissions, and passed the complete 35-test suite, including a regression check for opening files without Python's removed `U` mode.
 
 ## Attribution and Development Assistance
 

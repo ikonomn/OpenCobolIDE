@@ -121,7 +121,8 @@ def test_functional_syntax_errors(app):
     assert msg is not None
     app.cobol. _goto_error_msg(msg)
     QTest.qWait(500)
-    assert TextHelper(app.edit.current_editor).cursor_position() == (10, 0)
+    assert TextHelper(app.edit.current_editor).cursor_position() == (
+        msg.line, msg.col or 0)
 
     # this will never happen, this is just for making coveralls happy.
     app.cobol._run()
