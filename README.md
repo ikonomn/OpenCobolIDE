@@ -13,6 +13,8 @@ The original OpenCobolIDE authors and maintainer retain full credit for the proj
 - Fixed APIs removed from modern Python.
 - Fixed bundled Pygments regular expressions rejected by Python 3.12.
 - Fixed file opening after Python removed the legacy universal-newline mode.
+- Fixed GnuCOBOL standard selection on Python 3.11 and newer so options such
+  as `mf` are passed as `-std=mf` instead of their numeric enum value.
 - Fixed bundled legacy modules that conflicted with the Python standard library.
 - Fixed PyQt5 drawing, sizing, color, margin, and editor-panel errors.
 - Updated GnuCOBOL detection and compilation support.
@@ -57,13 +59,13 @@ cobc --version
 Download:
 
 ```text
-opencobolide_4.7.6+modern7_all.deb
+opencobolide_4.7.6+modern8_all.deb
 ```
 
 Open a terminal in the directory containing the downloaded file and install it with:
 
 ```bash
-sudo apt install ./opencobolide_4.7.6+modern7_all.deb
+sudo apt install ./opencobolide_4.7.6+modern8_all.deb
 ```
 
 Using `apt` is recommended because it resolves missing dependencies automatically.
@@ -87,7 +89,7 @@ sudo apt remove opencobolide
 After downloading, calculate the SHA-256 checksum with:
 
 ```bash
-sha256sum opencobolide_4.7.6+modern7_all.deb
+sha256sum opencobolide_4.7.6+modern8_all.deb
 ```
 
 Compare it with the checksum published alongside the GitHub release asset.
@@ -101,7 +103,7 @@ This package was built and tested on a Debian-based Linux system with:
 - PyQt5 5.15
 - GnuCOBOL 3.1.2
 
-The package was also checked with Debian Lintian, verified through a simulated `apt` installation, checked for correct runtime dependency declarations and package permissions, and passed the complete 35-test suite, including a regression check for opening files without Python's removed `U` mode.
+The package was also checked with Debian Lintian, verified through a simulated `apt` installation, checked for correct runtime dependency declarations and package permissions, and passed the complete test suite, including regression checks for opening files without Python's removed `U` mode and for stable GnuCOBOL standard names on Python 3.11 and newer.
 
 ## Attribution and Development Assistance
 

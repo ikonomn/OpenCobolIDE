@@ -11,14 +11,16 @@ from pyqode.core.modes import CheckerMode
 
 from open_cobol_ide import settings, system
 from open_cobol_ide.compilers import GnuCobolCompiler
+from open_cobol_ide.enums import GnuCobolStandard, gnucobol_standard_name
 
 
 def make_linter_command(cobol_file_name, original_file_path):
     from .settings import Settings
     settings = Settings()
     args = ['-fsyntax-only', '-I%s' % os.path.dirname(original_file_path)]
-    args.append('-std=%s' % str(settings.cobol_standard).replace(
-        'GnuCobolStandard.', ''))
+    standard = GnuCobolStandard(settings.cobol_standard)
+    if standard != GnuCobolStandard.none:
+        args.append('-std=%s' % gnucobol_standard_name(standard))
     args += settings.compiler_flags
     original_path = os.path.dirname(original_file_path)
     if settings.free_format:

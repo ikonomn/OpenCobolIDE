@@ -28,3 +28,14 @@ class GnuCobolStandard(IntEnum):
     cobol2014 = 7
     acu = 8
     none = 9
+
+
+def gnucobol_standard_name(value):
+    """Return the GnuCOBOL command-line name for a standard setting.
+
+    Python 3.11 changed ``IntEnum.__str__`` to return the numeric value, so
+    deriving the compiler option from ``str(value)`` produced values such as
+    ``-std=6`` instead of ``-std=mf``.  Enum member names are stable across
+    supported Python versions.
+    """
+    return GnuCobolStandard(value).name

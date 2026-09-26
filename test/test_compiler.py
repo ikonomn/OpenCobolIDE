@@ -7,7 +7,9 @@ import pytest
 from open_cobol_ide import system
 from open_cobol_ide.compilers import (
     GnuCobolCompiler, get_file_type)
-from open_cobol_ide.enums import FileType, GnuCobolStandard
+from open_cobol_ide.enums import (
+    FileType, GnuCobolStandard, gnucobol_standard_name)
+from open_cobol_ide.linter import make_linter_command
 from open_cobol_ide.settings import Settings
 
 
@@ -50,6 +52,25 @@ def test_type_extension(file_type, expected):
 
 exe_ext = GnuCobolCompiler().extension_for_type(FileType.EXECUTABLE)
 dll_ext = GnuCobolCompiler().extension_for_type(FileType.MODULE)
+
+
+STANDARD_OPTIONS = [
+    (GnuCobolStandard.default, 'default'),
+    (GnuCobolStandard.cobol2002, 'cobol2002'),
+    (GnuCobolStandard.cobol85, 'cobol85'),
+    (GnuCobolStandard.ibm, 'ibm'),
+    (GnuCobolStandard.mvs, 'mvs'),
+    (GnuCobolStandard.bs2000, 'bs2000'),
+    (GnuCobolStandard.mf, 'mf'),
+    (GnuCobolStandard.cobol2014, 'cobol2014'),
+    (GnuCobolStandard.acu, 'acu'),
+    (GnuCobolStandard.none, None),
+]
+
+
+@pytest.mark.parametrize('standard, expected', STANDARD_OPTIONS[:-1])
+def test_gnucobol_standard_name(standard, expected):
+    assert gnucobol_standard_name(standard) == expected
 
 
 @pytest.mark.parametrize('free, std, ftype, expected_opts', [
@@ -122,6 +143,34 @@ def test_make_command_exe(free, std, ftype, expected_opts):
     settings.free_format = free
     settings.cobol_standard = GnuCobolStandard.default
     settings.free_format = False
+
+
+@pytest.mark.parametrize(
+    'standard, expected_option',
+    [(standard, '-std=%s' % name if name else None)
+     for standard, name in STANDARD_OPTIONS])
+def test_standard_option_is_stable_for_compiler_and_linter(
+        standard, expected_option):
+    settings = Settings()
+    original_standard = settings.cobol_standard
+    original_flags = settings.compiler_flags
+    try:
+        settings.cobol_standard = standard
+        settings.compiler_flags = []
+        _, compiler_options = GnuCobolCompiler().make_command(
+            ['HelloWorld.cbl'], FileType.EXECUTABLE, 'bin')
+        _, linter_options = make_linter_command(
+            'HelloWorld.cbl', os.path.abspath('HelloWorld.cbl'))
+        if expected_option is None:
+            assert not any(opt.startswith('-std=')
+                           for opt in compiler_options)
+            assert not any(opt.startswith('-std=') for opt in linter_options)
+        else:
+            assert expected_option in compiler_options
+            assert expected_option in linter_options
+    finally:
+        settings.cobol_standard = original_standard
+        settings.compiler_flags = original_flags
 
 
 @pytest.mark.parametrize('path, ftype, expected_results, output_file_path', [

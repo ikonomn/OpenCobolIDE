@@ -44,8 +44,11 @@ Additions and updates
   ``4.7.6+modern6`` Debian package.
 * Replaced the removed Python ``Ur`` file mode with standard text mode, added a
   file-opening regression test, and prepared the ``4.7.6+modern7`` package.
+* Replaced Python-version-dependent ``IntEnum`` string conversion with stable
+  GnuCOBOL standard names in compiler and live-linter commands, and prepared
+  the ``4.7.6+modern8`` package.
 * Updated the compiler-navigation test for diagnostic ordering differences
-  between GnuCOBOL versions; the complete 35-test suite passes.
+  between GnuCOBOL versions; the expanded 54-test suite passes.
 * Replaced obsolete installation and contribution documentation with guidance
   for Debian-family Linux, Python 3.8+, PyQt5 5.15+, and GnuCOBOL.
 * Marked remaining cross-platform feature documentation and upstream release
