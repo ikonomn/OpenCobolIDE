@@ -11,8 +11,8 @@ was completed with assistance from OpenAI Codex and is not an official upstream
 release.
 
 Pull requests should target the ``modern-python`` branch. Keep changes focused,
-add tests for behavior changes, and run ``python3 -m pytest`` when the test
-dependencies are installed.
+add tests for behavior changes, and run ``python3 -m pytest -q`` when the test
+dependencies are installed. The modern9 source currently passes 57 tests.
 
 Windows and macOS packaging is outside the scope of this branch. Historical
 cross-platform build files are preserved in the

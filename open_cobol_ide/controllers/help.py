@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from pyqode.qt import QtCore, QtGui, QtWidgets
 from open_cobol_ide.settings import Settings
 from open_cobol_ide.view.dialogs.about import DlgAbout
@@ -10,8 +12,27 @@ class HelpController(Controller):
     """
     Controls the ? menu: show help contents and about dialog.
     """
-    #: original upstream documentation
-    help_url = 'https://opencobolide.readthedocs.io/en/latest/'
+    #: Online fallback used only when the packaged and source manuals are
+    #: unavailable.
+    help_url = ('https://github.com/ikonomn/OpenCobolIDE/tree/'
+                'modern-python/doc/source')
+
+    @staticmethod
+    def local_help_candidates():
+        """Return the installed and source-tree local manual locations."""
+        source_root = Path(__file__).resolve().parents[2]
+        return (
+            Path('/usr/share/doc/opencobolide/manual.html'),
+            source_root / 'doc' / 'OpenCobolIDE-modern9.html',
+        )
+
+    @classmethod
+    def help_location(cls):
+        """Return a local-file URL when possible, otherwise the web URL."""
+        for path in cls.local_help_candidates():
+            if path.is_file():
+                return QtCore.QUrl.fromLocalFile(str(path))
+        return QtCore.QUrl(cls.help_url)
 
     def __init__(self, app):
         super().__init__(app)
@@ -24,9 +45,9 @@ class HelpController(Controller):
 
     def show_help_contents(self):
         """
-        Opens help_url in the default browser
+        Open the packaged manual in the default browser.
         """
-        QtGui.QDesktopServices.openUrl(QtCore.QUrl(self.help_url))
+        QtGui.QDesktopServices.openUrl(self.help_location())
 
     def show_about_dlg(self):
         """

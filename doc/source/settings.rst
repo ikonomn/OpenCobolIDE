@@ -4,7 +4,8 @@ Application preferences
 This page describes the preferences settings that are available for you to
 customise your experience with the IDE.
 
-To open the preferences dialog, go to Edit->Preferences (``F2`` on Windows and Linux and ``CMD+,`` on OS X).
+To open the preferences dialog, choose ``Edit -> Preferences`` or press
+``F2``.
 
 Editor settings
 ---------------
@@ -92,8 +93,7 @@ Editor color scheme
 
 This let you choose a color scheme for the source code editor and the run output window.
 
-OpenCobolIDE uses the pygments library for its color schemes definition. You can easily add some
-custom color schemes by installing python plugin (this won't work with a frozen application on Windows and OS X).
+OpenCobolIDE uses the bundled Pygments library for its color schemes.
 
 
 Compiler settings
@@ -112,17 +112,22 @@ This tab let you change the GnuCOBOL compiler settings.
 Compiler path
 +++++++++++++
 
-This option let you specify the full path to a working GnuCOBOL compiler. When you change this path you can
-check whether your compiler is working by clicking on the "Check compiler" button. The following dialog will then
-show up.
+This option specifies the path to a working GnuCOBOL compiler. Determine the
+active compiler with::
+
+    command -v cobc
+
+When you change the path, use **Check compiler** to verify that OpenCobolIDE can
+compile a small program.
 
 Press "Check compilation" to check if the compiler is able to compile a simple hello world executable. If you don't
-get "Compiler works", read the compiler output carefully. If it is not working, you might need to adjust the
-environment variables.
+get "Compiler works", read the compiler output carefully. Use ``cobc --info``
+to inspect the compiler's active configuration, copybook, include, and library
+paths before overriding environment variables.
 
 - PATH: prefix paths to the PATH environment variable
-- COB_CONFIG_DIR: Hmm, news says this was dropped, but it’ll effect where .conf dialect support files are found.
-- COB_COPY_DIR: Path to COPY books.
+- COB_CONFIG_DIR: directory containing dialect ``.conf`` files.
+- COB_COPY_DIR: directory containing default copybooks.
 - COB_INCLUDE_PATH
 - COB_LIB_PATH
 
@@ -146,7 +151,18 @@ version will be handled by the ide automatically.
 Standard
 ++++++++
 
-This option let you choose the target COBOL standard.
+This option chooses the target COBOL dialect. Modern8 and newer pass the
+selected name directly to GnuCOBOL on every supported Python version. For
+example, ``mf`` produces ``-std=mf`` rather than the numeric ``-std=6`` seen
+with older builds on Python 3.11 and newer.
+
+Available selections are ``default``, ``cobol2002``, ``cobol85``, ``ibm``,
+``mvs``, ``bs2000``, ``mf``, ``cobol2014``, ``acu``, and ``none``. Selecting
+``none`` omits the automatic ``-std`` option from compilation and live syntax
+checking.
+
+Do not add another ``-std`` option under additional compiler flags when a
+standard is selected here.
 
 Free format
 +++++++++++
@@ -178,14 +194,6 @@ Libraries
 This option let you specify the libraries you want to link with. Separate them with a blank space. *-l flag*
 
 
-VCVARSALL path:
-+++++++++++++++
-
-*This option is not visible on the above screenshot because it is available only on windows.*
-
-This option let you specify the path to vcvarsall.bat which is needed if you are using a custom GnuCompiler built with
-Visual Studio. ``vcvarsall.bat`` can be found in the ``VC`` folder of your Visual C++ installation.
-
 Run settings
 ------------
 
@@ -208,13 +216,9 @@ To run such a program you need to run it in an external console window.
 To enable running a program in an external terminal:
 
 * check ``Run in external terminal``
-* specify the terminal program to use if necessary:
-
-    * **On Windows**, the IDE will automatically use ``cmd.exe``.
-    * **On OS X**, the IDE will automatically use ``open``.
-    * **On linux**, it depends on the distribution and the desktop environment you are using.
-      The IDE will try to pick up one of those if available: ``gnome-terminal``, ``konsole`` and ``xfce-terminal``.
-      If you are using another terminal, please indicate the command to use.
+* specify the terminal program if necessary. The IDE tries
+  ``gnome-terminal``, ``konsole``, and ``xfce-terminal``. If the installed
+  desktop uses another terminal, enter its command explicitly.
 
 
 Environment

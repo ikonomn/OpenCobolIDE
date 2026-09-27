@@ -1,12 +1,20 @@
 Getting started
 ===============
-.. note:: All the screenshots were taken on Gnome 3 desktop.
-          You will have different looks and feels on other operating systems or
-          desktop environments.
+.. note:: The screenshots come from the original 4.7.6 documentation. The
+          appearance may differ on current Debian-family desktops.
 
-OpenCobolIDE is **simple and lightweight** IDE. It works on a single
-file basis (i.e. it has no concept of project): *you create/open a file,
-compile it then run it.*
+OpenCobolIDE is a simple and lightweight IDE. It works on a single-file basis
+and has no project model: create or open a file, compile it, and run it.
+
+Before starting, confirm that the IDE and compiler are available::
+
+    opencobolide
+    cobc --version
+
+If the compiler is not detected, open ``Edit -> Preferences -> Compiler`` and
+set the compiler path shown by::
+
+    command -v cobc
 
 
 .. image:: _static/Home.png
@@ -31,22 +39,19 @@ Create a new file
 
     - Type:
         Specify the type of file to create. Depending on your choice the
-        default code template that is created will changed. Note that you
-        can changed the file type later on after creating the file.
+        default code template that is created will change. You can change the
+        file type later.
 
         You can choose from:
 
             - program:
                 A *program* is an **executable**.
-                When compiled, it produces an **.exe** on Windows and an
-                **executable binary file** on GNU/Linux and Mac OSX.
+                When compiled, it produces an executable Linux binary.
 
             - module:
                 A *module* or *subprogram* is a **library**, a list of
                 procedures that can be shared among other modules/programs.
-                When compiled, it produces a dynamically linked library
-                (**.dll**) on Windows and a shared object (**.so**) on
-                GNU/Linux and Mac OSX.
+                When compiled, it produces a Linux shared object (``.so``).
 
             - empty:
                 create an empty file.
@@ -65,7 +70,9 @@ Create a new file
 Open a file
 -----------
 
-Simply click on *Open* or choose a file in the recent files list.
+Click *Open* or choose a file in the recent-files list. Modern7 and newer open
+files correctly on Python 3.11 and newer, including files with CRLF line
+endings.
 
 .. note:: The recent files list have a context menu that let you remove a file
           or clear the entire list.
@@ -126,7 +133,13 @@ Compile a file
 
 To compile a file, press **F8** or press the compile button.
 
-This will compile the current file as well as its dependencies.
+This compiles the current file and its detected dependencies. Generated
+binaries are placed in a ``bin`` directory beside the source file unless a
+different output directory is configured.
+
+Modern8 and newer pass the selected compiler standard by name. For example, selecting
+``mf`` in Preferences produces ``-std=mf`` rather than ``-std=6`` on Python
+3.11 and newer.
 
 You can double click on an entry in the issues table to quickly go to the
 problematic line in the editor (if the file hasn't been open,
@@ -148,3 +161,17 @@ stdin has been tested and works with the **ACCEPT** keyword).
 
 .. note:: It will recompile the file and all its dependencies before running
           the compiled program.
+
+Quick verification program
+--------------------------
+
+Create a program containing::
+
+           IDENTIFICATION DIVISION.
+           PROGRAM-ID. HELLO.
+           PROCEDURE DIVISION.
+               DISPLAY "OPENCOBOLIDE MODERN9 OK".
+               STOP RUN.
+
+Save it as ``hello.cob``, press **F8** to compile, and press **F5** to run.
+The Output panel should display ``OPENCOBOLIDE MODERN9 OK``.

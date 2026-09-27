@@ -1,7 +1,62 @@
 What's New?
 ***********
 
-** OpenCobolIDE is no longer maintained **
+Modern Debian compatibility builds
+==================================
+
+These builds are an unofficial compatibility polish of the original
+OpenCobolIDE 4.7.6 release. They do not transfer ownership or maintainer status
+and do not represent a new upstream release. The work was completed with
+assistance from OpenAI Codex.
+
+4.7.6+modern9
+-------------
+
+* Added a self-contained offline HTML manual generated from all maintained RST
+  documentation pages.
+* Embedded the documentation screenshots so the manual requires no network
+  connection or separate files.
+* Changed the Help action to open the installed local manual, with the GitHub
+  documentation directory retained as a fallback.
+* Expanded the automated suite to 57 passing tests.
+
+4.7.6+modern8
+-------------
+
+* Fixed GnuCOBOL standard selection on Python 3.11 and newer.
+* Compiler and live-linter commands now use stable names such as
+  ``-std=default`` and ``-std=mf`` instead of numeric enum values.
+* Selecting ``none`` consistently omits the automatic ``-std`` option.
+* Verified every standard exposed by the IDE against the installed GnuCOBOL
+  configuration files.
+* Expanded the automated suite to 54 passing tests.
+
+4.7.6+modern7
+-------------
+
+* Replaced the removed ``Ur`` file mode with standard text mode.
+* Restored file opening on Python 3.11 and newer while retaining universal
+  newline handling.
+* Added a regression test using Windows CRLF line endings.
+
+4.7.6+modern6
+-------------
+
+* Fixed bundled Pygments regular expressions that failed under Python 3.12.
+
+4.7.6+modern5
+-------------
+
+* Produced the cleaned Debian-only package with Python 3.8+, PyQt5 5.15+, and
+  system GnuCOBOL dependencies.
+* Preserved original authorship and maintainer attribution.
+* Removed unsupported cross-platform packaging assets from the maintained
+  branch while preserving them in ``codex/legacy-cross-platform-backup``.
+
+Historical upstream changelog
+=============================
+
+**The original OpenCobolIDE project is no longer maintained upstream.**
 
 This page lists the most prominent milestones achieved by the OpenCobolIDE
 developers. For more specific details about what is planned and what has been

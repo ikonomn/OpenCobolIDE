@@ -47,8 +47,11 @@ Additions and updates
 * Replaced Python-version-dependent ``IntEnum`` string conversion with stable
   GnuCOBOL standard names in compiler and live-linter commands, and prepared
   the ``4.7.6+modern8`` package.
+* Added a self-contained HTML manual generated from all documentation RST
+  pages, packaged it for offline use, and made the Help action open it locally
+  in ``4.7.6+modern9``.
 * Updated the compiler-navigation test for diagnostic ordering differences
-  between GnuCOBOL versions; the expanded 54-test suite passes.
+  between GnuCOBOL versions; the expanded 57-test suite passes.
 * Replaced obsolete installation and contribution documentation with guidance
   for Debian-family Linux, Python 3.8+, PyQt5 5.15+, and GnuCOBOL.
 * Marked remaining cross-platform feature documentation and upstream release

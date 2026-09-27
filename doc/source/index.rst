@@ -2,22 +2,28 @@
 .. image:: _static/silex-192x192.png
     :align: center
 
-Welcome to OpenCobolIDE documentation!
-==========================================
+OpenCobolIDE 4.7.6 modern9 documentation
+=========================================
 
 OpenCobolIDE is a simple and lightweight COBOL IDE based on the
 `OpenCOBOL/GnuCOBOL`_ compiler and the `pyQode`_ source code editor widget.
 
-This documentation accompanies an unofficial compatibility polish of
-OpenCobolIDE 4.7.6 for modern Python, PyQt5, and Debian-family Linux, completed
-with assistance from OpenAI Codex. Original ownership and maintainer
-attribution remain unchanged. References to
-other operating systems in feature descriptions and the historical change log
-describe the original upstream release and are not supported build targets.
+This documentation accompanies the unofficial ``4.7.6+modern9`` compatibility
+polish for modern Python, PyQt5, GnuCOBOL, and Debian-family Linux. The
+compatibility work was completed with assistance from OpenAI Codex. Original
+ownership and maintainer attribution remain unchanged.
+
+The maintained package supports Debian, Ubuntu, Linux Mint, and compatible
+derivatives. References to other operating systems in :doc:`whats_new` describe
+the original upstream release and are not supported build targets.
+
+The original Read the Docs project is no longer available. Until a replacement
+documentation site is published, the maintained documentation source is
+available in the `modern-python documentation directory`_.
 
 
-Parts of the documentation:
-===========================
+Documentation contents
+======================
 
 .. toctree::
     :maxdepth: 1
@@ -40,37 +46,37 @@ Parts of the documentation:
    * .. glossary::
 
       :doc:`whats_new`
-         Historical upstream release notes.
+         Modern compatibility changes followed by historical upstream notes.
 
    * .. glossary::
 
       :doc:`download`
-         Instructions on where and how to install OpenCobolIDE.
+         Install or upgrade the modern9 Debian package.
 
    * .. glossary::
 
       :doc:`getting_started`
-         Getting started with OpenCobolIDE
+         Create, open, compile, and run a COBOL program.
 
    * .. glossary::
 
       :doc:`settings`
-         Description of the application preferences settings
+         Configure the editor, GnuCOBOL compiler, and runtime.
 
    * .. glossary::
 
       :doc:`advanced`
-         Covers some more advanced topics
+         Debian-focused compiler, SQL precompiler, and developer topics.
 
    * .. glossary::
 
       :doc:`tipsandtricks`
-         Tips & Tricks
+         Tips and tricks.
 
    * .. glossary::
 
       :doc:`faq`
-         Frequently asked questions
+         Frequently asked questions and troubleshooting.
 
 
 Meta information:
@@ -100,3 +106,4 @@ Indices and tables:
 
 .. _pyQode: https://github.com/pyQode
 .. _OpenCOBOL/GnuCOBOL: http://sourceforge.net/projects/open-cobol/
+.. _`modern-python documentation directory`: https://github.com/ikonomn/OpenCobolIDE/tree/modern-python/doc/source

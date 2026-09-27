@@ -21,6 +21,8 @@ The original OpenCobolIDE authors and maintainer retain full credit for the proj
 - Updated Debian and Python packaging metadata.
 - Updated the Linux desktop launcher.
 - Added a Debian installation package.
+- Added a self-contained offline manual generated from all maintained RST
+  documentation pages; the Help action opens it locally.
 
 ## Dependencies
 
@@ -59,13 +61,13 @@ cobc --version
 Download:
 
 ```text
-opencobolide_4.7.6+modern8_all.deb
+opencobolide_4.7.6+modern9_all.deb
 ```
 
 Open a terminal in the directory containing the downloaded file and install it with:
 
 ```bash
-sudo apt install ./opencobolide_4.7.6+modern8_all.deb
+sudo apt install ./opencobolide_4.7.6+modern9_all.deb
 ```
 
 Using `apt` is recommended because it resolves missing dependencies automatically.
@@ -89,7 +91,7 @@ sudo apt remove opencobolide
 After downloading, calculate the SHA-256 checksum with:
 
 ```bash
-sha256sum opencobolide_4.7.6+modern8_all.deb
+sha256sum opencobolide_4.7.6+modern9_all.deb
 ```
 
 Compare it with the checksum published alongside the GitHub release asset.

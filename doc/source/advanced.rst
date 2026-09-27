@@ -1,123 +1,100 @@
 Advanced topics
 ===============
 
+This maintained branch targets Debian-family Linux. The Windows and macOS
+instructions from the original 4.7.6 documentation are intentionally omitted.
 
-.. _windows-gnu-cobol:
+Using a custom GnuCOBOL installation
+-------------------------------------
 
-Setup a custom compiler on Windows
-----------------------------------
+The Debian package depends on GnuCOBOL, but OpenCobolIDE can also use a compiler
+installed in a custom location such as ``/usr/local/bin/cobc``.
 
-Starting from version 4.6.0, you have all the tools to setup a custom GnuCOBOL compiler on windows.
+First identify the active compiler and its configuration directories::
 
-The first step is to download or build the compiler and make sure it works from the command line.
+    command -v cobc
+    readlink -f "$(command -v cobc)"
+    cobc --version
+    cobc --info
 
-Then fire up OpenCobolIDE, open the preferences dialog and go to the compiler tab:
+Open ``Edit -> Preferences -> Compiler`` and set **Compiler path** to the value
+reported by ``command -v cobc``. Use **Check compiler** to confirm that the IDE
+can compile a small program.
 
-    - specify the compiler path in  "Custom compiler path". When you choose a new compiler, you will
-      be presented with a dialog that let you check if the compiler works. If the test failed, then this
-      might be because you need to adjust some environment variables
-    - adjust the environment variables (PATH and COBC_CONFIG_DIR are usually required, you might also need
-      to adjust the include and copy path depending on the compiler you chose). You may disable variables
-      that you don't need by removing the check mark.
+The important GnuCOBOL directories reported by ``cobc --info`` include:
 
-      .. note:: when you've changed an environmnent variable, you can check if the compiler works by clicking on the
-                ``check compiler`` button.
+``COB_CONFIG_DIR``
+    Contains dialect files such as ``default.conf``, ``cobol85.conf``, and
+    ``mf.conf``.
 
-    - if the compiler is build with MSVC, you will also need to indicate the path of vcvarsall.bat of the
-      compiler used to build GnuCOBOL. If using Visual Studio 2010, you can find this file in
-      ``c:\Program Files(x86)\Microsoft Visual Studio 10.0\VC\vcvarsall.bat``
+``COB_COPY_DIR``
+    Contains the default GnuCOBOL copybooks.
 
-Here is the setup I use for working with `GnuCOBOL 2.0 MSVC`_:
+``COB_LIBS``
+    Shows the library search and link options used by the compiler.
 
-   .. image:: _static/custom_compiler_windows.png
-        :align: center
+Do not override these paths in OpenCobolIDE unless the compiler genuinely uses
+non-default directories. A compiler installed under ``/usr/local`` normally
+reports the matching ``/usr/local/share/gnucobol`` paths itself.
 
+Compiler standards on modern Python
+-----------------------------------
 
-.. _GnuCOBOL 2.0 MSVC: http://www.kiska.net/opencobol/2.0/index.html
+Modern8 and newer pass compiler standards by their GnuCOBOL names on every supported
+Python version. The available selections are:
 
+* ``default``
+* ``cobol2002``
+* ``cobol85``
+* ``ibm``
+* ``mvs``
+* ``bs2000``
+* ``mf``
+* ``cobol2014``
+* ``acu``
+* ``none``
+
+For example, selecting ``mf`` produces ``-std=mf`` for compilation and live
+syntax checking. Selecting ``none`` omits the automatic ``-std`` option. Do not
+add a duplicate ``-std`` option under additional compiler flags.
+
+To verify a dialect outside the IDE, run a direct compiler test such as::
+
+    cobc -x -std=mf -o hello hello.cob
+    ./hello
 
 .. _sql-guide:
 
-SQL COBOL Guide
----------------
+SQL COBOL with DBPRE
+--------------------
 
-GnuCOBOL does not support SQL statements (such as EXEC SQL) natively but you may use a pre-compiler that
-will convert your sql statements to pure COBOL that can then be compiled with GnuCOBOL.
+GnuCOBOL does not support ``EXEC SQL`` statements natively. A precompiler must
+convert them to COBOL before compilation. The legacy OpenCobolIDE integration
+supports DBPRE on Linux for files with the ``.scb`` extension.
 
-OpenCobolIDE supports the following pre-compilers:
+This integration is retained from the original 4.7.6 release and has not been
+part of the modern9 compatibility test matrix. Back up source files and verify
+the generated COBOL independently before relying on it.
 
-- `dbpre`_  (**UNIX**)
-- `esqlOC`_ (**WINDOWS**)
+A typical DBPRE setup requires:
 
-.. _dbpre: http://sourceforge.net/projects/dbpre/
-.. _esqlOC: http://sourceforge.net/p/open-cobol/discussion/contrib/thread/4057115f/
+* the ``dbpre`` executable;
+* the ``cobmysqlapi.o`` object file;
+* the ``PGCTBBAT``, ``PGCTBBATWS``, and ``SQLCA`` copybooks;
+* the appropriate database development headers and client library.
 
-Read the below section to know how to setup OpenCobolIDE to work with one of these pre-compilers.
-
-
-.. warning:: Pre-compilers are associated with one specific extension (**.scb** for dbpre and **.sqb** for esqlOC).
-             Those tools will get used only if the file extension match the associated extension!
-             E.g. pre-compilers will never get called on regular COBOL files (.cbl, .cob,...).
-
-esqlOC (on Windows)
-+++++++++++++++++++
-
-.. warning:: To work with esqlOC, you need to use GnuCOBOL built with Visual Studio.
-             Read :ref:`windows-gnu-cobol` to setup the correct compiler.
-
-1) Setup OpenCobolIDE to work with GnuCOBOL compiled with Visual Studio (make sure you can compile a simple
-   HelloWorld)
-2) Download esqlOC and install it somewhere on your drive (prefer a path without spaces such as ``c:\esqloc``).
-3) Open the OpenCobolIDE preferences and go to the **SQL Cobol** tab. There specify the installation directory
-   of esqlOC.
-4) Open a **.sqb** file and compile it.
-
-
-DBPRE (on GNU/Linux)
-++++++++++++++++++++
-
-1) Download dbpre and follow the instruction for compiling. You don't need to install it system
-   wide, just create a clean dbpre directory in your home folder where you you copy the following files:
-
-      - dbpre executable
-      - cobmysqlapi.o
-      - the copybooks: PGCTBBAT, PGCTBBATWS and SQLCA
-
-   The dbpre directory should look like that:
-
-   .. image:: _static/dbpre_directory_content.png
-        :align: center
-
-2) Run OpenCobolIDE and open the preferences dialog.
-3) Go to the SQL Cobol setting tab
-4) Specify the path to the dbpre executable, cobmysqlapi.o and the directory that contains the copybooks
-5) Setup the DB connection parameters to connect to your test db$
-6) Go to the compiler settings tab
-7) Add a new library path that points to: `/usr/include/mysql`
-8) Add `mysqlclient` to the libraries.
-9) Open a **.scb** file, compile and enjoy!
-
-Here are some screen-shots of a working configuration:
-
-**DBPRE configuration**:
-
-   .. image:: _static/configured_dbpre.png
-        :align: center
-
-**Compiler configuration**:
-
-   .. image:: _static/configured_compiler_for_dbpre.png
-        :align: center
+Configure their paths under ``Edit -> Preferences -> SQL COBOL``. Add required
+include, copybook, library-search, and library options under the compiler
+settings, then open and compile the ``.scb`` source.
 
 Developer mode
 --------------
 
-By default, OpenCobolIDE embeds a series of third party libraries and modify python's sys import path to always load the
-bundled libraries first. Those libraries are bundled inside the opencobolide python package (this path is internally
-used to set the ``OCIDE_EXTLIBS_PATH`` environment variable).
+OpenCobolIDE normally loads the legacy pure-Python libraries bundled under
+``open_cobol_ide/extlibs``. Setting ``OCIDE_DEV_MODE=1`` disables that bundled
+path modification and requires compatible dependencies to be supplied by the
+development environment.
 
-This behaviour can be changed by setting the ``OCIDE_DEV_MODE`` environment variable to 1. If you do so, you'll need to
-install the required third-parties yourself. This can be done easily by running the following command at the root
-of the OpenCobolIDE's source directory:
-
-``pip install -r requirements.txt``
+The maintained Debian package deliberately uses the distribution PyQt5 package
+so its native Qt dependencies match the host system. Developer mode is intended
+for source work and is not required for normal use.
