@@ -19,11 +19,11 @@ class HelpController(Controller):
 
     @staticmethod
     def local_help_candidates():
-        """Return the installed and source-tree local manual locations."""
+        """Return the source-tree and installed local manual locations."""
         source_root = Path(__file__).resolve().parents[2]
         return (
-            Path('/usr/share/doc/opencobolide/manual.html'),
             source_root / 'doc' / 'OpenCobolIDE-modern9.html',
+            Path('/usr/share/doc/opencobolide/manual.html'),
         )
 
     @classmethod

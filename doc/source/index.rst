@@ -2,13 +2,13 @@
 .. image:: _static/silex-192x192.png
     :align: center
 
-OpenCobolIDE 4.7.6 modern9 documentation
-=========================================
+OpenCobolIDE 4.7.6 modern9.1 documentation
+===========================================
 
 OpenCobolIDE is a simple and lightweight COBOL IDE based on the
 `OpenCOBOL/GnuCOBOL`_ compiler and the `pyQode`_ source code editor widget.
 
-This documentation accompanies the unofficial ``4.7.6+modern9`` compatibility
+This documentation accompanies the unofficial ``4.7.6+modern9.1`` compatibility
 polish for modern Python, PyQt5, GnuCOBOL, and Debian-family Linux. The
 compatibility work was completed with assistance from OpenAI Codex. Original
 ownership and maintainer attribution remain unchanged.
@@ -51,7 +51,7 @@ Documentation contents
    * .. glossary::
 
       :doc:`download`
-         Install or upgrade the modern9 Debian package.
+         Install or upgrade the modern9.1 Debian package.
 
    * .. glossary::
 

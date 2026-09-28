@@ -120,6 +120,53 @@ def run_command(pgm, args, working_dir=''):
     return status, output
 
 
+def find_build_script(file_path):
+    """Return the nearest executable project ``build.sh``, if present."""
+    directory = os.path.dirname(os.path.abspath(file_path))
+    while True:
+        script = os.path.join(directory, 'build.sh')
+        if os.path.isfile(script) and os.access(script, os.X_OK):
+            return script
+
+        # Do not escape from the source's project into an unrelated parent.
+        if os.path.exists(os.path.join(directory, '.git')) or \
+                os.path.isfile(os.path.join(directory, 'Makefile')):
+            break
+        parent = os.path.dirname(directory)
+        if parent == directory:
+            break
+        directory = parent
+    return None
+
+
+def get_build_script_output_directory(file_path):
+    """Return the conventional output directory for a project build script."""
+    script = find_build_script(file_path)
+    if script is not None:
+        return os.path.join(os.path.dirname(script), 'bin')
+    return None
+
+
+def compile_with_build_script(file_path, output_callback=None):
+    """Compile *file_path* through its project-local ``build.sh`` script."""
+    script = find_build_script(file_path)
+    if script is None:
+        raise FileNotFoundError('No executable build.sh found next to %s' %
+                                file_path)
+
+    working_dir = os.path.dirname(script)
+    source = os.path.abspath(file_path)
+    status, output = run_command(script, [source], working_dir=working_dir)
+    if output_callback is not None:
+        output_callback(output)
+    messages = GnuCobolCompiler().parse_output(output, working_dir)
+    if status != 0 and not messages:
+        messages.append((output or 'Build script failed with exit code %d' %
+                         status, CheckerMessages.ERROR, -1, 0, None, None,
+                         source))
+    return status, messages
+
+
 def check_compiler():
     """
     Checks if a valid COBOL compiler can be found.
@@ -167,7 +214,8 @@ class GnuCobolCompiler(QtCore.QObject):
     # GC output messages format depends on the underlying compiler
     # See https://github.com/OpenCobolIDE/OpenCobolIDE/issues/206
     OUTPUT_PATTERN_GCC = re.compile(
-        r'^(?P<filename>[\w\.\-_\s]*):(?P<line>\s*\d*):(?P<type>[\w\s]*):(?P<error>.*)$')
+        r'^(?P<filename>[\w\.\-_\s]*):(?P<line>\s*\d+):\s*'
+        r'(?P<type>error|warning|note):(?P<error>.*)$', re.IGNORECASE)
     OUTPUT_PATTERN_MSVC = re.compile(
         r'^(?P<filename>[\w\.\-_\s]*)\((?P<line>\s*\d*)\):(?P<type>[\w\s]*):'
         '(?P<error>.*)$')

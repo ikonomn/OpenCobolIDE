@@ -15,7 +15,8 @@ from .base import Controller
 from open_cobol_ide import system
 from open_cobol_ide.enums import FileType
 from open_cobol_ide.compilers import GnuCobolCompiler, get_file_type, \
-    DbpreCompiler, EsqlOCCompiler
+    DbpreCompiler, EsqlOCCompiler, find_build_script, \
+    compile_with_build_script, get_build_script_output_directory
 from open_cobol_ide.settings import Settings
 
 
@@ -104,7 +105,12 @@ class CompilationThread(QtCore.QThread):
 
         for f in files:
             try:
-                if is_dbpre_cobol(f):
+                build_script = find_build_script(f)
+                if build_script:
+                    self.command_started.emit('%s %s' % (build_script, f))
+                    status, messages = compile_with_build_script(
+                        f, self.output_available.emit)
+                elif is_dbpre_cobol(f):
                     status, messages = dbpre.compile(f)
                 elif is_esqloc_cobol(f):
                     status, messages = esqloc.compile(f)
@@ -256,10 +262,12 @@ class CobolController(Controller):
     def clean_file(path):
         output_path = GnuCobolCompiler().get_output_filename(
             [os.path.split(path)[1]], get_file_type(path))
-        output_dir = Settings().output_directory
-        if not os.path.isabs(output_dir):
-            output_dir = os.path.abspath(os.path.join(
-                os.path.dirname(path), output_dir))
+        output_dir = get_build_script_output_directory(path)
+        if output_dir is None:
+            output_dir = Settings().output_directory
+            if not os.path.isabs(output_dir):
+                output_dir = os.path.abspath(os.path.join(
+                    os.path.dirname(path), output_dir))
         output_path = os.path.join(output_dir, output_path)
         try:
             os.remove(output_path)
@@ -324,10 +332,13 @@ class CobolController(Controller):
             ext = GnuCobolCompiler().extension_for_type(
                 get_file_type(filename))
             name = os.path.splitext(os.path.split(filename)[1])[0]
-            output_dir = Settings().output_directory
-            if not os.path.isabs(output_dir):
-                path = os.path.dirname(filename)
-                output_dir = os.path.abspath(os.path.join(path, output_dir))
+            output_dir = get_build_script_output_directory(filename)
+            if output_dir is None:
+                output_dir = Settings().output_directory
+                if not os.path.isabs(output_dir):
+                    path = os.path.dirname(filename)
+                    output_dir = os.path.abspath(os.path.join(
+                        path, output_dir))
             path = os.path.join(output_dir, name + ext)
             self.ui.errorsTable.add_message(
                 CheckerMessage(
@@ -440,10 +451,12 @@ class CobolController(Controller):
         self.ui.tabWidgetLogs.setCurrentIndex(LOG_PAGE_RUN)
         self.ui.dockWidgetLogs.show()
         self.ui.consoleOutput.clear()
-        output_dir = Settings().output_directory
-        if not os.path.isabs(output_dir):
-            output_dir = os.path.join(
-                os.path.dirname(editor.file.path), output_dir)
+        output_dir = get_build_script_output_directory(editor.file.path)
+        if output_dir is None:
+            output_dir = Settings().output_directory
+            if not os.path.isabs(output_dir):
+                output_dir = os.path.join(
+                    os.path.dirname(editor.file.path), output_dir)
         if Settings().working_dir:
             wd = Settings().working_dir
         else:

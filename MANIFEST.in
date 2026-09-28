@@ -18,6 +18,7 @@ recursive-include forms *
 recursive-include share *
 recursive-include doc *
 recursive-include scripts *
+recursive-include examples *
 recursive-include open_cobol_ide/extlibs *
 global-exclude *.pyc
 global-exclude *.pyo

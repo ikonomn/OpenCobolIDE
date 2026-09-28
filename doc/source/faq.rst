@@ -40,7 +40,7 @@ Older compatibility builds converted the selected standard to a numeric
 ``default`` or ``-std=6`` for ``mf``.
 
 Modern8 and newer fix this in both compiler and live-linter commands. Upgrade
-to ``4.7.6+modern9`` and select the desired standard from
+to ``4.7.6+modern9.1`` and select the desired standard from
 ``Edit -> Preferences -> Compiler``. Selecting ``mf`` now produces
 ``-std=mf``.
 

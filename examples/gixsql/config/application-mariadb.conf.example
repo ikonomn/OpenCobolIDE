@@ -1,0 +1,3 @@
+DATASRC=mysql://localhost:3306/application
+DATASRC_USR=application_user
+DATASRC_PWD=change-me

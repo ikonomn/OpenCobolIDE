@@ -9,6 +9,15 @@ OpenCobolIDE 4.7.6 release. They do not transfer ownership or maintainer status
 and do not represent a new upstream release. The work was completed with
 assistance from OpenAI Codex.
 
+4.7.6+modern9.1
+---------------
+
+* Added support for executable project ``build.sh`` scripts.
+* Routed custom build output, Run, Clean, and Rebuild through project ``bin/``.
+* Prevented compiler build timestamps from being reported as source errors.
+* Added a minimal GixSQL project with SQLite and MariaDB runtime profiles.
+* Documented the complete GixSQL preprocessing and compilation workflow.
+
 4.7.6+modern9
 -------------
 
