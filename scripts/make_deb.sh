@@ -12,7 +12,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 package_name="opencobolide"
-package_version="4.7.6+modern9.1"
+package_version="4.7.6+modern9.2"
 package_root="build/deb-root"
 output_file="dist/${package_name}_${package_version}_all.deb"
 
@@ -87,6 +87,7 @@ printf '%s\n' \
     '  * Add a self-contained offline HTML manual opened by the Help action.' \
     '  * Ship a reusable GixSQL build.sh template for project preprocessing.' \
     '  * Document SQLite and MariaDB runtime profiles with example conf files.' \
+    '  * Add offline Help instructions for resetting a broken window layout.' \
     '  * Remove obsolete release assets and runtime-unneeded bundled tests.' \
     '  * Complete compatibility and packaging work with OpenAI Codex assistance.' \
     '' \

@@ -1,10 +1,10 @@
-Download and install modern9.1
+Download and install modern9.2
 ==============================
 
 Scope
 -----
 
-The unofficial ``4.7.6+modern9.1`` package supports Debian, Ubuntu, Linux Mint,
+The unofficial ``4.7.6+modern9.2`` package supports Debian, Ubuntu, Linux Mint,
 and compatible Debian-family distributions. It preserves the original
 OpenCobolIDE authorship and maintainer attribution.
 
@@ -22,10 +22,10 @@ packages from the configured distribution repositories.
 Installation
 ------------
 
-Download ``opencobolide_4.7.6+modern9.1_all.deb`` from the `modern9.1 release`_.
+Download ``opencobolide_4.7.6+modern9.2_all.deb`` from the `modern9.2 release`_.
 Open a terminal in the download directory and install it with::
 
-    sudo apt install ./opencobolide_4.7.6+modern9.1_all.deb
+    sudo apt install ./opencobolide_4.7.6+modern9.2_all.deb
 
 If GnuCOBOL must be installed separately, run::
 
@@ -40,14 +40,14 @@ Confirm the installed package version with::
 
     dpkg-query -W -f='${Package} ${Version}\n' opencobolide
 
-The expected package version is ``4.7.6+modern9.1``.
+The expected package version is ``4.7.6+modern9.2``.
 
 Package checksum
 ----------------
 
 Verify the downloaded package with::
 
-    sha256sum opencobolide_4.7.6+modern9.1_all.deb
+    sha256sum opencobolide_4.7.6+modern9.2_all.deb
 
 Compare the result with the checksum published alongside the GitHub release
 asset. The checksum is kept outside this embedded manual so it can verify the
@@ -68,4 +68,4 @@ Windows, macOS, RPM, Arch Linux, and historical PPA builds are not supported by
 this maintained branch. Their former assets are preserved only in the
 ``codex/legacy-cross-platform-backup`` branch.
 
-.. _`modern9.1 release`: https://github.com/ikonomn/OpenCobolIDE/releases/tag/v4.7.6-modern9.1
+.. _`modern9.2 release`: https://github.com/ikonomn/OpenCobolIDE/releases/tag/v4.7.6-modern9.2

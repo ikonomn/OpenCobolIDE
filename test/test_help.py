@@ -14,8 +14,8 @@ def test_local_help_manual_is_used_from_source_tree():
 
 
 def test_local_help_manual_contains_every_documentation_page():
-    manual = HelpController.local_help_candidates()[1].read_text(
-        encoding='utf-8')
+    path = Path(HelpController.help_location().toLocalFile())
+    manual = path.read_text(encoding='utf-8')
 
     for source in Path('doc/source').glob('*.rst'):
         assert '>%s<' % source.name in manual
@@ -36,7 +36,7 @@ def test_local_help_internal_links_resolve():
                 self.targets.add(attrs['href'][1:])
 
     parser = Links()
-    parser.feed(HelpController.local_help_candidates()[1].read_text(
-        encoding='utf-8'))
+    path = Path(HelpController.help_location().toLocalFile())
+    parser.feed(path.read_text(encoding='utf-8'))
 
     assert parser.targets <= parser.anchors

@@ -9,6 +9,12 @@ OpenCobolIDE 4.7.6 release. They do not transfer ownership or maintainer status
 and do not represent a new upstream release. The work was completed with
 assistance from OpenAI Codex.
 
+4.7.6+modern9.2
+---------------
+
+* Added offline Help instructions for resetting a missing menu bar or broken
+  window layout without deleting project files.
+
 4.7.6+modern9.1
 ---------------
 

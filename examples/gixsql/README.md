@@ -33,7 +33,7 @@ The rest of this README explains what happened and how to adapt the example.
 
 ## 1. Requirements
 
-Install OpenCobolIDE `4.7.6+modern9.1` or newer, GnuCOBOL, GixSQL, and the
+Install OpenCobolIDE `4.7.6+modern9.2` or newer, GnuCOBOL, GixSQL, and the
 SQLite or MariaDB client libraries required by the selected GixSQL driver.
 
 Verify the commands:
