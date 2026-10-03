@@ -12,7 +12,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 package_name="opencobolide"
-package_version="4.7.6+modern9.2"
+package_version="4.7.6+modern9.3"
 package_root="build/deb-root"
 output_file="dist/${package_name}_${package_version}_all.deb"
 
@@ -88,6 +88,7 @@ printf '%s\n' \
     '  * Ship a reusable GixSQL build.sh template for project preprocessing.' \
     '  * Document SQLite and MariaDB runtime profiles with example conf files.' \
     '  * Add offline Help instructions for resetting a broken window layout.' \
+    '  * Recommend GnuCOBOL instead of requiring the distribution package.' \
     '  * Remove obsolete release assets and runtime-unneeded bundled tests.' \
     '  * Complete compatibility and packaging work with OpenAI Codex assistance.' \
     '' \
@@ -103,7 +104,8 @@ printf '%s\n' \
     'Section: devel' \
     'Priority: optional' \
     'Architecture: all' \
-    'Depends: python3 (>= 3.8), python3-pyqt5 (>= 5.15), gnucobol' \
+    'Depends: python3 (>= 3.8), python3-pyqt5 (>= 5.15)' \
+    'Recommends: gnucobol' \
     "Installed-Size: $installed_size" \
     'Maintainer: Colin Duquesnoy <colin.duquesnoy@gmail.com>' \
     'Homepage: https://github.com/OpenCobolIDE/OpenCobolIDE' \

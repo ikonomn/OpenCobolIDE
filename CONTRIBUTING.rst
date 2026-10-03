@@ -1,7 +1,7 @@
 Contributing
 ============
 
-This repository contains the unofficial ``4.7.6+modern9.2`` compatibility polish
+This repository contains the unofficial ``4.7.6+modern9.3`` compatibility polish
 of the original OpenCobolIDE 4.7.6 release for modern Python, PyQt5, GnuCOBOL,
 and Debian-family Linux. It does not change the original project ownership or
 maintainer attribution.

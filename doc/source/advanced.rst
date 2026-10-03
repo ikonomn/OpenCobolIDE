@@ -73,7 +73,7 @@ convert them to COBOL before compilation. The legacy OpenCobolIDE integration
 supports DBPRE on Linux for files with the ``.scb`` extension.
 
 This integration is retained from the original 4.7.6 release and has not been
-part of the modern9.2 compatibility test matrix. Back up source files and verify
+part of the modern9.3 compatibility test matrix. Back up source files and verify
 the generated COBOL independently before relying on it.
 
 A typical DBPRE setup requires:
