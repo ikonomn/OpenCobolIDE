@@ -4,7 +4,7 @@ set -euo pipefail
 # Build the Debian-family package without requiring stdeb or dh-python.
 #
 # Build requirements:
-#   python3 (>= 3.8), python3-setuptools, dpkg-dev
+#   python3 (>= 3.8), python3-pip, python3-setuptools, dpkg-dev
 #
 # Runtime dependencies are recorded in the generated package control file and
 # are resolved by apt when the package is installed.
@@ -12,27 +12,46 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 package_name="opencobolide"
-package_version="4.7.6+modern9.3"
-package_root="build/deb-root"
-output_file="dist/${package_name}_${package_version}_all.deb"
+package_version="${OCIDE_PACKAGE_VERSION:-4.7.6+modern10}"
+package_root="${OCIDE_PACKAGE_ROOT:-build/deb-root}"
+output_file="${OCIDE_OUTPUT_FILE:-dist/${package_name}_${package_version}_all.deb}"
 
 rm -rf "$package_root"
 mkdir -p "$package_root/DEBIAN"
 mkdir -p "$package_root/usr/share/doc/$package_name"
 mkdir -p "$package_root/usr/share/doc/$package_name/examples/gixsql"
 mkdir -p "$package_root/usr/share/man/man1"
-mkdir -p dist
+mkdir -p "$package_root/usr/share/applications"
+mkdir -p "$package_root/usr/share/pixmaps"
+mkdir -p "$package_root/usr/bin"
+mkdir -p "$(dirname "$output_file")"
 
-python3 setup.py install \
-    --root="$(pwd)/$package_root" \
-    --install-lib=/usr/lib/python3/dist-packages \
-    --install-scripts=/usr/bin \
-    --install-data=/usr \
-    --single-version-externally-managed \
-    --record="$(pwd)/build/deb-install-files.txt"
+python3 -m pip install . \
+    --target "$package_root/usr/lib/python3/dist-packages" \
+    --no-deps \
+    --no-build-isolation \
+    --no-compile \
+    --disable-pip-version-check
+
+# A --target installation places console scripts below the target directory.
+# The Debian package provides its launcher in /usr/bin instead, so discard the
+# duplicate target-local script directory.
+rm -rf "$package_root/usr/lib/python3/dist-packages/bin"
+
+cat > "$package_root/usr/bin/opencobolide" <<'PY'
+#!/usr/bin/python3
+from open_cobol_ide.main import main
+
+raise SystemExit(main())
+PY
+
+install -m 0644 share/OpenCobolIDE.desktop \
+    "$package_root/usr/share/applications/OpenCobolIDE.desktop"
+install -m 0644 share/OpenCobolIDE.png \
+    "$package_root/usr/share/pixmaps/OpenCobolIDE.png"
 
 # The Help action opens this self-contained manual without network access.
-install -m 0644 doc/OpenCobolIDE-modern9.html \
+install -m 0644 doc/OpenCobolIDE-modern10.html \
     "$package_root/usr/share/doc/$package_name/manual.html"
 example_target="$package_root/usr/share/doc/$package_name/examples/gixsql"
 install -m 0755 examples/gixsql/build.sh "$example_target/build.sh"
@@ -81,7 +100,12 @@ printf '%s\n' \
     '' \
     '  * Preserve the original OpenCobolIDE authorship and maintainer.' \
     '  * Polish OpenCobolIDE 4.7.6 for modern Python, PyQt5, and Debian Linux.' \
-    '  * Fix bundled Pygments regular expressions for Python 3.12.' \
+    '  * Use maintained Pygments instead of its obsolete bundled copy.' \
+    '  * Remove the obsolete Future compatibility dependency from artifacts.' \
+    '  * Fix remaining invalid escape warnings on Python 3.12.' \
+    '  * Add modern venv and pip source installation for Linux and Windows.' \
+    '  * Add Linux shell and Windows PowerShell installation helpers.' \
+    '  * Support launching with python -m open_cobol_ide.' \
     '  * Restore file opening on Python 3.11 and newer.' \
     '  * Pass GnuCOBOL standard names correctly on Python 3.11 and newer.' \
     '  * Add a self-contained offline HTML manual opened by the Help action.' \
@@ -92,7 +116,7 @@ printf '%s\n' \
     '  * Remove obsolete release assets and runtime-unneeded bundled tests.' \
     '  * Complete compatibility and packaging work with OpenAI Codex assistance.' \
     '' \
-    ' -- OpenCobolIDE compatibility build <noreply@opencobolide.invalid>  Sat, 26 Sep 2026 12:00:00 +0300' \
+    ' -- OpenCobolIDE compatibility build <noreply@opencobolide.invalid>  Tue, 13 Oct 2026 12:00:00 +0300' \
     > "$changelog"
 gzip -n -9 "$changelog"
 
@@ -104,7 +128,7 @@ printf '%s\n' \
     'Section: devel' \
     'Priority: optional' \
     'Architecture: all' \
-    'Depends: python3 (>= 3.8), python3-pyqt5 (>= 5.15)' \
+    'Depends: python3 (>= 3.8), python3-pyqt5 (>= 5.15), python3-pygments (>= 2.11)' \
     'Recommends: gnucobol' \
     "Installed-Size: $installed_size" \
     'Maintainer: Colin Duquesnoy <colin.duquesnoy@gmail.com>' \

@@ -9,6 +9,22 @@ OpenCobolIDE 4.7.6 release. They do not transfer ownership or maintainer status
 and do not represent a new upstream release. The work was completed with
 assistance from OpenAI Codex.
 
+4.7.6+modern10
+---------------
+
+* Replaced the obsolete bundled Pygments runtime with the maintained system
+  package and removed the obsolete Future compatibility dependency from built
+  artifacts.
+* Fixed remaining invalid escape warnings in OpenCobolIDE and bundled PyQode
+  runtime modules for Python 3.12 and newer.
+* Updated legacy PyQode imports for current Pygments releases.
+* Added modern virtual-environment and ``pip`` installation from source.
+* Added Linux shell and Windows PowerShell source-installation helpers.
+* Added support for launching the source installation with
+  ``python -m open_cobol_ide``.
+* Modernized the Debian builder and added automated source-install checks.
+* Updated the offline manual for modern10.
+
 4.7.6+modern9.3
 ---------------
 

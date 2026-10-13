@@ -862,7 +862,7 @@ class DbpreCompiler(QtCore.QObject):
 
 
 class EsqlOCCompiler(QtCore.QObject):
-    """
+    r"""
     Provides an interface to esqlOC.exe:
 
     esqlOC.exe -static -o file.cob file.sqb

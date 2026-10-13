@@ -3,3 +3,4 @@
 # deliberately installed by the distribution so its native dependencies match
 # the host system (Debian/Ubuntu package: python3-pyqt5).
 PyQt5>=5.15,<6
+Pygments>=2.11,<3

@@ -58,6 +58,25 @@ Additions and updates
   notes as historical rather than supported build targets.
 * Removed deprecated setuptools test-command integration.
 * Added this change record.
+* Added modern source installation through Python virtual environments and
+  ``pip`` for Linux and Windows.
+* Added Linux and PowerShell helper scripts plus detailed source-installation
+  and wheel-building documentation.
+* Replaced the installed bundled Pygments copy with a maintained external
+  dependency and removed the obsolete Future dependency from Python 3 code.
+* Excluded the historical bundled Pygments and Future trees from wheels,
+  source distributions, and Debian packages while retaining them in Git for
+  reference.
+* Fixed the remaining invalid escape sequences in OpenCobolIDE and its bundled
+  PyQode runtime modules.
+* Updated legacy PyQode Pygments imports for current Pygments module names.
+* Replaced the Debian builder's deprecated ``setup.py install`` invocation
+  with a PEP 517 ``pip`` build-and-stage workflow.
+* Added regression tests for warning-free runtime sources and modern source
+  installer commands.
+* Prepared the ``4.7.6+modern10`` Debian package with warning-free Python 3.12
+  runtime sources, maintained Pygments, and modern Linux/Windows source
+  installation helpers.
 
 Removals
 --------
@@ -76,9 +95,9 @@ Removals
 Files intentionally retained
 ----------------------------
 
-The bundled PyQode, Pygments, QCrash, QDarkStyle, Keyring, and future modules
-remain because application code still imports them. Further dependency
-replacement should be handled separately and tested as an application change.
-The small platform-specific Keyring backend modules are also retained because
-the legacy Keyring loader discovers them dynamically even when they are not
-usable on the current operating system.
+The bundled PyQode, QCrash, QDarkStyle, and Keyring modules remain because the
+application still imports them. The old Pygments and Future source trees remain
+in Git for historical reference but are explicitly excluded from installable
+artifacts. The small platform-specific Keyring backend modules are retained
+because the legacy Keyring loader discovers them dynamically even when they are
+not usable on the current operating system.

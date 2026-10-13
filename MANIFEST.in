@@ -12,6 +12,7 @@ include *.txt
 include *.cfg
 include *.py
 include *.ini
+include INSTALL_FROM_SOURCE.md
 include .coveragerc
 recursive-include test *
 recursive-include forms *
@@ -20,5 +21,9 @@ recursive-include doc *
 recursive-include scripts *
 recursive-include examples *
 recursive-include open_cobol_ide/extlibs *
+# The old bundled copies are retained in Git for historical reference only.
+# Source distributions and wheels use maintained external dependencies.
+recursive-exclude open_cobol_ide/extlibs/pygments *
+recursive-exclude open_cobol_ide/extlibs/future *
 global-exclude *.pyc
 global-exclude *.pyo

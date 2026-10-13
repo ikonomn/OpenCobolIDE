@@ -20,29 +20,29 @@ def make_cobol_patterns(fixed_format=True):
         comment = any('comment', [r"\*>[^\n]*"])
     keywords_reserved = any(
         'keyword_reserved',
-        ['(^|(?<=[^0-9a-zA-Z_\-]))(%s)\s*($|(?=[^0-9a-zA-Z_\-]))' %
+        [r'(^|(?<=[^0-9a-zA-Z_-]))(%s)\s*($|(?=[^0-9a-zA-Z_-]))' %
          '|'.join(kw.RESERVED + kw.SQL_COBOL_KEYWORDS + kw.MNEMONICS)])
     constants = any(
         'constant',
-        ['(^|(?<=[^0-9a-zA-Z_\-]))'
-         '(^|(?<=[^0-9a-zA-Z_\-]))(equal|equals|ne|lt|le|gt|ge|'
-         'greater|less|than|not|and|or)\s*($|(?=[^0-9a-zA-Z_\-]))'])
+        [r'(^|(?<=[^0-9a-zA-Z_-]))'
+         r'(^|(?<=[^0-9a-zA-Z_-]))(equal|equals|ne|lt|le|gt|ge|'
+         r'greater|less|than|not|and|or)\s*($|(?=[^0-9a-zA-Z_-]))'])
     types = any('type', [
-        '(PIC\s+.+?(?=(\s|\.\s?))|PICTURE\s+.+?(?=(\s|\.\s?))|'
-        '(COMPUTATIONAL)(-[1-5X])?|(COMP)(-[1-5X])?|'
-        'BINARY-C-LONG|'
-        'BINARY-CHAR|BINARY-DOUBLE|BINARY-LONG|BINARY-SHORT|'
-        'BINARY)\s*($|(?=[^0-9a-zA-Z_\-]))'])
+        r'(PIC\s+.+?(?=(\s|\.\s?))|PICTURE\s+.+?(?=(\s|\.\s?))|'
+        r'(COMPUTATIONAL)(-[1-5X])?|(COMP)(-[1-5X])?|'
+        r'BINARY-C-LONG|'
+        r'BINARY-CHAR|BINARY-DOUBLE|BINARY-LONG|BINARY-SHORT|'
+        r'BINARY)\s*($|(?=[^0-9a-zA-Z_-]))'])
     # operator = any('operator', ['(\*\*|\*|\+|-|/|<=|>=|<|>|==|/=|=)'])
     punctuation = any('punctuation', ['([(),;:&%.])'])
     name_builtin = any(
         'builtin', [
-            '(^|(?<=[^0-9a-zA-Z_\-]))(true|false)\s*($|(?=[^0-9a-zA-Z_\-]))'])
-    string = any('string', ['"[^"\n]*("|\n)', r"'[^'\n]*('|\n)"])
+            r'(^|(?<=[^0-9a-zA-Z_-]))(true|false)\s*($|(?=[^0-9a-zA-Z_-]))'])
+    string = any('string', [r'"[^"\n]*("|\n)', r"'[^'\n]*('|\n)"])
     numbers = any('number', [
-        '\d+(\s*|\.$|$)',
-        '[+-]?\d*\.\d+([eE][-+]?\d+)?',
-        '[+-]?\d+\.\d*([eE][-+]?\d+)?'
+        r'\d+(\s*|\.$|$)',
+        r'[+-]?\d*\.\d+([eE][-+]?\d+)?',
+        r'[+-]?\d+\.\d*([eE][-+]?\d+)?'
     ])
     variable = any(
         'instance',

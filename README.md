@@ -2,7 +2,7 @@
 
 This package is the original OpenCobolIDE 4.7.6 release, polished with assistance from OpenAI Codex so it can run with modern Python, PyQt5, and current Debian-based Linux distributions.
 
-It is not a new upstream OpenCobolIDE release, does not change the original project ownership or maintainership, and does not add major new IDE features. It is an unofficial compatibility polish intended only for Debian-family systems, including Debian, Ubuntu, Linux Mint, and compatible derivatives.
+It is not a new upstream OpenCobolIDE release, does not change the original project ownership or maintainership, and does not add major new IDE features. The binary package remains an unofficial compatibility polish for Debian-family systems, including Debian, Ubuntu, Linux Mint, and compatible derivatives. A modern source-installation workflow is also provided for testing on other Linux distributions and Windows.
 
 The original OpenCobolIDE authors and maintainer retain full credit for the project. OpenAI Codex assisted only with the modern Python, PyQt5, Linux compatibility, packaging, and testing work described below.
 
@@ -11,7 +11,9 @@ The original OpenCobolIDE authors and maintainer retain full credit for the proj
 - Updated for Python 3.8 and newer.
 - Updated for PyQt5 5.15 and newer.
 - Fixed APIs removed from modern Python.
-- Fixed bundled Pygments regular expressions rejected by Python 3.12.
+- Replaced the obsolete bundled Pygments/Future runtime copies with a maintained
+  Pygments dependency and native Python 3 built-ins, eliminating their Python
+  3.12 invalid-escape warnings from installed builds.
 - Fixed file opening after Python removed the legacy universal-newline mode.
 - Fixed GnuCOBOL standard selection on Python 3.11 and newer so options such
   as `mf` are passed as `-std=mf` instead of their numeric enum value.
@@ -21,6 +23,8 @@ The original OpenCobolIDE authors and maintainer retain full credit for the proj
 - Updated Debian and Python packaging metadata.
 - Updated the Linux desktop launcher.
 - Added a Debian installation package.
+- Added modern virtual-environment and ``pip`` source installers for Linux and
+  Windows without the deprecated ``setup.py install`` workflow.
 - Added a self-contained offline manual generated from all maintained RST
   documentation pages; the Help action opens it locally.
 
@@ -61,13 +65,13 @@ cobc --version
 Download:
 
 ```text
-opencobolide_4.7.6+modern9.3_all.deb
+opencobolide_4.7.6+modern10_all.deb
 ```
 
 Open a terminal in the directory containing the downloaded file and install it with:
 
 ```bash
-sudo apt install ./opencobolide_4.7.6+modern9.3_all.deb
+sudo apt install ./opencobolide_4.7.6+modern10_all.deb
 ```
 
 Using `apt` is recommended because it resolves missing dependencies automatically.
@@ -76,7 +80,7 @@ If GnuCOBOL was installed from source and `cobc` is already available, avoid
 installing the distribution compiler package with:
 
 ```bash
-sudo apt install --no-install-recommends ./opencobolide_4.7.6+modern9.3_all.deb
+sudo apt install --no-install-recommends ./opencobolide_4.7.6+modern10_all.deb
 ```
 
 Launch the application from the desktop menu or run:
@@ -84,6 +88,32 @@ Launch the application from the desktop menu or run:
 ```bash
 opencobolide
 ```
+
+## Installation from source
+
+The source tree now uses the standard Python virtual-environment and `pip`
+workflow on Linux and Windows. It no longer requires the deprecated
+`setup.py install` command.
+
+Linux:
+
+```bash
+./scripts/install_from_source.sh
+./.venv/bin/opencobolide
+```
+
+Windows PowerShell:
+
+```powershell
+Set-ExecutionPolicy -Scope Process Bypass
+.\scripts\install_from_source.ps1
+.\.venv\Scripts\opencobolide.exe
+```
+
+GnuCOBOL must be installed separately and `cobc` (or `cobc.exe`) must be
+available through `PATH`. See [INSTALL_FROM_SOURCE.md](INSTALL_FROM_SOURCE.md)
+for prerequisites, manual commands, wheel-building instructions, and current
+cross-platform limitations.
 
 ## Removal
 
@@ -98,7 +128,7 @@ sudo apt remove opencobolide
 After downloading, calculate the SHA-256 checksum with:
 
 ```bash
-sha256sum opencobolide_4.7.6+modern9.3_all.deb
+sha256sum opencobolide_4.7.6+modern10_all.deb
 ```
 
 Compare it with the checksum published alongside the GitHub release asset.
@@ -112,7 +142,7 @@ This package was built and tested on a Debian-based Linux system with:
 - PyQt5 5.15
 - GnuCOBOL 3.1.2
 
-The package was also checked with Debian Lintian, verified through a simulated `apt` installation, checked for correct runtime dependency declarations and package permissions, and passed the complete test suite, including regression checks for opening files without Python's removed `U` mode and for stable GnuCOBOL standard names on Python 3.11 and newer.
+The package was also checked with Debian Lintian, verified through a simulated `apt` installation, checked for correct runtime dependency declarations and package permissions, and passed the complete test suite, including regression checks for opening files without Python's removed `U` mode and for stable GnuCOBOL standard names on Python 3.11 and newer. The source-installation work additionally passed 66 tests, a Python 3.12 warning-as-error compilation check, a wheel-content audit, an isolated virtual-environment import test, and a Debian-package regression build.
 
 ## Attribution and Development Assistance
 

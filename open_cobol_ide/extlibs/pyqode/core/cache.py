@@ -22,12 +22,6 @@ import locale
 import logging
 from pyqode.qt import QtCore
 
-try:
-    from future.builtins import open
-    from future.builtins import str
-except:
-    pass  # python 3.2 not supported
-
 
 class Cache(object):
     """

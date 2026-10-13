@@ -12,8 +12,8 @@ import sys
 from pygments.formatters.html import HtmlFormatter
 from pygments.lexer import Error, RegexLexer, Text, _TokenType
 from pygments.lexers import get_lexer_for_filename, get_lexer_for_mimetype
-from pygments.lexers.agile import PythonLexer
-from pygments.lexers.compiled import CLexer, CppLexer
+from pygments.lexers.python import PythonLexer
+from pygments.lexers.c_cpp import CLexer, CppLexer
 from pygments.lexers.dotnet import CSharpLexer
 from pygments.lexers.special import TextLexer
 from pygments.styles import get_style_by_name, get_all_styles

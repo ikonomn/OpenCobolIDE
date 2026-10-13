@@ -101,7 +101,7 @@ class Application(QtCore.QObject):
                 'compile...'
             if system.windows:
                 msg += '\n\nTip: Ensure that there is no additional ' \
-                    'installation of MinGW in %s:\MinGW' % sys.executable[0]
+                    'installation of MinGW in %s:\\MinGW' % sys.executable[0]
             QtWidgets.QMessageBox.warning(
                 self.win, 'COBOL compiler not found or not working', msg)
         else:

@@ -8,14 +8,12 @@ Here is the list of bundled packages:
   - pyqode.qt
   - pyqode.core
   - pyqode.cobol
-  - pygments
-  - future
   - qdarkstyle
-  - githubpy
   - keyring
+  - qcrash
 
-Those package must be installed in the development environment. You can install
-them all by running ``sudo pip3 -r requirements.txt``.
+Pygments is installed as a normal dependency.  The old Python 2 ``future`` and
+``enum`` compatibility packages are no longer bundled into installable builds.
 
 """
 import os
@@ -25,11 +23,8 @@ import shutil
 import pyqode.qt
 import pyqode.core
 import pyqode.cobol
-import pygments
-import future
 import qdarkstyle
 import keyring
-import enum
 import qcrash
 
 
@@ -81,5 +76,5 @@ except FileExistsError:
     shutil.rmtree(BUILD)
     os.mkdir(BUILD)
 finally:
-    embed_packages([future, pygments, qdarkstyle, keyring, pyqode.qt,
-                    pyqode.core, pyqode.cobol, enum, qcrash])
+    embed_packages([qdarkstyle, keyring, pyqode.qt,
+                    pyqode.core, pyqode.cobol, qcrash])

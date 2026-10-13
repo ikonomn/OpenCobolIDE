@@ -6,7 +6,11 @@ You will need to install PyQt5 and GnuCOBOL on your own.
 
 """
 import sys
+import os
+import shutil
+
 from setuptools import setup, find_packages
+from setuptools.command.build_py import build_py as _build_py
 from open_cobol_ide import __version__
 
 try:
@@ -15,6 +19,19 @@ try:
 except ImportError:
     build_ui = None
     cmdclass = {}
+
+
+class CleanBuildPy(_build_py):
+    """Prevent excluded legacy files leaking in from an earlier build."""
+
+    def run(self):
+        package_build_dir = os.path.join(self.build_lib, 'open_cobol_ide')
+        if os.path.isdir(package_build_dir):
+            shutil.rmtree(package_build_dir)
+        super().run()
+
+
+cmdclass['build_py'] = CleanBuildPy
 
 
 DESCRIPTION = ('OpenCobolIDE 4.7.6 legacy release updated to run on modern '
@@ -26,13 +43,6 @@ with open('README.md', 'r', encoding='utf-8') as readme:
         LONG_DESC = DESCRIPTION + ' based on GnuCOBOL and PyQode'
     else:
         LONG_DESC = readme.read()
-
-
-data_files = []
-if sys.platform == 'linux':
-    data_files.append(('/usr/share/applications',
-                       ['share/OpenCobolIDE.desktop']))
-    data_files.append(('/usr/share/pixmaps', ['share/OpenCobolIDE.png']))
 
 
 setup(
@@ -47,9 +57,22 @@ setup(
     long_description=LONG_DESC,
     long_description_content_type='text/markdown',
     packages=[p for p in find_packages() if 'test' not in p],
-    data_files=data_files,
     include_package_data=True,
-    install_requires=['PyQt5>=5.15,<6'],
+    # Pygments and future used to be bundled.  Pygments is now a normal
+    # dependency and Python 3 no longer needs the future compatibility layer,
+    # so Python 3.12+ does not compile either obsolete bundled copy.
+    install_requires=[
+        'PyQt5>=5.15,<6',
+        'Pygments>=2.11,<3',
+    ],
+    exclude_package_data={
+        'open_cobol_ide': [
+            'extlibs/pygments/*',
+            'extlibs/pygments/**/*',
+            'extlibs/future/*',
+            'extlibs/future/**/*',
+        ],
+    },
     entry_points={
         'gui_scripts': ['opencobolide = open_cobol_ide.main:main']},
     cmdclass=cmdclass,
@@ -62,6 +85,7 @@ setup(
         'License :: OSI Approved :: GNU General Public License v3 or later '
         '(GPLv3+)',
         'Operating System :: POSIX :: Linux',
+        'Operating System :: Microsoft :: Windows',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3 :: Only',
         'Topic :: Text Editors :: Integrated Development Environments (IDE)']
