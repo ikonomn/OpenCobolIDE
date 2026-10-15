@@ -69,6 +69,9 @@ class MainWindow(QtWidgets.QMainWindow):
         _logger().debug('CLOSING')
         self.ui.tabWidgetEditors.closeEvent(event)
         if event.isAccepted():
+            # The Run console owns a backend even when no editor is open.
+            self.ui.consoleOutput.stop_process()
+            self.ui.consoleOutput.backend.stop()
             _logger().debug('CLOSED')
 
     def dragEnterEvent(self, event):
