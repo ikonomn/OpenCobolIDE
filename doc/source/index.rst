@@ -2,13 +2,13 @@
 .. image:: _static/silex-192x192.png
     :align: center
 
-OpenCobolIDE 4.7.6 modern10 documentation
+OpenCobolIDE 4.7.6 modern11 documentation
 ==========================================
 
 OpenCobolIDE is a simple and lightweight COBOL IDE based on the
 `OpenCOBOL/GnuCOBOL`_ compiler and the `pyQode`_ source code editor widget.
 
-This documentation accompanies the unofficial ``4.7.6+modern10`` compatibility
+This documentation accompanies the unofficial ``4.7.6+modern11`` compatibility
 polish for modern Python, PyQt5, GnuCOBOL, and Debian-family Linux. The
 compatibility work was completed with assistance from OpenAI Codex. Original
 ownership and maintainer attribution remain unchanged.
@@ -52,7 +52,7 @@ Documentation contents
    * .. glossary::
 
       :doc:`download`
-         Install or upgrade the modern10 Debian package.
+         Install or upgrade the modern11 Debian package.
 
    * .. glossary::
 
@@ -113,3 +113,14 @@ Indices and tables:
 .. _pyQode: https://github.com/pyQode
 .. _OpenCOBOL/GnuCOBOL: http://sourceforge.net/projects/open-cobol/
 .. _`modern-python documentation directory`: https://github.com/ikonomn/OpenCobolIDE/tree/modern-python/doc/source
+
+
+Program arguments (modern11)
+----------------------------
+
+When you select Run, a popup asks for optional program arguments. For
+``bio2.cbl``, enter ``18090212 18650415`` to pass two dates. Do not enter
+the program name. Quote arguments containing spaces, for example
+``123 "customer name"``. Leave the entry empty to run without arguments,
+or select Cancel to stop. The IDE remembers the last entry per source file.
+Arguments work in the embedded console and external terminal.

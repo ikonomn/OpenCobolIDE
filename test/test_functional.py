@@ -32,6 +32,14 @@ Process finished with exit code 0""" % (compiled_path + ' ')
 print(expected_output)
 
 
+@pytest.fixture(autouse=True)
+def accept_default_program_arguments(monkeypatch):
+    # Existing integration scenarios run without arguments. Argument entry
+    # and cancellation have dedicated coverage in test_program_arguments.
+    monkeypatch.setattr(QtWidgets.QInputDialog, 'getText',
+                        lambda *args, **kwargs: ('', True))
+
+
 def test_functional(app):
     """
     Does what a typical user expect from an IDE: open a file, compile it

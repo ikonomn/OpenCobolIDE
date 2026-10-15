@@ -3,6 +3,7 @@ Controls the COBOL specific action (compile, run and change program type)
 
 """
 import logging
+import shlex
 import os
 import subprocess
 import sys
@@ -370,6 +371,27 @@ class CobolController(Controller):
         """
         if self.app.edit.current_editor is None:
             return
+        source = os.path.abspath(self.app.edit.current_editor.file.path)
+        settings = QtCore.QSettings('OpenCobolIDE', 'OpenCobolIDE4')
+        key = 'programArguments/' + source
+        text = settings.value(key, '')
+        while True:
+            text, accepted = QtWidgets.QInputDialog.getText(
+                self.main_window, 'Run program',
+                'Program arguments (optional):\n'
+                'Use quotes for spaces, for example: "customer name" 123',
+                QtWidgets.QLineEdit.Normal, text)
+            if not accepted:
+                return
+            try:
+                arguments = shlex.split(text)
+            except ValueError as exc:
+                QtWidgets.QMessageBox.warning(
+                    self.main_window, 'Invalid arguments', str(exc))
+                continue
+            break
+        settings.setValue(key, text)
+        self._program_arguments = arguments
         self.ui.consoleOutput.clear()
         self._run_requested = True
         self.compile()
@@ -381,6 +403,7 @@ class CobolController(Controller):
         :param program: program to run
         :param wd: working directory
         """
+        arguments = getattr(self, '_program_arguments', [])
         pyqode_console = system.which('pyqode-console')
         cobc_run_insert_pos = 1
         if pyqode_console is None:
@@ -398,7 +421,7 @@ class CobolController(Controller):
         if file_type == FileType.MODULE:
             program = QtCore.QFileInfo(program).baseName()
         if system.windows:
-            cmd = pyqode_console + [program]
+            cmd = pyqode_console + [program] + arguments
             if file_type == FileType.MODULE:
                 cmd.insert(cobc_run_insert_pos, system.which('cobcrun'))
             try:
@@ -411,10 +434,10 @@ class CobolController(Controller):
                 return
         elif system.darwin:
             if file_type == FileType.MODULE:
-                create_script(PATH_RUN_MODULE_SCRIPT, RUN_MODULE_SCRIPT, (wd, system.which('cobcrun'), program))
+                create_script(PATH_RUN_MODULE_SCRIPT, RUN_MODULE_SCRIPT, (shlex.quote(wd), shlex.quote(system.which('cobcrun')), ' '.join(shlex.quote(a) for a in [program] + arguments)))
                 cmd = ['open', '-n', '-a', 'Terminal', '--args', PATH_RUN_MODULE_SCRIPT]
             else:
-                create_script(PATH_RUN_PROGRAM_SCRIPT, RUN_PROGRAM_SCRIPT, (wd, program))
+                create_script(PATH_RUN_PROGRAM_SCRIPT, RUN_PROGRAM_SCRIPT, (shlex.quote(wd), ' '.join(shlex.quote(a) for a in [program] + arguments)))
                 cmd = ['open', '-n', '-a', 'Terminal', '--args', PATH_RUN_PROGRAM_SCRIPT]
             try:
                 subprocess.Popen(cmd, cwd=wd, env=env)
@@ -424,13 +447,15 @@ class CobolController(Controller):
                 self.ui.consoleOutput.appendPlainText(msg)
                 return
         else:
-            if file_type == FileType.EXECUTABLE:
-                cmd = ['"%s %s"' % (' '.join(pyqode_console), program)]
-            else:
-                cmd = ['"%s %s %s"' % (' '.join(pyqode_console), system.which('cobcrun'), program)]
-            cmd = system.shell_split(Settings().external_terminal_command.strip()) + cmd
+            launch = pyqode_console[:]
+            if file_type == FileType.MODULE:
+                launch.append(system.which('cobcrun'))
+            launch += [program] + arguments
+            command = ' '.join(shlex.quote(a) for a in launch)
+            cmd = system.shell_split(Settings().external_terminal_command.strip())
+            cmd.append(command)
             try:
-                subprocess.Popen(' '.join(cmd), cwd=wd, shell=True, env=env)
+                subprocess.Popen(cmd, cwd=wd, env=env)
             except (OSError, subprocess.CalledProcessError):
                 msg = "Failed to launch program in external terminal (cmd=%s) " % ' '.join(cmd)
                 _logger().exception(msg)
@@ -484,9 +509,9 @@ class CobolController(Controller):
             if file_type == FileType.MODULE:
                 cobcrun = system.which('cobcrun')
                 self.ui.consoleOutput.start_process(
-                    cobcrun, [os.path.splitext(editor.file.name)[0]], working_dir=wd, env=env)
+                    cobcrun, [os.path.splitext(editor.file.name)[0]] + getattr(self, '_program_arguments', []), working_dir=wd, env=env)
             else:
-                self.ui.consoleOutput.start_process(program, working_dir=wd, env=env, print_command=True)
+                self.ui.consoleOutput.start_process(program, getattr(self, '_program_arguments', []), working_dir=wd, env=env, print_command=True)
 
     def _on_run_finished(self):
         self.enable_compile(True)

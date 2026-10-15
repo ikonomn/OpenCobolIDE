@@ -65,13 +65,13 @@ cobc --version
 Download:
 
 ```text
-opencobolide_4.7.6+modern10_all.deb
+opencobolide_4.7.6+modern11_all.deb
 ```
 
 Open a terminal in the directory containing the downloaded file and install it with:
 
 ```bash
-sudo apt install ./opencobolide_4.7.6+modern10_all.deb
+sudo apt install ./opencobolide_4.7.6+modern11_all.deb
 ```
 
 Using `apt` is recommended because it resolves missing dependencies automatically.
@@ -80,7 +80,7 @@ If GnuCOBOL was installed from source and `cobc` is already available, avoid
 installing the distribution compiler package with:
 
 ```bash
-sudo apt install --no-install-recommends ./opencobolide_4.7.6+modern10_all.deb
+sudo apt install --no-install-recommends ./opencobolide_4.7.6+modern11_all.deb
 ```
 
 Launch the application from the desktop menu or run:
@@ -128,7 +128,7 @@ sudo apt remove opencobolide
 After downloading, calculate the SHA-256 checksum with:
 
 ```bash
-sha256sum opencobolide_4.7.6+modern10_all.deb
+sha256sum opencobolide_4.7.6+modern11_all.deb
 ```
 
 Compare it with the checksum published alongside the GitHub release asset.
@@ -157,3 +157,15 @@ This is an unofficial, community-maintained compatibility build provided for tes
 Use this software and the provided Debian package at your own risk. The original developers, contributors, package maintainer, and development-assistance providers accept no responsibility or liability for data loss, system damage, compilation errors, security issues, interrupted work, or any other consequences resulting from installing or using this software.
 
 Always back up important source code, configuration, and project files before installation or use. This disclaimer does not replace or modify the terms of the GNU General Public License under which OpenCobolIDE is distributed.
+
+## Program arguments (modern11)
+
+Press **Run** to enter optional arguments for the COBOL program. For example,
+for `bio2.cbl`, enter `18090212 18650415`. Enter only the arguments; the IDE
+supplies the program name. The last entry is remembered separately for each
+source file. An empty entry runs without arguments; Cancel stops the launch.
+
+Use double quotes for an argument containing spaces, for example
+`123 "customer name"`. Unmatched quotes are reported before compilation.
+Arguments are passed to the program in both the embedded console and external
+terminal. These are runtime arguments, separate from compiler options.
