@@ -5,13 +5,26 @@ Setup script for OpenCobolIDE
 You will need to install PyQt5 and GnuCOBOL on your own.
 
 """
+import ast
+from pathlib import Path
 import sys
 import os
 import shutil
 
 from setuptools import setup, find_packages
 from setuptools.command.build_py import build_py as _build_py
-from open_cobol_ide import __version__
+# Build backends need not add the source tree to sys.path. Read metadata
+# without importing the application or any of its runtime dependencies.
+ROOT = Path(__file__).resolve().parent
+version_source = ast.parse(
+    (ROOT / 'open_cobol_ide' / '__init__.py').read_text(encoding='utf-8'))
+__version__ = next(
+    ast.literal_eval(node.value)
+    for node in version_source.body
+    if isinstance(node, ast.Assign)
+    and any(isinstance(target, ast.Name) and target.id == '__version__'
+            for target in node.targets)
+)
 
 try:
     from pyqt_distutils.build_ui import build_ui
@@ -38,7 +51,7 @@ DESCRIPTION = ('OpenCobolIDE 4.7.6 legacy release updated to run on modern '
                'Python')
 
 # get long description
-with open('README.md', 'r', encoding='utf-8') as readme:
+with (ROOT / 'README.md').open(encoding='utf-8') as readme:
     if 'bdist_deb' in sys.argv or 'sdist_dsc' in sys.argv:
         LONG_DESC = DESCRIPTION + ' based on GnuCOBOL and PyQode'
     else:

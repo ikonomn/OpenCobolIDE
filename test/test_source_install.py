@@ -45,3 +45,14 @@ def test_obsolete_dependencies_are_excluded_from_source_distribution():
     manifest = (ROOT / 'MANIFEST.in').read_text(encoding='utf-8')
     assert 'recursive-exclude open_cobol_ide/extlibs/pygments *' in manifest
     assert 'recursive-exclude open_cobol_ide/extlibs/future *' in manifest
+
+
+def test_setup_metadata_without_source_on_import_path(tmp_path):
+    """PEP 517 may execute setup.py without the project on sys.path."""
+    import subprocess
+    import sys
+
+    result = subprocess.run(
+        [sys.executable, '-I', str(ROOT / 'setup.py'), '--version'],
+        cwd=str(tmp_path), text=True, capture_output=True, check=True)
+    assert result.stdout.strip() == '4.7.6'
