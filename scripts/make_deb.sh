@@ -12,7 +12,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 package_name="opencobolide"
-package_version="${OCIDE_PACKAGE_VERSION:-4.7.6+modern11}"
+package_version="${OCIDE_PACKAGE_VERSION:-4.7.6+modern11.1}"
 package_root="${OCIDE_PACKAGE_ROOT:-build/deb-root}"
 output_file="${OCIDE_OUTPUT_FILE:-dist/${package_name}_${package_version}_all.deb}"
 
@@ -51,7 +51,7 @@ install -m 0644 share/OpenCobolIDE.png \
     "$package_root/usr/share/pixmaps/OpenCobolIDE.png"
 
 # The Help action opens this self-contained manual without network access.
-install -m 0644 doc/OpenCobolIDE-modern11.html \
+install -m 0644 doc/OpenCobolIDE-modern11.1.html \
     "$package_root/usr/share/doc/$package_name/manual.html"
 example_target="$package_root/usr/share/doc/$package_name/examples/gixsql"
 install -m 0755 examples/gixsql/build.sh "$example_target/build.sh"

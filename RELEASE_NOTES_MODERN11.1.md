@@ -1,6 +1,9 @@
-# OpenCobolIDE 4.7.6+modern11
+# OpenCobolIDE 4.7.6+modern11.1
 
-Modern11 adds a program-arguments popup when Run is selected.
+Modern11.1 replaces modern11, retaining the program-arguments popup and fixing source installation and shutdown.
+
+- Read package metadata without importing the application during isolated builds.
+- Stop the Run console helper when the IDE closes, preventing the QProcess warning.
 
 - Enter runtime arguments, including quoted values containing spaces.
 - Remember the last arguments separately for each source file.
@@ -17,7 +20,7 @@ to running `bio2 18090212 18650415` in a terminal.
 Download the Debian package and install it with:
 
 ```sh
-sudo apt install ./opencobolide_4.7.6+modern11_all.deb
+sudo apt install ./opencobolide_4.7.6+modern11.1_all.deb
 ```
 
 Restart the IDE after installation. Supports Debian, Ubuntu, Linux Mint, and
@@ -30,11 +33,7 @@ and maintainer attribution remain unchanged.
 The arguments popup and COBOL argument handling were tested locally, and
 the user confirmed successful operation with `bio2.cbl` on Linux Mint.
 
-- Automated test suite: **73 passed**.
+- Automated test suite: **75 passed**.
 - Debian installer rebuilt from the updated repository and version verified.
-
-## SHA-256
-
-`dfe2e1bf76e0d15e0da20274701293c22468663a7149c2be907f747f09e850f7`
 
 A `SHA256SUMS` file is included with the release assets.
