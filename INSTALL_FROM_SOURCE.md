@@ -13,9 +13,11 @@ cobc --version
 ## Linux
 
 Install Python 3.8 or newer, Python virtual-environment support, and GnuCOBOL
-with your distribution's package manager. Then clone the repository and run:
+with your distribution's package manager. Install Git, then clone the
+modern-python branch of the repository and run:
 
 ```bash
+git clone --branch modern-python https://github.com/ikonomn/OpenCobolIDE.git
 cd OpenCobolIDE
 ./scripts/install_from_source.sh
 ```
@@ -43,9 +45,12 @@ Install 64-bit Python 3.8 or newer and select **Add Python to PATH** in the
 Python installer. Install a Windows build of GnuCOBOL separately and add the
 directory containing `cobc.exe` to `PATH`.
 
-Open PowerShell in the cloned repository and run:
+Install Git, then open PowerShell and clone the repository before running
+the installer:
 
 ```powershell
+git clone --branch modern-python https://github.com/ikonomn/OpenCobolIDE.git
+cd OpenCobolIDE
 Set-ExecutionPolicy -Scope Process Bypass
 .\scripts\install_from_source.ps1
 ```

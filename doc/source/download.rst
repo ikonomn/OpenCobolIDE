@@ -82,14 +82,21 @@ Installation from source
 The source tree supports the standard Python virtual-environment and ``pip``
 workflow. It does not require the deprecated ``setup.py install`` command.
 
-On Linux, clone the repository and run::
+First install Git. Clone the modern-python branch of the repository and
+change into its directory before running the installer.
 
+On Linux::
+
+    git clone --branch modern-python https://github.com/ikonomn/OpenCobolIDE.git
+    cd OpenCobolIDE
     ./scripts/install_from_source.sh
     ./.venv/bin/opencobolide
 
 On Windows, install Python 3.8 or newer and a Windows build of GnuCOBOL. Make
 sure ``cobc.exe`` is available through ``PATH``. Then run in PowerShell::
 
+    git clone --branch modern-python https://github.com/ikonomn/OpenCobolIDE.git
+    cd OpenCobolIDE
     Set-ExecutionPolicy -Scope Process Bypass
     .\scripts\install_from_source.ps1
     .\.venv\Scripts\opencobolide.exe

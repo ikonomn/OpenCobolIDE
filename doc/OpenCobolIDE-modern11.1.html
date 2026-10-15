@@ -583,12 +583,17 @@ sudo apt install gnucobol</code></pre>
 <pre><code>sudo apt remove opencobolide</code></pre>
 <h3 id="download-installation-from-source">Installation from source<a class="permalink" href="#download-installation-from-source">#</a></h3>
 <p>The source tree supports the standard Python virtual-environment and <code>pip</code> workflow. It does not require the deprecated <code>setup.py install</code> command.</p>
-<p>On Linux, clone the repository and run:</p>
-<pre><code>./scripts/install_from_source.sh
+<p>First install Git. Clone the modern-python branch of the repository and change into its directory before running the installer.</p>
+<p>On Linux:</p>
+<pre><code>git clone --branch modern-python https://github.com/ikonomn/OpenCobolIDE.git
+cd OpenCobolIDE
+./scripts/install_from_source.sh
 ./.venv/bin/opencobolide</code></pre>
 <p>On Windows, install Python 3.8 or newer and a Windows build of GnuCOBOL. Make</p>
 <p>sure <code>cobc.exe</code> is available through <code>PATH</code>. Then run in PowerShell:</p>
-<pre><code>Set-ExecutionPolicy -Scope Process Bypass
+<pre><code>git clone --branch modern-python https://github.com/ikonomn/OpenCobolIDE.git
+cd OpenCobolIDE
+Set-ExecutionPolicy -Scope Process Bypass
 .\scripts\install_from_source.ps1
 .\.venv\Scripts\opencobolide.exe</code></pre>
 <p>The Debian package remains the tested binary distribution. Source installation is provided to help users of other Linux distributions and Windows, but those platform combinations have not all been fully tested. See <code>INSTALL_FROM_SOURCE.md</code> in the repository for detailed prerequisites, manual commands, and wheel-building instructions.</p>

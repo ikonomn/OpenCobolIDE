@@ -95,9 +95,13 @@ The source tree now uses the standard Python virtual-environment and `pip`
 workflow on Linux and Windows. It no longer requires the deprecated
 `setup.py install` command.
 
+Install Git first, then clone the repository and enter its directory.
+
 Linux:
 
 ```bash
+git clone --branch modern-python https://github.com/ikonomn/OpenCobolIDE.git
+cd OpenCobolIDE
 ./scripts/install_from_source.sh
 ./.venv/bin/opencobolide
 ```
@@ -105,6 +109,8 @@ Linux:
 Windows PowerShell:
 
 ```powershell
+git clone --branch modern-python https://github.com/ikonomn/OpenCobolIDE.git
+cd OpenCobolIDE
 Set-ExecutionPolicy -Scope Process Bypass
 .\scripts\install_from_source.ps1
 .\.venv\Scripts\opencobolide.exe
