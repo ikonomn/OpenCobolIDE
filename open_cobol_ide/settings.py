@@ -464,7 +464,9 @@ class Settings(object):
         for v in lst:
             if v:
                 ret_val.append(v.replace('&', ''))
-        return sorted(list(set(ret_val)))
+        # Flags with operands (e.g. -T listing.prn) must retain order.
+        # Repeated options such as -I must also remain intact.
+        return ret_val
 
     @compiler_flags.setter
     def compiler_flags(self, value):
