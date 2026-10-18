@@ -9,11 +9,14 @@
 - Existing SQL preferences and storage remain shared.
 
 See doc/modern11.2-workflow.md for usage and limitations.
-Mageia crash investigation remains separate. This is a local candidate;
-no GitHub release or tag has been published for modern11.2 yet.
+Mageia crash investigation remains separate and is not claimed as fixed by
+this release.
 
 The GixSQL build template includes `detect_sql.py`; copy it alongside `build.sh`.
 Plain COBOL is compiled directly without requiring gixpp or linking libgixsql.
 Embedded SQL, including SQL in COPY files, selects GixSQL preprocessing.
 The detector handles standard fixed/free source and simple COPY names; it stops
 on unresolved copybooks rather than silently choosing a plain build.
+
+Verification: 78 selected regression tests passed. The Debian package and
+source archive are accompanied by SHA256SUMS.
