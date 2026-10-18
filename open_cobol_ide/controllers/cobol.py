@@ -154,6 +154,43 @@ class CobolController(Controller):
         self.ui.actionClean.triggered.connect(self.clean)
         self.ui.actionRebuild.triggered.connect(self.rebuild)
         self._exception_flags = []
+        listing_action = self.ui.menuCobol.addAction('Automatic listing filename')
+        listing_action.setCheckable(True)
+        listing_action.setChecked(Settings().automatic_listing)
+        listing_action.toggled.connect(
+            lambda enabled: setattr(Settings(), 'automatic_listing', enabled))
+        source_action = self.ui.menuCobol.addAction('Compiler options for this file...')
+        source_action.triggered.connect(self.edit_source_compiler_options)
+
+    def edit_source_compiler_options(self):
+        editor = self.app.edit.current_editor
+        if editor is None or not editor.file.path:
+            return
+        path = editor.file.path
+        settings = Settings()
+        current = settings.source_flags(path)
+        choices = ['Use global defaults', 'Use custom flags for this file']
+        choice, accepted = QtWidgets.QInputDialog.getItem(
+            self.main_window, 'Compiler options for this file',
+            os.path.basename(path), choices, 0 if current is None else 1, False)
+        if not accepted:
+            return
+        if choice == choices[0]:
+            settings.set_source_flags(path, None)
+            return
+        flags = settings.compiler_flags if current is None else current
+        text, accepted = QtWidgets.QInputDialog.getText(
+            self.main_window, 'Compiler options for this file',
+            'Replaces global extra flags. Empty means no extra flags.\n'
+            'Use -T {stem}.prn for a source-specific listing.',
+            QtWidgets.QLineEdit.Normal, ' '.join(shlex.quote(f) for f in flags))
+        if accepted:
+            try:
+                flags = shlex.split(text, posix=not system.windows)
+            except ValueError as error:
+                QtWidgets.QMessageBox.warning(self.main_window, 'Invalid options', str(error))
+                return
+            settings.set_source_flags(path, flags)
 
     def create_bt_compile(self):
         bt_compile = QtWidgets.QToolButton()

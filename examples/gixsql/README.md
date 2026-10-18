@@ -338,3 +338,9 @@ an absolute profile path, or set `DB_CONFIG_FILE`.
 
 This is compiler version information, not an error. Current OpenCobolIDE only
 treats output explicitly marked as error, warning, or note as a diagnostic.
+
+The GixSQL build template includes `detect_sql.py`; copy it alongside `build.sh`.
+Plain COBOL is compiled directly without requiring gixpp or linking libgixsql.
+Embedded SQL, including SQL in COPY files, selects GixSQL preprocessing.
+The detector handles standard fixed/free source and simple COPY names; it stops
+on unresolved copybooks rather than silently choosing a plain build.

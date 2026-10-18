@@ -92,3 +92,40 @@ def test_compile_with_build_script_reports_unparsed_failure(monkeypatch,
     assert len(messages) == 1
     assert messages[0][0] == 'gixpp: preprocessing failed'
     assert messages[0][-1] == str(source)
+
+
+def test_template_plain_build_needs_no_gixsql(tmp_path):
+    import shutil
+    import subprocess
+    from pathlib import Path
+    template = Path(__file__).resolve().parents[1] / 'examples' / 'gixsql'
+    for name in ['build.sh', 'detect_sql.py']:
+        shutil.copy2(template / name, tmp_path / name)
+    source = tmp_path / 'plain.cbl'
+    source.write_text('       identification division.\n'
+                      '       program-id. plain.\n'
+                      '       procedure division.\n'
+                      '           goback.\n')
+    env = dict(os.environ, GIXPP='nonexistent-gixpp-test-command')
+    result = subprocess.run(['bash', str(tmp_path / 'build.sh'), str(source)],
+                            env=env, text=True, capture_output=True)
+    assert result.returncode == 0, result.stderr
+    assert (tmp_path / 'bin' / 'plain').exists()
+    assert (tmp_path / 'build' / 'plain.lst').exists()
+    assert not (tmp_path / 'build' / 'plain.cbsql').exists()
+
+
+def test_detector_recurses_copy_and_ignores_comments(tmp_path):
+    import importlib.util
+    from pathlib import Path
+    path = Path(__file__).resolve().parents[1] / 'examples/gixsql/detect_sql.py'
+    spec = importlib.util.spec_from_file_location('sql_detector', path)
+    detector = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(detector)
+    source = tmp_path / 'main.cbl'
+    source.write_text('       DISPLAY "EXEC SQL".\n      * EXEC SQL\n')
+    assert not detector.has_sql(source, [tmp_path])
+    source.write_text('       COPY first.\n')
+    (tmp_path / 'first.cpy').write_text('       COPY second.\n')
+    (tmp_path / 'second.cpy').write_text('           EXEC SQL SELECT 1 END-EXEC.\n')
+    assert detector.has_sql(source, [tmp_path])

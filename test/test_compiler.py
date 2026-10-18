@@ -28,7 +28,7 @@ def test_is_working():
 
 
 def test_get_version():
-    prog = re.compile(r'^.*\d.\d.\d$')
+    prog = re.compile(r'^cobc \(GnuCOBOL\) \d+\.\d+[.\w+-]*$')
     assert prog.match(GnuCobolCompiler().get_version(include_all=False)) \
         is not None
 
@@ -134,12 +134,14 @@ def test_gnucobol_standard_name(standard, expected):
 def test_make_command_exe(free, std, ftype, expected_opts):
     compiler = GnuCobolCompiler()
     settings = Settings()
+    settings.compiler_flags = ['-Wall', '-debug']
     settings.free_format = free
     settings.cobol_standard = std
     pgm, options = compiler.make_command(['HelloWorld.cbl'], ftype, 'bin')
     assert pgm == Settings().compiler_path
     for o, eo in zip(options, expected_opts):
         assert o == eo
+    settings.compiler_flags = ['-Wall', '-debug']
     settings.free_format = free
     settings.cobol_standard = GnuCobolStandard.default
     settings.free_format = False

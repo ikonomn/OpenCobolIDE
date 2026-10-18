@@ -2,13 +2,13 @@
 .. image:: _static/silex-192x192.png
     :align: center
 
-OpenCobolIDE 4.7.6 modern11.1 documentation
+OpenCobolIDE 4.7.6 modern11.2 documentation
 ==========================================
 
 OpenCobolIDE is a simple and lightweight COBOL IDE based on the
 `OpenCOBOL/GnuCOBOL`_ compiler and the `pyQode`_ source code editor widget.
 
-This documentation accompanies the unofficial ``4.7.6+modern11.1`` compatibility
+This documentation accompanies the unofficial ``4.7.6+modern11.2`` compatibility
 polish for modern Python, PyQt5, GnuCOBOL, and Debian-family Linux. The
 compatibility work was completed with assistance from OpenAI Codex. Original
 ownership and maintainer attribution remain unchanged.
@@ -52,7 +52,7 @@ Documentation contents
    * .. glossary::
 
       :doc:`download`
-         Install or upgrade the modern11.1 Debian package.
+         Install or upgrade the modern11.2 Debian package.
 
    * .. glossary::
 
@@ -115,7 +115,7 @@ Indices and tables:
 .. _`modern-python documentation directory`: https://github.com/ikonomn/OpenCobolIDE/tree/modern-python/doc/source
 
 
-Program arguments (modern11.1)
+Program arguments (modern11.2)
 ----------------------------
 
 When you select Run, a popup asks for optional program arguments. For
@@ -124,3 +124,30 @@ the program name. Quote arguments containing spaces, for example
 ``123 "customer name"``. Leave the entry empty to run without arguments,
 or select Cancel to stop. The IDE remembers the last entry per source file.
 Arguments work in the embedded console and external terminal.
+
+
+Compiler workflow (modern11.2)
+-----------------------------
+
+Enable **COBOL > Automatic listing filename** to create a listing named after
+its source, for example ``payapply1.cbl`` produces ``payapply1.prn``.
+An explicit ``-T custom.prn`` remains unchanged. A bare ``-T`` uses the source
+basename, and ``-T {stem}.prn`` is also supported. Listings are written relative
+to the source directory. Syntax checking does not create listings.
+
+Use **COBOL > Compiler options for this file...** to choose global defaults or
+custom extra flags for the current saved source. Custom flags replace global
+extra flags; an empty custom value means no extra flags. Other settings,
+including SQL preferences, remain shared. Overrides are stored by source path.
+Choose global defaults again to remove an override.
+
+Normal compilation rebuilds the output so changed flags take effect. Projects
+with their own ``build.sh`` continue to control their own compilation options.
+
+To install an optional terminal launcher from source, run::
+
+    OCIDE_INSTALL_LAUNCHER=1 bash scripts/install_from_source.sh
+
+The launcher is installed at ``~/.local/bin/opencobolide``. Ensure that directory
+is in your PATH. Existing unrelated commands are not overwritten. Keep the
+installation folder and its virtual environment in place.

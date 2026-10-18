@@ -12,7 +12,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 package_name="opencobolide"
-package_version="${OCIDE_PACKAGE_VERSION:-4.7.6+modern11.1}"
+package_version="${OCIDE_PACKAGE_VERSION:-4.7.6+modern11.2}"
 package_root="${OCIDE_PACKAGE_ROOT:-build/deb-root}"
 output_file="${OCIDE_OUTPUT_FILE:-dist/${package_name}_${package_version}_all.deb}"
 
@@ -51,10 +51,11 @@ install -m 0644 share/OpenCobolIDE.png \
     "$package_root/usr/share/pixmaps/OpenCobolIDE.png"
 
 # The Help action opens this self-contained manual without network access.
-install -m 0644 doc/OpenCobolIDE-modern11.1.html \
+install -m 0644 doc/OpenCobolIDE-modern11.2.html \
     "$package_root/usr/share/doc/$package_name/manual.html"
 example_target="$package_root/usr/share/doc/$package_name/examples/gixsql"
 install -m 0755 examples/gixsql/build.sh "$example_target/build.sh"
+install -m 0644 examples/gixsql/detect_sql.py "$example_target/detect_sql.py"
 install -m 0644 examples/gixsql/README.md "$example_target/README.md"
 install -m 0644 examples/gixsql/gitignore.example \
     "$example_target/gitignore.example"
@@ -98,6 +99,8 @@ changelog="$package_root/usr/share/doc/$package_name/changelog"
 printf '%s\n' \
     "$package_name ($package_version) unstable; urgency=medium" \
     '' \
+    '  * Add automatic listing names and per-source compiler flag overrides.' \
+    '  * Add an optional user launcher for Linux source installation.' \
     '  * Prompt for program arguments on Run and remember them per source file.' \
     '  * Forward quoted arguments to embedded and external program consoles.' \
     '  * Preserve the original OpenCobolIDE authorship and maintainer.' \
@@ -118,7 +121,7 @@ printf '%s\n' \
     '  * Remove obsolete release assets and runtime-unneeded bundled tests.' \
     '  * Complete compatibility and packaging work with OpenAI Codex assistance.' \
     '' \
-    ' -- OpenCobolIDE compatibility build <noreply@opencobolide.invalid>  Thu, 15 Oct 2026 12:00:00 +0300' \
+    ' -- OpenCobolIDE compatibility build <noreply@opencobolide.invalid>  Sun, 18 Oct 2026 12:00:00 +0300' \
     > "$changelog"
 gzip -n -9 "$changelog"
 

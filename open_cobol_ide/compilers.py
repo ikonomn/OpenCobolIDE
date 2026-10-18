@@ -515,20 +515,12 @@ class GnuCobolCompiler(QtCore.QObject):
         # ensure bin dir exists
         output_full_path = os.path.join(
             output_dir, self.get_output_filename(inputs, file_type))
-        if os.path.exists(output_full_path) and \
-            os.path.getmtime(file_path) <= \
-                os.path.getmtime(output_full_path):
-            desc = 'compilation skipped, up to date...'
-            self.output_available.emit('%s: %s' % (file_path, desc))
-            msg = (desc, CheckerMessages.INFO, -1, 0, None, None, file_path)
-            _logger().info(desc)
-
-            return 0, [msg]
-
+        # Rebuild so source-specific or global option changes take effect.
         self.prepare_bin_dir(output_dir, output_full_path)
 
         pgm, options = self.make_command(
-            inputs, file_type, original_output_dir, additional_options)
+            inputs, file_type, original_output_dir, additional_options,
+            source_path=file_path)
         self.started.emit(' '.join([pgm] + options))
         status, output = run_command(pgm, options, working_dir=path)
         self.output_available.emit(output)
@@ -552,7 +544,7 @@ class GnuCobolCompiler(QtCore.QObject):
             file_type)
 
     def make_command(self, input_file_names, file_type, output_dir=None,
-                     additional_options=None):
+                     additional_options=None, source_path=None):
         """
         Makes the command needed to compile the specified file.
 
@@ -577,7 +569,11 @@ class GnuCobolCompiler(QtCore.QObject):
         standard = GnuCobolStandard(settings.cobol_standard)
         if standard != GnuCobolStandard.none:
             options.append('-std=%s' % gnucobol_standard_name(standard))
-        options += settings.compiler_flags
+        from .compiler_options import listing_options
+        flags = settings.source_flags(source_path or input_file_names[0])
+        if flags is None:
+            flags = settings.compiler_flags
+        options += listing_options(flags, input_file_names[0], settings.automatic_listing)
         if settings.free_format:
             options.append('-free')
         if settings.copybook_paths:

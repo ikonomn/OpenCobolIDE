@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Generic project build script for OpenCobolIDE + GixSQL.
-# Copy this file to the root of a COBOL project and make it executable.
+# Copy this file and detect_sql.py to the project root; make build.sh executable.
 
 project_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 source_file=${1:-}
@@ -33,10 +33,6 @@ gixsql_copy_dir=${GIXSQL_COPY_DIR:-/usr/share/gixsql/copy}
 gixsql_library_dir=${GIXSQL_LIBRARY_DIR:-/usr/lib}
 project_copy_dir=${PROJECT_COPY_DIR:-$project_dir/copybooks}
 
-command -v "$gixpp_command" >/dev/null || {
-    printf 'GixSQL preprocessor not found: %s\n' "$gixpp_command" >&2
-    exit 127
-}
 command -v "$cobc_command" >/dev/null || {
     printf 'GnuCOBOL compiler not found: %s\n' "$cobc_command" >&2
     exit 127
@@ -51,21 +47,31 @@ listing="$build_dir/$program.lst"
 
 mkdir -p "$build_dir" "$bin_dir"
 
-gixpp_args=(-e -S -z a -P varchar -I "$gixsql_copy_dir")
+mode=$(python3 "$project_dir/detect_sql.py" "$source_file" \
+    "$project_copy_dir" "$gixsql_copy_dir")
 cobc_args=(-x -v -debug --Xref -ftsymbols -T "$listing"
-    -I "$gixsql_copy_dir" -L "$gixsql_library_dir" -lgixsql)
+    -I "$gixsql_copy_dir")
+gixpp_args=(-e -S -z a -P varchar -I "$gixsql_copy_dir")
 if [[ -d "$project_copy_dir" ]]; then
     gixpp_args+=(-I "$project_copy_dir")
     cobc_args+=(-I "$project_copy_dir")
 fi
 
-printf 'Preprocessing %s\n' "$source_file"
-"$gixpp_command" "${gixpp_args[@]}" \
-    -i "$source_file" -o "$preprocessed"
-
-printf 'Compiling %s\n' "$preprocessed"
-"$cobc_command" "${cobc_args[@]}" \
-    -o "$executable" "$preprocessed"
+if [[ "$mode" == "sql" ]]; then
+    command -v "$gixpp_command" >/dev/null || {
+        printf 'GixSQL preprocessor not found: %s\n' "$gixpp_command" >&2
+        exit 127
+    }
+    printf 'Preprocessing %s\n' "$source_file"
+    "$gixpp_command" "${gixpp_args[@]}" \
+        -i "$source_file" -o "$preprocessed"
+    cobc_args+=(-L "$gixsql_library_dir" -lgixsql)
+    compile_input="$preprocessed"
+else
+    compile_input="$source_file"
+fi
+printf 'Compiling %s (%s)\n' "$compile_input" "$mode"
+"$cobc_command" "${cobc_args[@]}" -o "$executable" "$compile_input"
 
 printf 'Executable: %s\n' "$executable"
 printf 'Listing:    %s\n' "$listing"

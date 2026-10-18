@@ -473,6 +473,29 @@ class Settings(object):
         self._settings.setValue('compilerFlags', repr(value))
 
     @property
+    def automatic_listing(self):
+        return bool(int(self._settings.value('compiler/automatic_listing', 0)))
+
+    @automatic_listing.setter
+    def automatic_listing(self, value):
+        self._settings.setValue('compiler/automatic_listing', int(value))
+
+    def source_flags(self, path):
+        import hashlib
+        key = hashlib.sha256(os.path.normcase(os.path.realpath(path)).encode('utf-8')).hexdigest()
+        raw = self._settings.value('compiler/source_flags/' + key, None)
+        return None if raw is None else json.loads(raw)
+
+    def set_source_flags(self, path, flags):
+        import hashlib
+        key = 'compiler/source_flags/' + hashlib.sha256(
+            os.path.normcase(os.path.realpath(path)).encode('utf-8')).hexdigest()
+        if flags is None:
+            self._settings.remove(key)
+        else:
+            self._settings.setValue(key, json.dumps(flags))
+
+    @property
     def copybook_paths(self):
         return self._settings.value('copybook_paths', '')
 
