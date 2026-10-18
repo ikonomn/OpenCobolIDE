@@ -65,13 +65,13 @@ cobc --version
 Download:
 
 ```text
-opencobolide_4.7.6+modern11.2_all.deb
+opencobolide_4.7.6+modern11.3_all.deb
 ```
 
 Open a terminal in the directory containing the downloaded file and install it with:
 
 ```bash
-sudo apt install ./opencobolide_4.7.6+modern11.2_all.deb
+sudo apt install ./opencobolide_4.7.6+modern11.3_all.deb
 ```
 
 Using `apt` is recommended because it resolves missing dependencies automatically.
@@ -80,7 +80,7 @@ If GnuCOBOL was installed from source and `cobc` is already available, avoid
 installing the distribution compiler package with:
 
 ```bash
-sudo apt install --no-install-recommends ./opencobolide_4.7.6+modern11.2_all.deb
+sudo apt install --no-install-recommends ./opencobolide_4.7.6+modern11.3_all.deb
 ```
 
 Launch the application from the desktop menu or run:
@@ -134,7 +134,7 @@ sudo apt remove opencobolide
 After downloading, calculate the SHA-256 checksum with:
 
 ```bash
-sha256sum opencobolide_4.7.6+modern11.2_all.deb
+sha256sum opencobolide_4.7.6+modern11.3_all.deb
 ```
 
 Compare it with the checksum published alongside the GitHub release asset.
@@ -164,7 +164,7 @@ Use this software and the provided Debian package at your own risk. The original
 
 Always back up important source code, configuration, and project files before installation or use. This disclaimer does not replace or modify the terms of the GNU General Public License under which OpenCobolIDE is distributed.
 
-## Program arguments (modern11.2)
+## Program arguments (modern11.3)
 
 Press **Run** to enter optional arguments for the COBOL program. For example,
 for `bio2.cbl`, enter `18090212 18650415`. Enter only the arguments; the IDE
@@ -176,7 +176,28 @@ Use double quotes for an argument containing spaces, for example
 Arguments are passed to the program in both the embedded console and external
 terminal. These are runtime arguments, separate from compiler options.
 
-## Compiler workflow in modern11.2
+## Compiler workflow in modern11.3
 
 Automatic listing names, optional source-install launcher and per-file compiler
-flags are described in [the workflow guide](doc/modern11.2-workflow.md).
+flags are described in [the workflow guide](doc/modern11.3-workflow.md).
+
+## Native-crash trace log
+
+For an intermittent native crash, start the source installation with tracing
+enabled:
+
+```bash
+cd /path/to/OpenCobolIDE
+OCIDE_TRACE_LOG="$HOME/opencobolide-trace.jsonl" .venv/bin/opencobolide
+```
+
+Repeat the action that triggers the problem and close the IDE normally if it
+does not crash. The JSONL file records startup, compilation, program launch,
+process completion, window shutdown, and Qt cleanup in order. Every event is
+flushed to disk immediately, and Python's native fault handler writes thread
+stacks to the same file when the runtime receives a supported fatal signal.
+Program argument values and the full environment are not recorded; only the
+argument count and a small set of display/runtime conditions are included.
+
+`OCIDE_TRACE_LOG=1` uses an automatically named file below
+`~/.cache/OpenCobolIDE/`. Leave the variable unset for normal operation.

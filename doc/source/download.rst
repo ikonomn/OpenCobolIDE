@@ -1,10 +1,10 @@
-Download and install modern11.2
+Download and install modern11.3
 =============================
 
 Scope
 -----
 
-The unofficial ``4.7.6+modern11.2`` package supports Debian, Ubuntu, Linux Mint,
+The unofficial ``4.7.6+modern11.3`` package supports Debian, Ubuntu, Linux Mint,
 and compatible Debian-family distributions. It preserves the original
 OpenCobolIDE authorship and maintainer attribution.
 
@@ -22,17 +22,17 @@ packages from the configured distribution repositories.
 Installation
 ------------
 
-Download ``opencobolide_4.7.6+modern11.2_all.deb`` from the `modern11.2 release`_.
+Download ``opencobolide_4.7.6+modern11.3_all.deb`` from the `modern11.3 release`_.
 Open a terminal in the download directory and install it with::
 
-    sudo apt install ./opencobolide_4.7.6+modern11.2_all.deb
+    sudo apt install ./opencobolide_4.7.6+modern11.3_all.deb
 
 GnuCOBOL is recommended rather than required. A normal ``apt`` installation
 installs the distribution compiler package. If ``cobc`` was already installed
 from source, keep that version and skip recommended packages with::
 
     sudo apt install --no-install-recommends \
-        ./opencobolide_4.7.6+modern11.2_all.deb
+        ./opencobolide_4.7.6+modern11.3_all.deb
 
 After installation, confirm that the intended compiler is first on ``PATH``::
 
@@ -52,14 +52,14 @@ Confirm the installed package version with::
 
     dpkg-query -W -f='${Package} ${Version}\n' opencobolide
 
-The expected package version is ``4.7.6+modern11.2``.
+The expected package version is ``4.7.6+modern11.3``.
 
 Package checksum
 ----------------
 
 Verify the downloaded package with::
 
-    sha256sum opencobolide_4.7.6+modern11.2_all.deb
+    sha256sum opencobolide_4.7.6+modern11.3_all.deb
 
 Compare the result with the checksum published alongside the GitHub release
 asset. The checksum is kept outside this embedded manual so it can verify the
@@ -111,4 +111,4 @@ Historical RPM, Arch Linux, macOS, and Windows package-building assets remain
 preserved in the ``codex/legacy-cross-platform-backup`` branch. They are not
 used by the modern source-installation workflow.
 
-.. _`modern11.2 release`: https://github.com/ikonomn/OpenCobolIDE/releases/tag/v4.7.6-modern11.2
+.. _`modern11.3 release`: https://github.com/ikonomn/OpenCobolIDE/releases/tag/v4.7.6-modern11.3

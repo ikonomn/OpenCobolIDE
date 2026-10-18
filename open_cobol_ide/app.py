@@ -13,7 +13,8 @@ import sys
 from pyqode.qt import QtCore, QtWidgets, QT_API, PYQT5_API, PYSIDE_API
 import qcrash.api as qcrash
 
-from open_cobol_ide import __display_version__, __version__, logger, system
+from open_cobol_ide import (
+    __display_version__, __version__, logger, system, trace_log)
 from open_cobol_ide.controllers import (
     CobolController, EditController, FileController, HelpController,
     HomeController, ViewController)
@@ -51,9 +52,17 @@ class Application(QtCore.QObject):
 
     def __init__(self, parse_args=True):
         super().__init__()
+        trace_log.event('application.init.enter', parse_args=parse_args,
+                        qt_api=QT_API)
         if system.darwin:
             Application._osx_init()
         self.app = QtWidgets.QApplication(sys.argv)
+        self.app.aboutToQuit.connect(
+            lambda: trace_log.event('qt.about_to_quit'))
+        trace_log.event(
+            'qt.application.created',
+            qt_version=QtCore.qVersion(),
+            application_thread=repr(self.app.thread()))
 
         self._reported_tracebacks = []
         qcrash.get_system_information = system.get_system_infos
@@ -80,12 +89,14 @@ class Application(QtCore.QObject):
         self.apply_mimetypes_preferences()
 
         self.win = MainWindow()
+        trace_log.event('main_window.created')
         self.win.setWindowTitle(self.title)
         self.file = FileController(self)
         self.view = ViewController(self)
         self.home = HomeController(self)
         self.edit = EditController(self)
         self.cobol = CobolController(self)
+        trace_log.event('controllers.created')
         self.help = HelpController(self)
         self.win.app = self
 
@@ -108,6 +119,7 @@ class Application(QtCore.QObject):
             _logger().info('GnuCOBOL version: %s',
                            GnuCobolCompiler.get_version(include_all=False))
         self._files = files
+        trace_log.event('application.init.finished', files_count=len(files))
 
     def restart(self):
         """
@@ -120,6 +132,11 @@ class Application(QtCore.QObject):
         sys.exit(0)
 
     def close(self):
+        console = getattr(getattr(self, 'win', None), 'ui', None)
+        console = getattr(console, 'consoleOutput', None)
+        trace_log.event(
+            'application.references.clear.start',
+            console_running=getattr(console, 'is_running', None))
         self.view = None
         self.cobol = None
         self.edit = None
@@ -127,6 +144,7 @@ class Application(QtCore.QObject):
         self.win = None
         self.home = None
         self.help = None
+        trace_log.event('application.references.clear.finished')
 
     def update_app_style(self):
         if Settings().dark_style:
@@ -161,7 +179,10 @@ class Application(QtCore.QObject):
                 # open specified files
                 for f in self._files:
                     self.file.open_file(f)
-        return self.app.exec_()
+        trace_log.event('main_window.show.start', fullscreen=Settings().fullscreen)
+        result = self.app.exec_()
+        trace_log.event('qt.exec.returned', return_code=result)
+        return result
 
     @staticmethod
     def _osx_init():
@@ -182,7 +203,9 @@ class Application(QtCore.QObject):
         prompting the user, if you need to prompt the user, use
         Application.file.quit())
         """
+        trace_log.event('application.exit.requested')
         self.app.closeAllWindows()
+        trace_log.event('application.exit.windows_closed')
         self.close()
 
     def handle_command_line_args(self):

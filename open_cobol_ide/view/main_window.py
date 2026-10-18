@@ -13,6 +13,7 @@ from pyqode.qt import QtCore, QtWidgets
 from open_cobol_ide import system
 from open_cobol_ide.view.forms.ide_ui import Ui_MainWindow
 from open_cobol_ide.settings import Settings
+from open_cobol_ide import trace_log
 
 
 def _logger():
@@ -66,13 +67,29 @@ class MainWindow(QtWidgets.QMainWindow):
         """
         Handle close event, gives the user a chance to save its work or not.
         """
+        console = self.ui.consoleOutput
+        process = getattr(console, 'process', None)
+        trace_log.event(
+            'main_window.close.enter',
+            console_running=getattr(console, 'is_running', None),
+            process_state=(int(process.state()) if process else None))
         _logger().debug('CLOSING')
         self.ui.tabWidgetEditors.closeEvent(event)
+        trace_log.event('main_window.close.editor_result',
+                        accepted=event.isAccepted())
         if event.isAccepted():
             # The Run console owns a backend even when no editor is open.
-            self.ui.consoleOutput.stop_process()
-            self.ui.consoleOutput.backend.stop()
+            trace_log.event('main_window.close.console_stop.start')
+            console.stop_process()
+            trace_log.event(
+                'main_window.close.console_stop.finished',
+                process_state=(int(process.state()) if process else None))
+            trace_log.event('main_window.close.backend_stop.start')
+            console.backend.stop()
+            trace_log.event('main_window.close.backend_stop.finished')
             _logger().debug('CLOSED')
+        trace_log.event('main_window.close.return',
+                        accepted=event.isAccepted())
 
     def dragEnterEvent(self, event):
         mime = event.mimeData()

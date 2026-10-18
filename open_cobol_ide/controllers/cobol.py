@@ -19,6 +19,7 @@ from open_cobol_ide.compilers import GnuCobolCompiler, get_file_type, \
     DbpreCompiler, EsqlOCCompiler, find_build_script, \
     compile_with_build_script, get_build_script_output_directory
 from open_cobol_ide.settings import Settings
+from open_cobol_ide import trace_log
 
 
 LOG_PAGE_COMPILER = 0
@@ -86,6 +87,7 @@ class CompilationThread(QtCore.QThread):
                     return 'exec sql' in f.read().lower()
             return False
 
+        trace_log.event('compile.thread.enter', source=self.file_path)
         cobc = GnuCobolCompiler()
         cobc.started.connect(self.command_started.emit)
         cobc.output_available.connect(self.output_available.emit)
@@ -106,6 +108,7 @@ class CompilationThread(QtCore.QThread):
 
         for f in files:
             try:
+                trace_log.event('compile.file.start', source=f)
                 build_script = find_build_script(f)
                 if build_script:
                     self.command_started.emit('%s %s' % (build_script, f))
@@ -118,10 +121,15 @@ class CompilationThread(QtCore.QThread):
                 else:
                     status, messages = cobc.compile(f, get_file_type(f))
             except Exception as e:
+                trace_log.event('compile.file.exception', source=f,
+                                exception=repr(e))
                 _logger().exception('exception while compiling')
                 self.errored.emit(f, e)
             else:
+                trace_log.event('compile.file.finished', source=f,
+                                status=status, messages=len(messages))
                 self.file_compiled.emit(f, status, messages)
+        trace_log.event('compile.thread.finished', files_count=len(files))
         self.finished.emit()
 
 
@@ -259,6 +267,8 @@ class CobolController(Controller):
         # make sure the associated compiler is working, otherwise disable
         # compile/run actions
         path = self.app.edit.current_editor.file.path
+        trace_log.event('compile.requested', source=path,
+                        run_requested=self._run_requested)
         dotted_extension = os.path.splitext(path)[1].upper()
         compiler_works, msg = self.check_compiler(dotted_extension)
         if not compiler_works:
@@ -290,6 +300,7 @@ class CobolController(Controller):
         self._compilation_thread.finished.connect(
             self._on_compilation_finished)
         self._compilation_thread.start()
+        trace_log.event('compile.thread.started', source=path)
         self._exception_flags[:] = []
 
     def clean(self):
@@ -319,6 +330,7 @@ class CobolController(Controller):
         self.compile()
 
     def _on_command_started(self, cmd):
+        trace_log.event('compile.command.started', command=cmd)
         old_color = self.ui.textEditCompilerOutput.textColor()
         color = QtGui.QColor('#629755') if Settings().dark_style else \
             QtGui.QColor('#000080')
@@ -336,6 +348,8 @@ class CobolController(Controller):
         otherwise enables actions/buttons.
 
         """
+        trace_log.event('compile.ui.finished', errors=self._errors,
+                        run_requested=self._run_requested)
         self.enable_compile(True)
         self.enable_run(True)
         self.ui.tabWidgetLogs.setCurrentIndex(LOG_PAGE_ISSUES)
@@ -347,6 +361,8 @@ class CobolController(Controller):
                 self._run()
 
     def _on_build_exception(self, path, exception):
+        trace_log.event('compile.ui.exception', source=path,
+                        exception=repr(exception))
         self.ui.errorsTable.add_message(
             CheckerMessage(
                     str(exception), CheckerMessages.ERROR, -1, path=path))
@@ -409,6 +425,7 @@ class CobolController(Controller):
         if self.app.edit.current_editor is None:
             return
         source = os.path.abspath(self.app.edit.current_editor.file.path)
+        trace_log.event('run.requested', source=source)
         settings = QtCore.QSettings('OpenCobolIDE', 'OpenCobolIDE4')
         key = 'programArguments/' + source
         text = settings.value(key, '')
@@ -419,6 +436,7 @@ class CobolController(Controller):
                 'Use quotes for spaces, for example: "customer name" 123',
                 QtWidgets.QLineEdit.Normal, text)
             if not accepted:
+                trace_log.event('run.arguments.cancelled', source=source)
                 return
             try:
                 arguments = shlex.split(text)
@@ -429,6 +447,8 @@ class CobolController(Controller):
             break
         settings.setValue(key, text)
         self._program_arguments = arguments
+        trace_log.event('run.arguments.accepted', source=source,
+                        argument_count=len(arguments))
         self.ui.consoleOutput.clear()
         self._run_requested = True
         self.compile()
@@ -441,6 +461,9 @@ class CobolController(Controller):
         :param wd: working directory
         """
         arguments = getattr(self, '_program_arguments', [])
+        trace_log.event('run.external.start', program=program,
+                        working_directory=wd, file_type=int(file_type),
+                        argument_count=len(arguments))
         pyqode_console = system.which('pyqode-console')
         cobc_run_insert_pos = 1
         if pyqode_console is None:
@@ -500,6 +523,7 @@ class CobolController(Controller):
                 return
         _logger().info('running program in external terminal: %s', ' '.join(cmd))
         self.ui.consoleOutput.appendPlainText("Launched in external terminal: %s" % ' '.join(cmd))
+        trace_log.event('run.external.launched', program=program)
 
     def _run(self):
         """
@@ -527,10 +551,15 @@ class CobolController(Controller):
             GnuCobolCompiler().extension_for_type(file_type)
         program = os.path.join(output_dir, filename)
         if not os.path.exists(program):
+            trace_log.event('run.program.missing', program=program)
             _logger().warning('cannot run %s, file does not exists',
                               program)
             return
         _logger().info('running program: %r (working dir=%r)', program, wd)
+        trace_log.event(
+            'run.program.start', program=program, working_directory=wd,
+            file_type=int(file_type), external_terminal=Settings().external_terminal,
+            argument_count=len(getattr(self, '_program_arguments', [])))
         if Settings().external_terminal:
             self._run_in_external_terminal(program, wd, file_type)
             self.enable_run(True)
@@ -549,8 +578,17 @@ class CobolController(Controller):
                     cobcrun, [os.path.splitext(editor.file.name)[0]] + getattr(self, '_program_arguments', []), working_dir=wd, env=env)
             else:
                 self.ui.consoleOutput.start_process(program, getattr(self, '_program_arguments', []), working_dir=wd, env=env, print_command=True)
+            trace_log.event(
+                'run.process.start.called', program=program,
+                process_state=int(self.ui.consoleOutput.process.state()),
+                process_id=int(self.ui.consoleOutput.process.processId()))
 
     def _on_run_finished(self):
+        process = self.ui.consoleOutput.process
+        trace_log.event(
+            'run.process.finished', exit_code=process.exitCode(),
+            exit_status=int(process.exitStatus()), state=int(process.state()),
+            process_id=int(process.processId()))
         self.enable_compile(True)
         self.enable_run(True)
 
@@ -566,8 +604,14 @@ class CobolController(Controller):
         """
         Cancels current any ongoing operations (run/compile).
         """
+        trace_log.event(
+            'operation.cancel.requested',
+            compiling=bool(self._compilation_thread and
+                           self._compilation_thread.isRunning()),
+            console_running=self.ui.consoleOutput.is_running)
         if self._compilation_thread:
             self._compilation_thread.terminate()
         self.ui.consoleOutput.stop_process()
+        trace_log.event('operation.cancel.finished')
         self.enable_compile(True)
         self.enable_run(True)

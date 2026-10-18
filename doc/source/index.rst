@@ -2,13 +2,13 @@
 .. image:: _static/silex-192x192.png
     :align: center
 
-OpenCobolIDE 4.7.6 modern11.2 documentation
+OpenCobolIDE 4.7.6 modern11.3 documentation
 ==========================================
 
 OpenCobolIDE is a simple and lightweight COBOL IDE based on the
 `OpenCOBOL/GnuCOBOL`_ compiler and the `pyQode`_ source code editor widget.
 
-This documentation accompanies the unofficial ``4.7.6+modern11.2`` compatibility
+This documentation accompanies the unofficial ``4.7.6+modern11.3`` compatibility
 polish for modern Python, PyQt5, GnuCOBOL, and Debian-family Linux. The
 compatibility work was completed with assistance from OpenAI Codex. Original
 ownership and maintainer attribution remain unchanged.
@@ -52,7 +52,7 @@ Documentation contents
    * .. glossary::
 
       :doc:`download`
-         Install or upgrade the modern11.2 Debian package.
+         Install or upgrade the modern11.3 Debian package.
 
    * .. glossary::
 
@@ -115,7 +115,7 @@ Indices and tables:
 .. _`modern-python documentation directory`: https://github.com/ikonomn/OpenCobolIDE/tree/modern-python/doc/source
 
 
-Program arguments (modern11.2)
+Program arguments (modern11.3)
 ----------------------------
 
 When you select Run, a popup asks for optional program arguments. For
@@ -126,7 +126,7 @@ or select Cancel to stop. The IDE remembers the last entry per source file.
 Arguments work in the embedded console and external terminal.
 
 
-Compiler workflow (modern11.2)
+Compiler workflow (modern11.3)
 -----------------------------
 
 Enable **COBOL > Automatic listing filename** to create a listing named after

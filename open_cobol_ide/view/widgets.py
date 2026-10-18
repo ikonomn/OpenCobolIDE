@@ -8,7 +8,7 @@ from pyqode.core.widgets import SplittableCodeEditTabWidget, OutputWindow
 from pyqode.core.widgets import FileSystemContextMenu, FileIconProvider as \
     PyQodeIconProvider
 import sys
-from open_cobol_ide import backend, system
+from open_cobol_ide import backend, system, trace_log
 from open_cobol_ide.settings import Settings
 
 
@@ -198,3 +198,40 @@ class MyOutputWindow(OutputWindow):
             base_backend += '.exe'
         backend_path = os.path.join(cwd, base_backend) if hasattr(sys, 'frozen') else backend.__file__
         super(MyOutputWindow, self).__init__(parent=parent, backend=backend_path)
+
+    def start_process(self, program, arguments=None, working_dir=None,
+                      print_command=True, use_pseudo_terminal=True, env=None):
+        trace_log.event(
+            'output_window.start.enter', program=program,
+            argument_count=len(arguments or []), working_directory=working_dir,
+            pseudo_terminal=use_pseudo_terminal,
+            previous_state=int(self.process.state()))
+        result = super().start_process(
+            program, arguments=arguments, working_dir=working_dir,
+            print_command=print_command,
+            use_pseudo_terminal=use_pseudo_terminal, env=env)
+        trace_log.event(
+            'output_window.start.return', program=program,
+            process_state=int(self.process.state()),
+            process_id=int(self.process.processId()))
+        return result
+
+    def stop_process(self):
+        trace_log.event(
+            'output_window.stop.enter', process_state=int(self.process.state()),
+            process_id=int(self.process.processId()))
+        result = super().stop_process()
+        trace_log.event(
+            'output_window.stop.return', process_state=int(self.process.state()),
+            exit_code=self.process.exitCode(),
+            exit_status=int(self.process.exitStatus()))
+        return result
+
+    def _on_process_finished(self):
+        trace_log.event(
+            'output_window.finished.enter', exit_code=self.process.exitCode(),
+            exit_status=int(self.process.exitStatus()),
+            process_state=int(self.process.state()))
+        result = super()._on_process_finished()
+        trace_log.event('output_window.finished.return')
+        return result

@@ -29,16 +29,28 @@ def main():
     """
     Application entry point.
     """
+    from open_cobol_ide import trace_log
+    trace_path = trace_log.configure()
+    trace_log.event('main.enter', trace_path=trace_path)
     dev_mode = os.environ.get('OCIDE_DEV_MODE')
     if not hasattr(sys, 'frozen') and dev_mode is None:
+        trace_log.event('main.override_sys_path.start')
         override_sys_path()
+        trace_log.event('main.override_sys_path.finished')
     from pyqode.qt import QtGui
     from open_cobol_ide import system
     from open_cobol_ide.app import Application
     from open_cobol_ide.settings import Settings
+    trace_log.event('application.create.start')
     app = Application()
+    trace_log.event('application.create.finished')
     if system.linux:
         QtGui.QIcon.setThemeName(Settings().icon_theme)
+    trace_log.event('event_loop.start')
     ret_code = app.run()
+    trace_log.event('event_loop.returned', return_code=ret_code)
+    trace_log.event('application.close.start')
     app.close()
+    trace_log.event('application.close.finished')
+    trace_log.event('main.return', return_code=ret_code)
     return ret_code
