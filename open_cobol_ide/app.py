@@ -52,6 +52,7 @@ class Application(QtCore.QObject):
 
     def __init__(self, parse_args=True):
         super().__init__()
+        self._closed = False
         trace_log.event('application.init.enter', parse_args=parse_args,
                         qt_api=QT_API)
         if system.darwin:
@@ -132,6 +133,10 @@ class Application(QtCore.QObject):
         sys.exit(0)
 
     def close(self):
+        if self._closed:
+            trace_log.event('application.references.clear.skipped')
+            return
+        self._closed = True
         console = getattr(getattr(self, 'win', None), 'ui', None)
         console = getattr(console, 'consoleOutput', None)
         trace_log.event(
@@ -206,7 +211,6 @@ class Application(QtCore.QObject):
         trace_log.event('application.exit.requested')
         self.app.closeAllWindows()
         trace_log.event('application.exit.windows_closed')
-        self.close()
 
     def handle_command_line_args(self):
         args = self.parse_args()

@@ -9,7 +9,7 @@ def test_local_help_manual_is_used_from_source_tree():
 
     assert location.isLocalFile()
     path = Path(location.toLocalFile())
-    assert path.name == 'OpenCobolIDE-modern11.3.html'
+    assert path.name == 'OpenCobolIDE-modern11.4.html'
     assert path.is_file()
 
 

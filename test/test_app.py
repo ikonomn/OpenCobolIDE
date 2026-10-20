@@ -1,4 +1,8 @@
 import sys
+from types import SimpleNamespace
+from unittest.mock import Mock
+
+from open_cobol_ide.app import Application
 from open_cobol_ide.settings import Settings
 
 
@@ -22,8 +26,6 @@ def test_update_style(app):
 
 
 def test_window_close_stops_console_only_when_accepted():
-    from types import SimpleNamespace
-    from unittest.mock import Mock
     from open_cobol_ide.view.main_window import MainWindow
 
     console = SimpleNamespace(stop_process=Mock(),
@@ -39,3 +41,31 @@ def test_window_close_stops_console_only_when_accepted():
     MainWindow.closeEvent(window, event)
     console.stop_process.assert_called_once_with()
     console.backend.stop.assert_called_once_with()
+
+
+def test_exit_leaves_reference_cleanup_until_event_loop_returns():
+    application = SimpleNamespace(
+        app=SimpleNamespace(closeAllWindows=Mock()),
+        close=Mock())
+
+    Application.exit(application)
+
+    application.app.closeAllWindows.assert_called_once_with()
+    application.close.assert_not_called()
+
+
+def test_close_is_idempotent():
+    application = SimpleNamespace(
+        _closed=False, view=object(), cobol=object(), edit=object(),
+        file=object(), win=None, home=object(), help=object())
+
+    Application.close(application)
+    Application.close(application)
+
+    assert application._closed is True
+    assert application.view is None
+    assert application.cobol is None
+    assert application.edit is None
+    assert application.file is None
+    assert application.home is None
+    assert application.help is None

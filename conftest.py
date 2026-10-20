@@ -34,6 +34,9 @@ def app(request):
     def fin():
         global _app
         _app.exit()
+        # Mirror main(): release Python-side references after the Qt windows
+        # have been asked to close, rather than from inside Application.exit.
+        _app.close()
         del _app
 
     # _app.win.hide()
