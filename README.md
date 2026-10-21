@@ -65,13 +65,13 @@ cobc --version
 Download:
 
 ```text
-opencobolide_4.7.6+modern11.4_all.deb
+opencobolide_4.7.6+modern11.5_all.deb
 ```
 
 Open a terminal in the directory containing the downloaded file and install it with:
 
 ```bash
-sudo apt install ./opencobolide_4.7.6+modern11.4_all.deb
+sudo apt install ./opencobolide_4.7.6+modern11.5_all.deb
 ```
 
 Using `apt` is recommended because it resolves missing dependencies automatically.
@@ -80,7 +80,7 @@ If GnuCOBOL was installed from source and `cobc` is already available, avoid
 installing the distribution compiler package with:
 
 ```bash
-sudo apt install --no-install-recommends ./opencobolide_4.7.6+modern11.4_all.deb
+sudo apt install --no-install-recommends ./opencobolide_4.7.6+modern11.5_all.deb
 ```
 
 Launch the application from the desktop menu or run:
@@ -134,7 +134,7 @@ sudo apt remove opencobolide
 After downloading, calculate the SHA-256 checksum with:
 
 ```bash
-sha256sum opencobolide_4.7.6+modern11.4_all.deb
+sha256sum opencobolide_4.7.6+modern11.5_all.deb
 ```
 
 Compare it with the checksum published alongside the GitHub release asset.
@@ -164,7 +164,7 @@ Use this software and the provided Debian package at your own risk. The original
 
 Always back up important source code, configuration, and project files before installation or use. This disclaimer does not replace or modify the terms of the GNU General Public License under which OpenCobolIDE is distributed.
 
-## Program arguments (modern11.4)
+## Program arguments (modern11.5)
 
 Press **Run** to enter optional arguments for the COBOL program. For example,
 for `bio2.cbl`, enter `18090212 18650415`. Enter only the arguments; the IDE
@@ -176,18 +176,28 @@ Use double quotes for an argument containing spaces, for example
 Arguments are passed to the program in both the embedded console and external
 terminal. These are runtime arguments, separate from compiler options.
 
-## Compiler workflow in modern11.4
+## Compiler workflow in modern11.5
 
-Automatic listing names, optional source-install launcher and per-file compiler
-flags are described in [the workflow guide](doc/modern11.4-workflow.md).
+Automatic listing names, optional source-install launcher, per-file compiler
+flags, compiler/environment overrides, and path validation are described in
+[the workflow guide](doc/modern11.5-workflow.md).
 
 ## Linux shutdown lifecycle service fix
 
-modern11.4 defers Python-side application cleanup until after the Qt event loop
+modern11.5 retains the modern11.4 correction that defers Python-side
+application cleanup until after the Qt event loop
 returns and prevents repeated cleanup. The correction applies to Linux source
 installations across distributions and desktop sessions. The Debian package is
 provided for Debian-family systems; other distributions should use the source
 installer.
+
+## Mageia 10 RPM packaging
+
+The Mageia 10 RPM specification, build scripts, dependency list, validation
+steps, and contributor instructions are kept together under
+[`packaging/mageia`](packaging/mageia/README.md). A Mageia binary RPM must be
+built and tested on Mageia 10. RPM compatibility with Fedora, openSUSE, and
+other distributions is not assumed.
 
 ## Native-crash trace log
 

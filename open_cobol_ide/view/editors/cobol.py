@@ -13,6 +13,7 @@ from open_cobol_ide import backend
 from open_cobol_ide.compilers import get_file_type
 from open_cobol_ide.linter import CobolLinterMode
 from open_cobol_ide.settings import Settings
+from open_cobol_ide.source_format import detect_source_format
 
 
 def _logger():
@@ -27,11 +28,14 @@ class CobolCodeEdit(CodeEditBase):
     """
 
     def __init__(self, parent=None):
-        super().__init__(parent, free_format=Settings().free_format)
+        self._default_free_format = Settings().free_format
+        self.detected_source_format = None
+        super().__init__(parent, free_format=self._default_free_format)
         self.syntax_highlighter.color_scheme = ColorScheme(
             Settings().color_scheme)
         self.linter_mode = self.modes.append(CobolLinterMode())
         self.app = None
+        self.textChanged.connect(self._refresh_source_format)
 
     def _start_server(self):
         if hasattr(sys, "frozen"):
@@ -50,6 +54,21 @@ class CobolCodeEdit(CodeEditBase):
 
     def setPlainText(self, txt, mime_type, encoding):
         super().setPlainText(txt, mime_type, encoding)
+        self._apply_source_format(txt)
+
+    def set_default_free_format(self, free_format):
+        """Set the fallback used when the source has no format directive."""
+        self._default_free_format = bool(free_format)
+        self._apply_source_format(self.toPlainText())
+
+    def _refresh_source_format(self):
+        self._apply_source_format(self.toPlainText())
+
+    def _apply_source_format(self, source):
+        detected = detect_source_format(source)
+        self.detected_source_format = detected
+        self.free_format = (self._default_free_format if detected is None
+                            else detected)
 
     @property
     def file_type(self):

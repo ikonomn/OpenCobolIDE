@@ -495,6 +495,37 @@ class Settings(object):
         else:
             self._settings.setValue(key, json.dumps(flags))
 
+    def source_environment(self, path):
+        """Return per-source compiler/environment overrides."""
+        import hashlib
+        key = hashlib.sha256(
+            os.path.normcase(os.path.realpath(path)).encode('utf-8')).hexdigest()
+        raw = self._settings.value('compiler/source_environment/' + key, None)
+        defaults = {
+            'compiler_path': '', 'path_mode': 'inherit',
+            'path': '', 'cob_copy_dir': ''}
+        if raw is None:
+            return defaults
+        try:
+            value = json.loads(raw)
+        except (TypeError, ValueError):
+            return defaults
+        defaults.update({k: value.get(k, defaults[k]) for k in defaults})
+        return defaults
+
+    def set_source_environment(self, path, value):
+        """Store or remove per-source compiler/environment overrides."""
+        import hashlib
+        key = 'compiler/source_environment/' + hashlib.sha256(
+            os.path.normcase(os.path.realpath(path)).encode('utf-8')).hexdigest()
+        if not value or not any((
+                value.get('compiler_path'), value.get('path'),
+                value.get('cob_copy_dir'),
+                value.get('path_mode', 'inherit') != 'inherit')):
+            self._settings.remove(key)
+        else:
+            self._settings.setValue(key, json.dumps(value))
+
     @property
     def copybook_paths(self):
         return self._settings.value('copybook_paths', '')

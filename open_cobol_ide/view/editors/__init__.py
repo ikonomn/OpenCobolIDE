@@ -19,7 +19,10 @@ def update_editor_settings(editor):
         # cobol editor specific settings
         editor.backspace_mode.enabled = settings.enable_smart_backspace
         editor.comment_indicator = settings.comment_indicator
-        editor.free_format = settings.free_format
+        try:
+            editor.set_default_free_format(settings.free_format)
+        except AttributeError:
+            editor.free_format = settings.free_format
         editor.caret_line_mode.enabled = settings.highlight_caret
         editor.auto_indent_mode.enabled = settings.enable_autoindent
         editor.code_completion_mode.trigger_length = \

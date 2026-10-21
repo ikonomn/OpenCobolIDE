@@ -175,30 +175,31 @@ class CobolController(Controller):
         if editor is None or not editor.file.path:
             return
         path = editor.file.path
+        from open_cobol_ide.view.dialogs.source_compiler_options import \
+            SourceCompilerOptionsDialog
         settings = Settings()
-        current = settings.source_flags(path)
-        choices = ['Use global defaults', 'Use custom flags for this file']
-        choice, accepted = QtWidgets.QInputDialog.getItem(
-            self.main_window, 'Compiler options for this file',
-            os.path.basename(path), choices, 0 if current is None else 1, False)
-        if not accepted:
-            return
-        if choice == choices[0]:
-            settings.set_source_flags(path, None)
-            return
-        flags = settings.compiler_flags if current is None else current
-        text, accepted = QtWidgets.QInputDialog.getText(
-            self.main_window, 'Compiler options for this file',
-            'Replaces global extra flags. Empty means no extra flags.\n'
-            'Use -T {stem}.prn for a source-specific listing.',
-            QtWidgets.QLineEdit.Normal, ' '.join(shlex.quote(f) for f in flags))
-        if accepted:
+        dialog = SourceCompilerOptionsDialog(
+            path, settings.compiler_flags, settings.source_flags(path),
+            settings.source_environment(path), self.main_window)
+        while dialog.exec_() == QtWidgets.QDialog.Accepted:
             try:
-                flags = shlex.split(text, posix=not system.windows)
+                flags, raw, cleaned = dialog.values()
             except ValueError as error:
-                QtWidgets.QMessageBox.warning(self.main_window, 'Invalid options', str(error))
-                return
+                QtWidgets.QMessageBox.warning(
+                    self.main_window, 'Invalid compiler options', str(error))
+                continue
+            changes = ['%s\n→ %s' % (raw[key], cleaned[key])
+                       for key in ('compiler_path', 'path', 'cob_copy_dir')
+                       if raw[key] != cleaned[key]]
+            if changes:
+                QtWidgets.QMessageBox.warning(
+                    self.main_window, 'Spaces removed from directory paths',
+                    'Leading or trailing spaces around directory components '
+                    'can select a different path. They were removed:\n\n' +
+                    '\n'.join(changes))
             settings.set_source_flags(path, flags)
+            settings.set_source_environment(path, cleaned)
+            break
 
     def create_bt_compile(self):
         bt_compile = QtWidgets.QToolButton()

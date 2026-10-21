@@ -48,8 +48,9 @@ def _get_encoding(filename):
 
 def get_file_type(path):
     """
-    Detects file type. If the file contains 'PROCEDURE DIVISION USING', then it
-    is considered as a module else it is considered as an executable.
+    Detects file type. A source containing both ``LINKAGE SECTION`` and
+    ``PROCEDURE DIVISION USING`` is considered a callable module; other
+    sources are considered executables.
 
     :param path: file path
     :return: FileType
@@ -63,20 +64,24 @@ def get_file_type(path):
         ftype = FileType.EXECUTABLE
         with open(path, 'r', encoding=encoding) as f:
             content = f.read().upper()
-        if re.match(r'.*PROCEDURE[\s\n]+DIVISION[\s\n]+USING', content,
-                    re.DOTALL):
+        has_linkage = re.search(
+            r'\bLINKAGE\s+SECTION\b', content, re.DOTALL) is not None
+        has_using = re.search(
+            r'\bPROCEDURE\s+DIVISION\s+USING\b', content,
+            re.DOTALL) is not None
+        if has_linkage and has_using:
             ftype = FileType.MODULE
     _logger().debug('file type: %r', ftype)
     return ftype
 
 
-def run_command(pgm, args, working_dir=''):
+def run_command(pgm, args, working_dir='', process_environment=None):
     if ' ' in pgm:
         pgm = '"%s"' % pgm
 
     path_cpy = os.environ['PATH']
 
-    p_env = GnuCobolCompiler.setup_process_environment()
+    p_env = process_environment or GnuCobolCompiler.setup_process_environment()
     os.environ['PATH'] = p_env.value('PATH')
     p = QtCore.QProcess()
     p.setProcessChannelMode(QtCore.QProcess.MergedChannels)
@@ -258,7 +263,7 @@ class GnuCobolCompiler(QtCore.QObject):
             return output
 
     @staticmethod
-    def setup_process_environment():
+    def setup_process_environment(source_path=None):
         env = QtCore.QProcessEnvironment()
         for k, v in os.environ.items():
             env.insert(k, v)
@@ -294,6 +299,18 @@ class GnuCobolCompiler(QtCore.QObject):
 
         if s.cob_lib_path and s.cob_copy_dir:
             env.insert('COB_LIB_PATH', s.cob_lib_path)
+
+        if source_path:
+            override = s.source_environment(source_path)
+            source_path_value = override.get('path', '')
+            mode = override.get('path_mode', 'inherit')
+            if mode == 'prepend' and source_path_value:
+                env.insert(
+                    'PATH', source_path_value + os.pathsep + env.value('PATH'))
+            elif mode == 'replace':
+                env.insert('PATH', source_path_value)
+            if override.get('cob_copy_dir'):
+                env.insert('COB_COPY_DIR', override['cob_copy_dir'])
 
         return env
 
@@ -522,7 +539,9 @@ class GnuCobolCompiler(QtCore.QObject):
             inputs, file_type, original_output_dir, additional_options,
             source_path=file_path)
         self.started.emit(' '.join([pgm] + options))
-        status, output = run_command(pgm, options, working_dir=path)
+        status, output = run_command(
+            pgm, options, working_dir=path,
+            process_environment=self.setup_process_environment(file_path))
         self.output_available.emit(output)
         messages = self.parse_output(output, path)
         binary_created = os.path.exists(output_full_path)
@@ -564,6 +583,10 @@ class GnuCobolCompiler(QtCore.QObject):
         options = []
         if file_type == FileType.EXECUTABLE:
             options.append('-x')
+        else:
+            # Be explicit: callable programs with LINKAGE SECTION and
+            # PROCEDURE DIVISION USING must be built as loadable modules.
+            options.append('-m')
         options.append('-o')
         options.append(os.path.join(output_dir, output_file_name))
         standard = GnuCobolStandard(settings.cobol_standard)
@@ -574,7 +597,10 @@ class GnuCobolCompiler(QtCore.QObject):
         if flags is None:
             flags = settings.compiler_flags
         options += listing_options(flags, input_file_names[0], settings.automatic_listing)
-        if settings.free_format:
+        from .source_format import read_source_format
+        source_format = read_source_format(
+            source_path or (input_file_names[0] if input_file_names else None))
+        if source_format is None and settings.free_format:
             options.append('-free')
         if settings.copybook_paths:
             for pth in settings.copybook_paths.split(';'):
@@ -595,7 +621,9 @@ class GnuCobolCompiler(QtCore.QObject):
             if system.windows and ' ' in ifn:
                 ifn = '"%s"' % ifn
             options.append(ifn)
-        pgm = Settings().compiler_path
+        source = source_path or input_file_names[0]
+        pgm = (Settings().source_environment(source).get('compiler_path') or
+               Settings().compiler_path)
 
         return pgm, options
 

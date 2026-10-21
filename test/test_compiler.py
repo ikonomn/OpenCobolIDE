@@ -90,12 +90,14 @@ def test_gnucobol_standard_name(standard, expected):
         '-free'
     ]),
     (False, GnuCobolStandard.default, FileType.MODULE, [
+        '-m',
         '-o', '%s' % os.path.join('bin', 'HelloWorld' + dll_ext),
         '-std=default',
         '-Wall',
         '-debug'
     ]),
     (True, GnuCobolStandard.default, FileType.MODULE, [
+        '-m',
         '-o', '%s' % os.path.join('bin', 'HelloWorld' + dll_ext),
         '-std=default',
         '-Wall',
@@ -118,12 +120,14 @@ def test_gnucobol_standard_name(standard, expected):
         '-free'
     ]),
     (False, GnuCobolStandard.mf, FileType.MODULE, [
+        '-m',
         '-o', '%s' % os.path.join('bin', 'HelloWorld' + dll_ext),
         '-std=mf',
         '-Wall',
         '-debug'
     ]),
     (True, GnuCobolStandard.mf, FileType.MODULE, [
+        '-m',
         '-o', '%s' % os.path.join('bin', 'HelloWorld' + dll_ext),
         '-std=mf',
         '-Wall',
@@ -145,6 +149,32 @@ def test_make_command_exe(free, std, ftype, expected_opts):
     settings.free_format = free
     settings.cobol_standard = GnuCobolStandard.default
     settings.free_format = False
+
+
+def test_callable_module_command_is_explicitly_module_build():
+    _, options = GnuCobolCompiler().make_command(
+        ['VIRTUAL-PRINTER.cbl'], FileType.MODULE, 'bin')
+    assert '-m' in options
+    assert '-x' not in options
+
+
+def test_source_directive_is_left_for_cobc_to_process(tmp_path):
+    settings = Settings()
+    original_free_format = settings.free_format
+    source = tmp_path / 'directive.cbl'
+    source.write_text('>>SOURCE FORMAT IS FIXED\nIDENTIFICATION DIVISION.\n')
+    try:
+        settings.free_format = True
+        _, options = GnuCobolCompiler().make_command(
+            [source.name], FileType.EXECUTABLE, str(tmp_path),
+            source_path=str(source))
+        assert '-free' not in options
+
+        _, linter_options = make_linter_command(
+            source.name, str(source), source.read_text())
+        assert '-free' not in linter_options
+    finally:
+        settings.free_format = original_free_format
 
 
 @pytest.mark.parametrize(

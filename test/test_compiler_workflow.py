@@ -46,6 +46,57 @@ def test_per_file_override_and_reset(tmp_path):
  assert settings.source_flags(a) is None
  assert data=={'SQL/password':'unchanged'}
 
+
+def test_per_source_environment_override_and_reset(tmp_path):
+ tree=ast.parse((ROOT/'open_cobol_ide/settings.py').read_text())
+ cls=next(n for n in tree.body if isinstance(n,ast.ClassDef) and n.name=='Settings')
+ cls.body=[n for n in cls.body if isinstance(n,ast.FunctionDef) and
+           n.name in ('source_environment','set_source_environment')]
+ scope={'os':os,'json':json}
+ exec(compile(ast.fix_missing_locations(ast.Module(body=[cls],type_ignores=[])),
+              'settings','exec'),scope)
+ data={}
+ store=SimpleNamespace(value=lambda k,d=None:data.get(k,d),
+                       setValue=lambda k,v:data.__setitem__(k,v),
+                       remove=lambda k:data.pop(k,None))
+ settings=scope['Settings'](); settings._settings=store
+ source=str(tmp_path/'one.cbl')
+ assert settings.source_environment(source)['path_mode']=='inherit'
+ value={'compiler_path':'/opt/cobc','path_mode':'prepend',
+        'path':'/opt/bin','cob_copy_dir':'/opt/copy'}
+ settings.set_source_environment(source,value)
+ assert settings.source_environment(source)==value
+ settings.set_source_environment(source,{})
+ assert settings.source_environment(source)['compiler_path']==''
+
+
+def test_path_whitespace_cleanup_preserves_directory_name_spaces():
+ from open_cobol_ide.path_utils import clean_directory_path, clean_path_list
+ assert clean_directory_path('/ ikonomn / dir1/ drir3/ ') == \
+        '/ikonomn/dir1/drir3/'
+ assert clean_directory_path('/home/My Projects/COBOL Files') == \
+        '/home/My Projects/COBOL Files'
+ assert clean_path_list(' /opt/cobol/bin : /usr/bin ') == \
+        '/opt/cobol/bin:/usr/bin'
+
+
+def test_source_environment_applies_path_and_copy_dir(tmp_path):
+ from open_cobol_ide.settings import Settings
+ from open_cobol_ide.compilers import GnuCobolCompiler
+ settings=Settings(); source=str(tmp_path/'env.cbl')
+ settings.set_source_environment(source, {
+     'compiler_path':'/opt/cobol/bin/cobc', 'path_mode':'prepend',
+     'path':'/opt/cobol/bin', 'cob_copy_dir':'/opt/cobol/copy'})
+ try:
+  env=GnuCobolCompiler.setup_process_environment(source)
+  assert env.value('PATH').split(os.pathsep)[0]=='/opt/cobol/bin'
+  assert env.value('COB_COPY_DIR')=='/opt/cobol/copy'
+  pgm, _=GnuCobolCompiler().make_command(
+      ['env.cbl'], 0, 'bin', source_path=source)
+  assert pgm=='/opt/cobol/bin/cobc'
+ finally:
+  settings.set_source_environment(source,{})
+
 def test_changed_sources_compile():
  for name in ['compiler_options.py','settings.py','compilers.py','linter.py','controllers/cobol.py']:
   p=ROOT/'open_cobol_ide'/name

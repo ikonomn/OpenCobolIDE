@@ -104,8 +104,16 @@ Compiler settings
 
 This tab let you change the GnuCOBOL compiler settings.
 
-.. warning:: Those settings are applied globally to every file you compile with the IDE. At the moment there is no way
-             to set custom compiler settings per file.
+Most settings in this tab are global. For a saved source file, choose
+**COBOL → Compiler options for this file…** to override its extra compiler
+flags, compiler executable, or ``COB_COPY_DIR``. An optional additional tools
+directory can be searched before the inherited ``PATH`` for tools such as
+``gcc``, ``clang``, or a preprocessor. The override is stored against the
+source's full path and does not affect other files.
+
+.. image:: _static/modern11.5-compiler-options-for-this-file.png
+    :align: center
+    :alt: Compiler options for this file
 
 .. note:: These settings don't support environment variable expansion.
 
@@ -134,7 +142,10 @@ paths before overriding environment variables.
 **Auto-detect and compile submodules** checkbox let you choose whether you'd like the IDE to
 compile submodules automatically (that way you just have to compile your main modules).
 
-.. note:: Each environment variables has an associated checkbox, it won't be used unless the check box is checked.
+.. note:: These fields are optional overrides. When a checkbox is clear, the
+          compiler inherits that variable from the environment. Path fields
+          are checked for accidental spaces at their edges and beside
+          directory separators before they are saved.
 
 Output directory
 ++++++++++++++++
@@ -167,7 +178,12 @@ standard is selected here.
 Free format
 +++++++++++
 
-Enable/Disable coding in free format.
+Sets the default layout for sources that do not contain a source-format
+directive. The editor automatically recognizes ``>>SOURCE FREE``, ``>>SOURCE
+FORMAT IS FREE``, and their ``FIXED`` equivalents. When a directive is present,
+the status-bar option shows the detected format and cannot be changed manually.
+The first directive controls the editor display; GnuCOBOL receives the source
+unchanged and handles any later format switches during compilation.
 
 Compiler flags
 ++++++++++++++

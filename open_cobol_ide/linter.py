@@ -12,9 +12,10 @@ from pyqode.core.modes import CheckerMode
 from open_cobol_ide import settings, system
 from open_cobol_ide.compilers import GnuCobolCompiler
 from open_cobol_ide.enums import GnuCobolStandard, gnucobol_standard_name
+from open_cobol_ide.source_format import detect_source_format
 
 
-def make_linter_command(cobol_file_name, original_file_path):
+def make_linter_command(cobol_file_name, original_file_path, source_code=None):
     from .settings import Settings
     settings = Settings()
     args = ['-fsyntax-only', '-I%s' % os.path.dirname(original_file_path)]
@@ -27,7 +28,9 @@ def make_linter_command(cobol_file_name, original_file_path):
         flags = settings.compiler_flags
     args += listing_options(flags, original_file_path, syntax_only=True)
     original_path = os.path.dirname(original_file_path)
-    if settings.free_format:
+    # A source directive is authoritative and may switch format again later in
+    # the file.  In that case let cobc process the unchanged source itself.
+    if detect_source_format(source_code) is None and settings.free_format:
         args.append('-free')
     if settings.copybook_paths:
         for pth in settings.copybook_paths.split(';'):
@@ -48,7 +51,8 @@ def make_linter_command(cobol_file_name, original_file_path):
             if lib:
                 args.append('-l%s' % lib)
     args.append(cobol_file_name)
-    pgm = Settings().full_compiler_path
+    pgm = (settings.source_environment(original_file_path).get('compiler_path') or
+           Settings().full_compiler_path)
     return pgm, args
 
 
@@ -80,11 +84,11 @@ def lint(request_data):
         with open(tmp_pth, 'w') as f:
             f.write(code)
         compiler = GnuCobolCompiler()
-        pgm, args = make_linter_command(tmp_name, path)
+        pgm, args = make_linter_command(tmp_name, path, code)
         print('linter command: %s %s' % (pgm, ' '.join(args)))
         process = QtCore.QProcess()
         process.setProcessEnvironment(
-            GnuCobolCompiler.setup_process_environment())
+            GnuCobolCompiler.setup_process_environment(path))
         process.setWorkingDirectory(os.path.dirname(tmp_pth))
         process.setProcessChannelMode(QtCore.QProcess.MergedChannels)
         print('running compiler process')

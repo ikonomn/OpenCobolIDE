@@ -181,6 +181,10 @@ class EditController(Controller):
                 pass
             self.app.cobol.display_file_type(editor)
             editor.cursorPositionChanged.connect(self._update_status_bar_labels)
+            try:
+                editor.textChanged.connect(self._update_status_bar_labels)
+            except AttributeError:
+                pass
             self._update_status_bar_labels()
             return editor
 
@@ -278,14 +282,34 @@ class EditController(Controller):
                 c = self._get_cursor_pos_in_bytes(c, encoding)
             self._lbl_cursor.setText('%d:%d' % (l + 1, c + 1))
             self._lbl_encoding.setText(encoding)
-            self._cb_free_format.setEnabled(True)
-            self._cb_free_format.setChecked(Settings().free_format)
+            detected_format = getattr(
+                self.current_editor, 'detected_source_format', None)
+            is_cobol_editor = hasattr(self.current_editor, 'free_format')
+            self._cb_free_format.blockSignals(True)
+            self._cb_free_format.setEnabled(
+                is_cobol_editor and detected_format is None)
+            if is_cobol_editor:
+                self._cb_free_format.setChecked(
+                    self.current_editor.free_format)
+            else:
+                self._cb_free_format.setChecked(False)
+            if detected_format is None:
+                self._cb_free_format.setToolTip(
+                    'Default source format (used when the source has no '
+                    '>>SOURCE directive)')
+            else:
+                self._cb_free_format.setToolTip(
+                    'Source format is controlled by a >>SOURCE directive '
+                    'in this file')
+            self._cb_free_format.blockSignals(False)
             self._lbl_path.setText(self.current_editor.file.path)
         else:
             self._lbl_cursor.setText('n/a')
             self._lbl_encoding.setText('n/a')
+            self._cb_free_format.blockSignals(True)
             self._cb_free_format.setChecked(False)
             self._cb_free_format.setEnabled(False)
+            self._cb_free_format.blockSignals(False)
             self._lbl_path.setText('n/a')
 
     def edit_preferences(self):

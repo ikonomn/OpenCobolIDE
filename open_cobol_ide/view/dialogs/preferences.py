@@ -8,6 +8,7 @@ from open_cobol_ide.settings import Settings
 from open_cobol_ide.view.forms import dlg_preferences_ui
 from open_cobol_ide.view.dialogs.check_compiler import DlgCheckCompiler
 from open_cobol_ide.view.dialogs.cobc_help import DlgCobcHelp
+from open_cobol_ide.path_utils import clean_directory_path, clean_path_list
 
 DEFAULT_TEMPLATE = '''      * Author:
       * Date:
@@ -578,6 +579,38 @@ class DlgPreferences(QtWidgets.QDialog, dlg_preferences_ui.Ui_Dialog):
         self.reset()
 
     def apply(self):
+        path_fields = [
+            (self.lineEditCompilerPath, False),
+            (self.PATH, os.pathsep),
+            (self.COB_CONFIG_DIR, False),
+            (self.COB_COPY_DIR, False),
+            (self.COB_INCLUDE_PATH, os.pathsep),
+            (self.COB_LIB_PATH, os.pathsep),
+            (self.lineEditOutputDirectory, False),
+            (self.edit_working_dir, False),
+        ]
+        corrections = []
+        for widget, separator in path_fields:
+            original = widget.text()
+            cleaned = (clean_path_list(original, separator)
+                       if separator else clean_directory_path(original))
+            if cleaned != original:
+                corrections.append('%s\n→ %s' % (original, cleaned))
+                widget.setText(cleaned)
+        for widget in (self.listWidgetCopyPaths, self.listWidgetLibPaths):
+            for index in range(widget.count()):
+                item = widget.item(index)
+                original = item.text()
+                cleaned = clean_directory_path(original)
+                if cleaned != original:
+                    corrections.append('%s\n→ %s' % (original, cleaned))
+                    item.setText(cleaned)
+        if corrections:
+            QtWidgets.QMessageBox.warning(
+                self, 'Spaces removed from directory paths',
+                'Leading or trailing spaces around directory components can '
+                'select a different path. They were removed:\n\n' +
+                '\n'.join(corrections))
         # force next check (otherwise the cached result will be used)
         compilers.GnuCobolCompiler.check_compiler.reset()
         settings = Settings()
