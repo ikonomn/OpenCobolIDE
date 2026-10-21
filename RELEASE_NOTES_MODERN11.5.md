@@ -41,4 +41,22 @@ the source unchanged, so it can process later format switches in the same file.
 
 ## Compiler options for one source file
 
-![Compiler options for this file](doc/images/modern11.5-compiler-options-for-this-file.png)
+![Compiler options for this file](https://raw.githubusercontent.com/ikonomn/OpenCobolIDE/v4.7.6-modern11.5/doc/images/modern11.5-compiler-options-for-this-file.png)
+
+## Release assets
+
+The Debian-family package is provided as
+`opencobolide_4.7.6+modern11.5_all.deb`. GnuCOBOL is recommended rather than
+required, so systems using a separately built GnuCOBOL installation can install
+the IDE without replacing their compiler.
+
+`opencobolide-modern11.5-mageia10-build-kit.tar.gz` is a source build kit for
+creating and testing a native Mageia 10 RPM. It contains the committed source,
+Mageia RPM specification, automated build script, dependency list, validation
+commands, and test instructions. It is not a prebuilt RPM.
+
+The resulting RPM should initially be described as built and tested for Mageia
+10. Compatibility with Fedora, openSUSE, and other RPM-based distributions is
+not claimed without separate builds and testing.
+
+SHA-256 checksums are published in `SHA256SUMS`.
