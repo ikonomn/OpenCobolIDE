@@ -50,3 +50,9 @@ Files without a directive continue to use the global preference.
 
 The source is passed unchanged to GnuCOBOL, which remains responsible for any
 additional format switches later in the same file.
+
+## Pending local bug-report work
+
+See [Local bug-report fixes and investigation status](local-bug-report-status.md)
+for unreleased runtime-diagnostics changes and the status of Vincent's scrolling
+and tooltip reports. These entries do not imply fixes are included in a release.

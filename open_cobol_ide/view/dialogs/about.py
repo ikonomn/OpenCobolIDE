@@ -117,14 +117,20 @@ class DlgAbout(QtWidgets.QDialog, dlg_about_ui.Ui_Dialog):
 
 %(cobc_infos)s
 
-cobcrun --runtime-env
-=====================
+cobcrun --info
+==============
+
+%(cobcrun_build_infos)s
+
+cobcrun --runtime-config
+========================
 
 %(cobcrun_infos)s
 '''
 
         gnucobol_infos = template % {
             'cobc_infos': GnuCobolCompiler.get_cobc_infos(),
+            'cobcrun_build_infos': GnuCobolCompiler.get_cobcrun_infos('--info'),
             'cobcrun_infos': GnuCobolCompiler.get_cobcrun_infos()
         }
         return gnucobol_infos

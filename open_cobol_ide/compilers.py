@@ -441,20 +441,21 @@ class GnuCobolCompiler(QtCore.QObject):
         return output
 
     @staticmethod
-    def get_cobcrun_infos():
+    def get_cobcrun_infos(option='--runtime-config'):
+        """Return runtime configuration or build information as display text."""
         env = GnuCobolCompiler.setup_process_environment()
         pgm = shutil.which('cobcrun', path=env.value('PATH'))
-        args = ['--runtime-env']
+        args = [option]
         if not pgm:
             return 'cannot run command, cobcrun could not be found using PATH.'
 
         status, output = run_command(pgm, args)
 
         if status != 0:
-            output = 'command "cobcrun --runtime-env" failed with exit ' \
+            output = 'command "cobcrun %s" failed with exit ' \
                      'code %d.\nNote that this command is supported only by ' \
                      'recent builds of GnuCOBOL\nProcess output: %s' % \
-                     (status, output)
+                     (option, status, output)
 
         return output
 
