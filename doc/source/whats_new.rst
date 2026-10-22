@@ -1,3 +1,10 @@
+modern11.6 local test build
+==========================
+
+The About report now displays separate cobcrun build information and runtime
+configuration using ``--info`` and ``--runtime-config`` instead of
+``--runtime-env``. Scrolling and tooltip reports remain under investigation.
+
 What's New?
 ***********
 

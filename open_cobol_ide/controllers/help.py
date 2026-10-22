@@ -22,7 +22,7 @@ class HelpController(Controller):
         """Return the source-tree and installed local manual locations."""
         source_root = Path(__file__).resolve().parents[2]
         return (
-            source_root / 'doc' / 'OpenCobolIDE-modern11.5.html',
+            source_root / 'doc' / 'OpenCobolIDE-modern11.6.html',
             Path('/usr/share/doc/opencobolide/manual.html'),
         )
 

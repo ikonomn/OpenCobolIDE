@@ -12,7 +12,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 package_name="opencobolide"
-package_version="${OCIDE_PACKAGE_VERSION:-4.7.6+modern11.5}"
+package_version="${OCIDE_PACKAGE_VERSION:-4.7.6+modern11.6}"
 package_root="${OCIDE_PACKAGE_ROOT:-build/deb-root}"
 output_file="${OCIDE_OUTPUT_FILE:-dist/${package_name}_${package_version}_all.deb}"
 
@@ -51,7 +51,7 @@ install -m 0644 share/OpenCobolIDE.png \
     "$package_root/usr/share/pixmaps/OpenCobolIDE.png"
 
 # The Help action opens this self-contained manual without network access.
-install -m 0644 doc/OpenCobolIDE-modern11.5.html \
+install -m 0644 doc/OpenCobolIDE-modern11.6.html \
     "$package_root/usr/share/doc/$package_name/manual.html"
 example_target="$package_root/usr/share/doc/$package_name/examples/gixsql"
 install -m 0755 examples/gixsql/build.sh "$example_target/build.sh"
@@ -99,6 +99,7 @@ changelog="$package_root/usr/share/doc/$package_name/changelog"
 printf '%s\n' \
     "$package_name ($package_version) unstable; urgency=medium" \
     '' \
+    '  * Correct About runtime diagnostics using cobcrun --info and --runtime-config.' \
     '  * Add automatic listing names and per-source compiler flag overrides.' \
     '  * Detect FREE and FIXED source directives in the editor automatically.' \
     '  * Add an opt-in durable trace log for investigating native crashes.' \
@@ -126,7 +127,7 @@ printf '%s\n' \
     '  * Remove obsolete release assets and runtime-unneeded bundled tests.' \
     '  * Complete compatibility and packaging work with OpenAI Codex assistance.' \
     '' \
-    ' -- OpenCobolIDE compatibility build <noreply@opencobolide.invalid>  Sun, 18 Oct 2026 12:00:00 +0300' \
+    ' -- OpenCobolIDE compatibility build <noreply@opencobolide.invalid>  Fri, 23 Oct 2026 12:00:00 +0300' \
     > "$changelog"
 gzip -n -9 "$changelog"
 

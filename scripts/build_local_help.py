@@ -16,7 +16,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / 'doc' / 'source'
-OUTPUT = ROOT / 'doc' / 'OpenCobolIDE-modern11.5.html'
+OUTPUT = ROOT / 'doc' / 'OpenCobolIDE-modern11.6.html'
 PAGES = (
     ('index', 'Documentation overview'),
     ('getting_started', 'Getting started'),
@@ -245,7 +245,7 @@ def build():
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>OpenCobolIDE 4.7.6 modern11.5 manual</title>
+<title>OpenCobolIDE 4.7.6 modern11.6 manual</title>
 <style>
 :root {{ color-scheme: light dark; --accent:#2878b5; --paper:#fff; --ink:#20242a;
   --muted:#66717d; --panel:#f2f5f7; --border:#d7dde2; }}
@@ -280,7 +280,7 @@ footer {{ margin-top:3rem; padding-top:1rem; border-top:1px solid var(--border);
 </style>
 </head>
 <body><main>
-<header><h1>OpenCobolIDE 4.7.6 modern11.5 manual</h1>
+<header><h1>OpenCobolIDE 4.7.6 modern11.6 manual</h1>
 <p class="subtitle">Offline documentation for the Debian-family Linux compatibility build.</p>
 <p>This unofficial compatibility polish preserves the original OpenCobolIDE authorship and
 maintainer attribution. The modernization was completed with assistance from OpenAI Codex.</p>

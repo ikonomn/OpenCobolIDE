@@ -65,13 +65,13 @@ cobc --version
 Download:
 
 ```text
-opencobolide_4.7.6+modern11.5_all.deb
+opencobolide_4.7.6+modern11.6_all.deb
 ```
 
 Open a terminal in the directory containing the downloaded file and install it with:
 
 ```bash
-sudo apt install ./opencobolide_4.7.6+modern11.5_all.deb
+sudo apt install ./opencobolide_4.7.6+modern11.6_all.deb
 ```
 
 Using `apt` is recommended because it resolves missing dependencies automatically.
@@ -80,7 +80,7 @@ If GnuCOBOL was installed from source and `cobc` is already available, avoid
 installing the distribution compiler package with:
 
 ```bash
-sudo apt install --no-install-recommends ./opencobolide_4.7.6+modern11.5_all.deb
+sudo apt install --no-install-recommends ./opencobolide_4.7.6+modern11.6_all.deb
 ```
 
 Launch the application from the desktop menu or run:
@@ -134,7 +134,7 @@ sudo apt remove opencobolide
 After downloading, calculate the SHA-256 checksum with:
 
 ```bash
-sha256sum opencobolide_4.7.6+modern11.5_all.deb
+sha256sum opencobolide_4.7.6+modern11.6_all.deb
 ```
 
 Compare it with the checksum published alongside the GitHub release asset.
@@ -219,3 +219,9 @@ argument count and a small set of display/runtime conditions are included.
 
 `OCIDE_TRACE_LOG=1` uses an automatically named file below
 `~/.cache/OpenCobolIDE/`. Leave the variable unset for normal operation.
+
+## modern11.6 local test build
+
+Corrects the About runtime diagnostics to use `cobcrun --info` and
+`cobcrun --runtime-config`. See [release notes](RELEASE_NOTES_MODERN11.6.md).
+Scrolling and tooltip reports remain under investigation.
