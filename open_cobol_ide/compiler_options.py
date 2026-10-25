@@ -2,7 +2,8 @@
 import os
 
 
-def listing_options(flags, source, automatic=False, syntax_only=False):
+def listing_options(flags, source, automatic=False, syntax_only=False,
+                    default_filename=None):
     result = []
     index = 0
     found = False
@@ -12,15 +13,16 @@ def listing_options(flags, source, automatic=False, syntax_only=False):
         if flag in ('-T', '-t'):
             found = True
             index += 1
-            filename = stem + '.prn'
+            filename = default_filename or stem + '.prn'
             if index < len(flags) and not flags[index].startswith('-'):
                 filename = flags[index].replace('{stem}', stem)
                 index += 1
             if not syntax_only:
                 result.extend([flag, filename])
         else:
-            result.append(flag)
+            if not syntax_only or flag not in ('-X', '--Xref', '-ftsymbols'):
+                result.append(flag)
             index += 1
     if automatic and not found and not syntax_only:
-        result.extend(['-T', stem + '.prn'])
+        result.extend(['-T', default_filename or stem + '.prn'])
     return result

@@ -48,6 +48,10 @@ class HomeController(Controller):
         self.app.file.recent_files_manager.updated.connect(
             self._update_recents)
         self.ui.btOpenFile.clicked.connect(self.app.file.request_open)
+        self.ui.btOpenProject.clicked.connect(self.app.file.request_open_project)
+        self.ui.btNewProject.clicked.connect(self.app.file.request_new_project)
+        self.ui.btOpenProject.setIcon(QtGui.QIcon.fromTheme(
+            'folder-open', self.ui.btOpenFile.icon()))
         self.ui.btNewFile.clicked.connect(self.app.file.request_new)
         self.ui.listWidgetRecents.itemClicked.connect(
             self._on_recent_item_clicked)

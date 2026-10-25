@@ -70,6 +70,7 @@ class CompilationThread(QtCore.QThread):
 
     #: path of the file to compile
     file_path = ''
+    file_paths = None
 
     def run(self):
         """
@@ -100,18 +101,18 @@ class CompilationThread(QtCore.QThread):
         esqloc.started.connect(self.command_started.emit)
         esqloc.output_available.connect(self.output_available.emit)
 
-        files = [self.file_path]
-        if Settings().autodetect_submodules:
+        files = list(self.file_paths) if self.file_paths is not None else [self.file_path]
+        if self.file_paths is None and Settings().autodetect_submodules:
             files += cobc.get_dependencies(self.file_path, recursive=True)
 
         _logger().info('running compilation thread: %r', files)
 
-        for f in files:
+        for f in dict.fromkeys(files):
             try:
                 trace_log.event('compile.file.start', source=f)
                 build_script = find_build_script(f)
                 if build_script:
-                    self.command_started.emit('%s %s' % (build_script, f))
+                    self.command_started.emit('bash %s %s' % (build_script, f))
                     status, messages = compile_with_build_script(
                         f, self.output_available.emit)
                 elif is_dbpre_cobol(f):
@@ -161,6 +162,10 @@ class CobolController(Controller):
         self.ui.actionCancel.triggered.connect(self.cancel)
         self.ui.actionClean.triggered.connect(self.clean)
         self.ui.actionRebuild.triggered.connect(self.rebuild)
+        self.project_compile_action = self.ui.menuCobol.addAction('Compile Project')
+        self.project_compile_action.triggered.connect(self.compile_project)
+        self.project_settings_action = self.ui.menuCobol.addAction('Project compiler settings...')
+        self.project_settings_action.triggered.connect(self.edit_project_compiler_options)
         self._exception_flags = []
         listing_action = self.ui.menuCobol.addAction('Automatic listing filename')
         listing_action.setCheckable(True)
@@ -170,17 +175,54 @@ class CobolController(Controller):
         source_action = self.ui.menuCobol.addAction('Compiler options for this file...')
         source_action.triggered.connect(self.edit_source_compiler_options)
 
-    def edit_source_compiler_options(self):
-        editor = self.app.edit.current_editor
-        if editor is None or not editor.file.path:
+    def edit_project_compiler_options(self):
+        root = self.app.file.project_root
+        if not root:
+            QtWidgets.QMessageBox.information(
+                self.main_window, 'Project compiler settings', 'Open a project first.')
             return
-        path = editor.file.path
+        from open_cobol_ide.view.dialogs.source_compiler_options import SourceCompilerOptionsDialog
+        settings = Settings()
+        options = settings.project_options(root)
+        dialog = SourceCompilerOptionsDialog(
+            root, settings.compiler_flags, options.get('flags'),
+            options.get('environment', {}), self.main_window, project=True, options=options)
+        enabled = QtWidgets.QCheckBox('Use these project settings')
+        enabled.setChecked(options.get('enabled', True))
+        dialog.layout().insertWidget(1, enabled)
+        while dialog.exec_() == QtWidgets.QDialog.Accepted:
+            try:
+                flags, raw, cleaned = dialog.values()
+                from open_cobol_ide import project_config as config
+                updated = dict(options)
+                updated.update(dialog.extra_values())
+                updated.update(enabled=enabled.isChecked(), flags=flags, environment=cleaned)
+                candidate = config.load(root)
+                candidate['defaults'] = config.portable_options(root, updated)
+                if not self.validate_project_settings(root, candidate):
+                    continue
+                settings.set_project_options(root, updated)
+            except (ValueError, OSError) as error:
+                QtWidgets.QMessageBox.warning(
+                    self.main_window, 'Invalid project settings', str(error))
+                continue
+            break
+
+    def edit_source_compiler_options(self, path=None):
+        if not isinstance(path, str):
+            editor = self.app.edit.current_editor
+            if editor is None or not editor.file.path:
+                return
+            path = editor.file.path
         from open_cobol_ide.view.dialogs.source_compiler_options import \
             SourceCompilerOptionsDialog
+        from open_cobol_ide import project_config as config
         settings = Settings()
+        root = config.find_root(path)
+        source_options = settings.source_build_options(path)
         dialog = SourceCompilerOptionsDialog(
-            path, settings.compiler_flags, settings.source_flags(path),
-            settings.source_environment(path), self.main_window)
+            path, settings.inherited_flags(path), settings.source_flags(path),
+            settings.source_environment(path), self.main_window, options=source_options)
         while dialog.exec_() == QtWidgets.QDialog.Accepted:
             try:
                 flags, raw, cleaned = dialog.values()
@@ -197,9 +239,52 @@ class CobolController(Controller):
                     'Leading or trailing spaces around directory components '
                     'can select a different path. They were removed:\n\n' +
                     '\n'.join(changes))
-            settings.set_source_flags(path, flags)
-            settings.set_source_environment(path, cleaned)
+            try:
+                extra = dialog.extra_values()
+                if root:
+                    candidate = config.load(root)
+                    updated = dict(source_options)
+                    updated.update(extra)
+                    updated.update(flags=flags, environment=cleaned)
+                    candidate['sources'][config.source_key(root, path)] = config.portable_options(root, updated)
+                    if not self.validate_project_settings(root, candidate):
+                        continue
+                settings.set_source_compiler_options(path, flags, cleaned, extra)
+            except (ValueError, OSError) as error:
+                QtWidgets.QMessageBox.warning(self.main_window, 'Invalid source settings', str(error))
+                continue
             break
+
+    def validate_project_settings(self, root, document=None, paths=None):
+        from open_cobol_ide.project_validation import validate_project
+        try:
+            diagnostics = validate_project(root, Settings(), document, paths)
+        except (ValueError, OSError) as error:
+            QtWidgets.QMessageBox.warning(self.main_window, 'Project configuration error', str(error))
+            return False
+        errors = [item for item in diagnostics if item['level'] == 'error']
+        if document is not None and errors:
+            # Let users repair existing conflicts incrementally, without accepting new ones.
+            try:
+                previous = validate_project(root, Settings(), sources=paths)
+            except (ValueError, OSError):
+                previous = []
+            existing = [item for item in errors if item in previous]
+            errors = [item for item in errors if item not in existing]
+            diagnostics = [dict(item, level='warning', message='Existing conflict: ' + item['message'])
+                           if item in existing else item for item in diagnostics]
+        warnings = [item for item in diagnostics if item['level'] == 'warning']
+        if errors:
+            QtWidgets.QMessageBox.warning(self.main_window, 'Conflicting project settings',
+                '\n\n'.join('%s: %s' % (d['source'], d['message']) for d in errors))
+            return False
+        if warnings:
+            return QtWidgets.QMessageBox.question(self.main_window, 'Project settings warnings',
+                '\n\n'.join('%s: %s' % (d['source'], d['message']) for d in warnings) +
+                '\n\nContinue with these settings?',
+                QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+                QtWidgets.QMessageBox.No) == QtWidgets.QMessageBox.Yes
+        return True
 
     def create_bt_compile(self):
         bt_compile = QtWidgets.QToolButton()
@@ -259,6 +344,59 @@ class CobolController(Controller):
                 'configuration'
         return compiler_works, msg
 
+    def compile_project(self):
+        from open_cobol_ide.project import project_sources
+        root = self.app.file.project_root
+        if not root:
+            QtWidgets.QMessageBox.information(
+                self.main_window, 'Compile Project', 'Open a project directory first.')
+            return
+        settings = Settings()
+        paths = project_sources(root, settings.cobc_extensions +
+                                settings.dbpre_extensions + settings.esqloc_extensions)
+        if not paths:
+            QtWidgets.QMessageBox.information(
+                self.main_window, 'Compile Project', 'No COBOL sources found.')
+            return
+        self._run_requested = False
+        self._start_compilation(paths)
+
+    def _start_compilation(self, paths=None):
+        if self._compilation_thread is not None and self._compilation_thread.isRunning():
+            return
+        try:
+            if self.ui.tabWidgetEditors.save_all() is False:
+                return
+        except OSError as error:
+            QtWidgets.QMessageBox.warning(self.main_window, 'Cannot save sources', str(error))
+            return
+        sources = paths or [self.app.edit.current_editor.file.path]
+        roots = {Settings().project_root_for_source(source) for source in sources}
+        from open_cobol_ide.project_config import config_path
+        for root in roots:
+            if root and config_path(root).is_file():
+                if not self.validate_project_settings(root, paths=[p for p in sources
+                        if Settings().project_root_for_source(p) == root]):
+                    return
+        self.enable_compile(False)
+        self.project_compile_action.setEnabled(False)
+        self.enable_run(False)
+        self.ui.errorsTable.clear()
+        self._errors = 0
+        self.ui.textEditCompilerOutput.clear()
+        self.ui.tabWidgetLogs.setCurrentIndex(LOG_PAGE_COMPILER)
+        self._compilation_thread = CompilationThread()
+        self._compilation_thread.file_paths = paths
+        self._compilation_thread.file_path = (
+            paths[0] if paths else self.app.edit.current_editor.file.path)
+        self._compilation_thread.file_compiled.connect(self._on_file_compiled)
+        self._compilation_thread.errored.connect(self._on_build_exception)
+        self._compilation_thread.command_started.connect(self._on_command_started)
+        self._compilation_thread.output_available.connect(self._on_output_available)
+        self._compilation_thread.finished.connect(self._on_compilation_finished)
+        self._exception_flags[:] = []
+        self._compilation_thread.start()
+
     def compile(self):
         """
         Compiles the current editor
@@ -271,38 +409,17 @@ class CobolController(Controller):
         trace_log.event('compile.requested', source=path,
                         run_requested=self._run_requested)
         dotted_extension = os.path.splitext(path)[1].upper()
-        compiler_works, msg = self.check_compiler(dotted_extension)
+        if Settings().project_root_for_source(path):
+            compiler_works, msg = True, ''
+        else:
+            compiler_works, msg = self.check_compiler(dotted_extension)
         if not compiler_works:
             QtWidgets.QMessageBox.warning(
                 self.app.win, 'Cannot compile file',
                 'Cannot compile file: %r.\n\nReason: %s' % (
                     os.path.split(path)[1], msg))
             return
-        # ensures all editors are saved before compiling
-        self.ui.tabWidgetEditors.save_all()
-        # disable actions
-        self.enable_compile(False)
-        self.enable_run(False)
-        # reset errors
-        self.ui.errorsTable.clear()
-        self._errors = 0
-        # prepare and start compilation thread
-        self.ui.textEditCompilerOutput.clear()
-        self.ui.tabWidgetLogs.setCurrentIndex(LOG_PAGE_COMPILER)
-        self._compilation_thread = CompilationThread()
-        self._compilation_thread.file_path = \
-            self.app.edit.current_editor.file.path
-        self._compilation_thread.file_compiled.connect(self._on_file_compiled)
-        self._compilation_thread.errored.connect(self._on_build_exception)
-        self._compilation_thread.command_started.connect(
-            self._on_command_started)
-        self._compilation_thread.output_available.connect(
-            self._on_output_available)
-        self._compilation_thread.finished.connect(
-            self._on_compilation_finished)
-        self._compilation_thread.start()
-        trace_log.event('compile.thread.started', source=path)
-        self._exception_flags[:] = []
+        self._start_compilation()
 
     def clean(self):
         path = self.app.edit.current_editor.file.path
@@ -352,6 +469,7 @@ class CobolController(Controller):
         trace_log.event('compile.ui.finished', errors=self._errors,
                         run_requested=self._run_requested)
         self.enable_compile(True)
+        self.project_compile_action.setEnabled(True)
         self.enable_run(True)
         self.ui.tabWidgetLogs.setCurrentIndex(LOG_PAGE_ISSUES)
         if self._run_requested:
@@ -401,6 +519,9 @@ class CobolController(Controller):
                     CheckerMessages.INFO, -1,
                     path=filename))
         else:
+            if status != 0 and not messages:
+                messages = [('Compiler exited with status %s' % status,
+                             CheckerMessages.ERROR, -1, 0, None, None, filename)]
             for msg in messages:
                 msg = CheckerMessage(*msg)
                 if msg.status == CheckerMessages.ERROR:

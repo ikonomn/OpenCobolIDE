@@ -51,6 +51,14 @@ class FileController(Controller):
         self.ui.menuFile.clear()
         self.ui.menuFile.addAction(self.ui.actionNew)
         self.ui.menuFile.addAction(self.ui.actionOpen)
+        self.project_root = None
+        self._project_setup_dialog = None
+        self.new_project_action = self.ui.menuFile.addAction('New Project...')
+        self.new_project_action.triggered.connect(self.request_new_project)
+        self.open_project_action = self.ui.menuFile.addAction('Open Project...')
+        self.open_project_action.triggered.connect(self.request_open_project)
+        self.configure_project_action = self.ui.menuFile.addAction('Configure Project...')
+        self.configure_project_action.triggered.connect(self.show_project_setup)
         self.ui.menuFile.addSeparator()
         self.ui.menuFile.addMenu(self.menu_recents)
         self.ui.menuFile.addSeparator()
@@ -79,17 +87,83 @@ class FileController(Controller):
         self.ui.tvFileSystem.set_icon_provider(FileIconProvider())
         self._warning_unc = False
 
+    def request_open_project(self):
+        path = QtWidgets.QFileDialog.getExistingDirectory(
+            self.main_window, 'Open Project', Settings().last_path)
+        if path:
+            self.open_project(path, configure=True)
+
+    def open_project(self, path, configure=False):
+        path = os.path.abspath(path)
+        if not os.path.isdir(path):
+            raise NotADirectoryError(path)
+        try:
+            Settings().initialize_project_config(path)
+        except (ValueError, OSError) as error:
+            QtWidgets.QMessageBox.warning(self.main_window, 'Cannot open project', str(error))
+            return
+        self.project_root = path
+        Settings().register_project(path)
+        self.app.view.show_edit_page()
+        self.ui.tvFileSystem.set_root_path(path)
+        self.ui.dockWidgetFileSystem.show()
+        from open_cobol_ide.project import project_sources
+        for source in project_sources(path, Settings().all_extensions):
+            self.open_file(source)
+        Settings().last_path = path
+        if configure:
+            self.show_project_setup()
+
+    def request_new_project(self):
+        from open_cobol_ide.view.dialogs.project_setup import NewProjectDialog
+        from open_cobol_ide.project_config import create_project
+        dialog = NewProjectDialog(self.main_window, Settings().last_path)
+        while dialog.exec_() == QtWidgets.QDialog.Accepted:
+            try:
+                parent = dialog.directory.text().strip()
+                if not os.path.isdir(parent):
+                    raise ValueError('Choose an existing parent folder.')
+                root = create_project(parent, dialog.name.text())
+            except (ValueError, OSError) as error:
+                QtWidgets.QMessageBox.warning(self.main_window, 'Cannot create project', str(error))
+                continue
+            self.open_project(root, configure=True)
+            break
+
+    def show_project_setup(self):
+        if not self.project_root:
+            QtWidgets.QMessageBox.information(self.main_window, 'Configure Project', 'Open a project first.')
+            return
+        from open_cobol_ide.view.dialogs.project_setup import ProjectSetupDialog
+        if self._project_setup_dialog is not None:
+            self._project_setup_dialog.close()
+        self._project_setup_dialog = ProjectSetupDialog(self.project_root, self.app.cobol, self.main_window)
+        self._project_setup_dialog.show()
+
+    def open_created_file(self, path):
+        self.open_file(path)
+        if Settings().project_root_for_source(path):
+            choice = QtWidgets.QMessageBox.question(
+                self.main_window, 'Source compiler settings',
+                'This source inherits the project settings. Configure source overrides now?',
+                QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No, QtWidgets.QMessageBox.No)
+            if choice == QtWidgets.QMessageBox.Yes:
+                self.app.cobol.edit_source_compiler_options(path)
+
     def request_new(self, path=None):
         """
         Requests the creation of a new file, show the new file wizard and open
         if wizard completed sucessfully.
 
         """
+        if not path and self.project_root:
+            source_dir = os.path.join(self.project_root, 'src')
+            path = source_dir if os.path.isdir(source_dir) else self.project_root
         if path and os.path.isfile(path):
             path = os.path.abspath(os.path.join(path, os.pardir))
         path = DlgNewFile.create_new_file(self.main_window, path=path)
         if path:
-            self.open_file(path)
+            self.open_created_file(path)
 
     def request_open(self):
         """

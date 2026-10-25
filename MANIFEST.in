@@ -27,3 +27,5 @@ recursive-exclude open_cobol_ide/extlibs/pygments *
 recursive-exclude open_cobol_ide/extlibs/future *
 global-exclude *.pyc
 global-exclude *.pyo
+
+recursive-include open_cobol_ide/build_tools *.sh *.py

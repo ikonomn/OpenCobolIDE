@@ -42,15 +42,64 @@ program=${filename%.*}
 build_dir="$project_dir/build"
 bin_dir="$project_dir/bin"
 preprocessed="$build_dir/$program.cbsql"
-executable="$bin_dir/$program"
+compile_mode=${OCIDE_COMPILE_MODE:--x}
+case "$compile_mode" in
+    -x) output_extension=${OCIDE_OUTPUT_EXTENSION:-} ;;
+    -m) output_extension=${OCIDE_OUTPUT_EXTENSION:-.so} ;;
+    *) printf 'Invalid OCIDE_COMPILE_MODE: %s\n' "$compile_mode" >&2; exit 2 ;;
+esac
+executable="$bin_dir/$program$output_extension"
 listing="$build_dir/$program.lst"
 
 mkdir -p "$build_dir" "$bin_dir"
 
+run_logged() {
+    printf '$ '
+    printf '%q ' "$@"
+    printf '\n'
+    "$@"
+}
+
+printf 'Source: %s\nCompile mode: %s\n' "$source_file" "$compile_mode"
+printf 'Checking source and copybooks for SQL...\n'
 mode=$(python3 "$project_dir/detect_sql.py" "$source_file" \
     "$project_copy_dir" "$gixsql_copy_dir")
-cobc_args=(-x -v -debug --Xref -ftsymbols -T "$listing"
-    -I "$gixsql_copy_dir")
+printf 'SQL detection: %s\n' "$mode"
+cobc_args=("$compile_mode")
+if [[ -n "${OCIDE_COMPILER_FLAGS+x}" ]]; then
+    flags_file=$(mktemp)
+    trap 'rm -f "$flags_file"' EXIT
+    python3 -c 'import json, os, sys; flags=json.loads(os.environ["OCIDE_COMPILER_FLAGS"]); sys.stdout.buffer.write(b"".join(f.encode()+b"\0" for f in flags))' > "$flags_file"
+    mapfile -d '' -t ide_flags < "$flags_file"
+    cobc_args+=("${ide_flags[@]}")
+else
+    cobc_args+=(-debug --Xref -ftsymbols)
+fi
+# IDE flags replace extra compiler flags, but retain a default listing and
+# verbose build diagnostics unless the user supplied a custom listing.
+has_listing=false
+has_verbose=false
+for ((i=0; i<${#cobc_args[@]}; i++)); do
+    case "${cobc_args[i]}" in
+        -T|-t)
+            if ((i+1 >= ${#cobc_args[@]})); then
+                printf 'Listing option requires a filename\n' >&2
+                exit 2
+            fi
+            listing=${cobc_args[i+1]}
+            has_listing=true
+            ((i+=1))
+            ;;
+        -v|--verbose) has_verbose=true ;;
+    esac
+done
+if ! "$has_listing"; then
+    cobc_args+=(-T "$listing")
+fi
+if ! "$has_verbose"; then
+    cobc_args+=(-v)
+fi
+cobc_args+=(-I "$gixsql_copy_dir")
 gixpp_args=(-e -S -z a -P varchar -I "$gixsql_copy_dir")
 if [[ -d "$project_copy_dir" ]]; then
     gixpp_args+=(-I "$project_copy_dir")
@@ -63,7 +112,7 @@ if [[ "$mode" == "sql" ]]; then
         exit 127
     }
     printf 'Preprocessing %s\n' "$source_file"
-    "$gixpp_command" "${gixpp_args[@]}" \
+    run_logged "$gixpp_command" "${gixpp_args[@]}" \
         -i "$source_file" -o "$preprocessed"
     cobc_args+=(-L "$gixsql_library_dir" -lgixsql)
     compile_input="$preprocessed"
@@ -71,7 +120,7 @@ else
     compile_input="$source_file"
 fi
 printf 'Compiling %s (%s)\n' "$compile_input" "$mode"
-"$cobc_command" "${cobc_args[@]}" -o "$executable" "$compile_input"
+run_logged "$cobc_command" "${cobc_args[@]}" -o "$executable" "$compile_input"
 
-printf 'Executable: %s\n' "$executable"
+printf 'Output:     %s\n' "$executable"
 printf 'Listing:    %s\n' "$listing"

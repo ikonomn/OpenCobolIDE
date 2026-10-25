@@ -23,35 +23,25 @@ def make_linter_command(cobol_file_name, original_file_path, source_code=None):
     if standard != GnuCobolStandard.none:
         args.append('-std=%s' % gnucobol_standard_name(standard))
     from .compiler_options import listing_options
-    flags = settings.source_flags(original_file_path)
-    if flags is None:
-        flags = settings.compiler_flags
+    flags = settings.effective_flags(original_file_path)
     args += listing_options(flags, original_file_path, syntax_only=True)
-    original_path = os.path.dirname(original_file_path)
-    # A source directive is authoritative and may switch format again later in
-    # the file.  In that case let cobc process the unchanged source itself.
-    if detect_source_format(source_code) is None and settings.free_format:
-        args.append('-free')
-    if settings.copybook_paths:
-        for pth in settings.copybook_paths.split(';'):
-            if not pth:
-                continue
-            if not os.path.isabs(pth):
-                # expand relative path based on the original source path
-                # See github issue #119
-                pth = os.path.abspath(os.path.join(original_path, pth))
-            args.append('-I%s' % pth)
-
-    if settings.library_search_path:
-        for pth in settings.library_search_path.split(';'):
-            if pth:
-                args.append('-L%s' % pth)
-    if settings.libraries:
-        for lib in system.shell_split(settings.libraries):
-            if lib:
-                args.append('-l%s' % lib)
+    build = settings.effective_build_options(original_file_path)
+    if detect_source_format(source_code) is None:
+        selected = build['source_format']
+        if selected == 'inherit':
+            if settings.free_format: args.append('-free')
+        else:
+            args.append('-free' if selected == 'free' else '-fixed')
+    for path in build['copybook_paths']:
+        if not os.path.isabs(path):
+            path = os.path.abspath(os.path.join(os.path.dirname(original_file_path), path))
+        args.append('-I%s' % path)
+    for path in build['library_paths']:
+        args.append('-L%s' % path)
+    for library in build['libraries']:
+        args.append('-l%s' % library)
     args.append(cobol_file_name)
-    pgm = (settings.source_environment(original_file_path).get('compiler_path') or
+    pgm = (settings.effective_environment(original_file_path).get('compiler_path') or
            Settings().full_compiler_path)
     return pgm, args
 

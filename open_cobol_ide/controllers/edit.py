@@ -62,7 +62,7 @@ class EditController(Controller):
         self.ui.tvFileSystem.add_ignore_patterns('bin', '.oci*.cbl')
         mnu = FSContextMenu(self.app)
         self.ui.tvFileSystem.set_context_menu(mnu)
-        self.ui.tvFileSystem.file_created.connect(self.app.file.open_file)
+        self.ui.tvFileSystem.file_created.connect(self.app.file.open_created_file)
         self.ui.tvFileSystem.file_renamed.connect(
             self.ui.tabWidgetEditors.rename_document)
         self.ui.tvFileSystem.file_deleted.connect(
@@ -212,7 +212,8 @@ class EditController(Controller):
                 Settings().lock_fs_path = ''
                 self.ui.btFSLock.setChecked(False)
             if not self.ui.btFSLock.isChecked():
-                new_root = os.path.dirname(editor.file.path)
+                new_root = (self.app.file.project_root or
+                            os.path.dirname(editor.file.path))
                 if new_root != self.ui.tvFileSystem.root_path:
                     self.ui.tvFileSystem.set_root_path(new_root)
             self.ui.tableWidgetOffsets.set_editor(editor)

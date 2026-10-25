@@ -2,6 +2,7 @@
 This module contains function and classes for interfacing with the GnuCOBOL
 compiler.
 """
+import json
 import glob
 import locale
 import logging
@@ -48,8 +49,8 @@ def _get_encoding(filename):
 
 def get_file_type(path):
     """
-    Detects file type. A source containing both ``LINKAGE SECTION`` and
-    ``PROCEDURE DIVISION USING`` is considered a callable module; other
+    Detects file type. A source containing ``PROCEDURE DIVISION USING``
+    is considered a callable module; other
     sources are considered executables.
 
     :param path: file path
@@ -63,13 +64,33 @@ def get_file_type(path):
     except KeyError:
         ftype = FileType.EXECUTABLE
         with open(path, 'r', encoding=encoding) as f:
-            content = f.read().upper()
-        has_linkage = re.search(
-            r'\bLINKAGE\s+SECTION\b', content, re.DOTALL) is not None
+            from .source_format import detect_source_format
+            source = f.read()
+            free = detect_source_format(source)
+            if free is None:
+                selected = Settings().effective_build_options(path)['source_format']
+                free = (Settings().free_format if selected == 'inherit' else selected == 'free')
+                flags = Settings().effective_flags(path)
+                if '-free' in flags: free = True
+                if '-fixed' in flags: free = False
+            lines = []
+            for line in source.splitlines():
+                directive = detect_source_format(line)
+                if directive is not None:
+                    free = directive
+                    continue
+                if not free:
+                    if len(line) > 6 and line[6] in '*/':
+                        continue
+                    line = line[7:72]
+                line = re.sub(r"'(?:''|[^'])*'|\"(?:\"\"|[^\"])*\"|\*>.*",
+                              ' ', line)
+                lines.append(line)
+            content = '\n'.join(lines).upper()
         has_using = re.search(
             r'\bPROCEDURE\s+DIVISION\s+USING\b', content,
             re.DOTALL) is not None
-        if has_linkage and has_using:
+        if has_using:
             ftype = FileType.MODULE
     _logger().debug('file type: %r', ftype)
     return ftype
@@ -126,42 +147,57 @@ def run_command(pgm, args, working_dir='', process_environment=None):
 
 
 def find_build_script(file_path):
-    """Return the nearest executable project ``build.sh``, if present."""
-    directory = os.path.dirname(os.path.abspath(file_path))
-    while True:
-        script = os.path.join(directory, 'build.sh')
-        if os.path.isfile(script) and os.access(script, os.X_OK):
-            return script
-
-        # Do not escape from the source's project into an unrelated parent.
-        if os.path.exists(os.path.join(directory, '.git')) or \
-                os.path.isfile(os.path.join(directory, 'Makefile')):
-            break
-        parent = os.path.dirname(directory)
-        if parent == directory:
-            break
-        directory = parent
-    return None
+    """Select the IDE-owned builder for sources in an opened project."""
+    if os.path.splitext(file_path)[1].lower() not in ('.cbl', '.cob', '.pco'):
+        return None
+    if Settings().project_root_for_source(file_path) is None:
+        return None
+    script = os.path.join(os.path.dirname(__file__), 'build_tools', 'build.sh')
+    if not os.path.isfile(script):
+        raise FileNotFoundError('The IDE project build script is missing: ' + script)
+    return script
 
 
 def get_build_script_output_directory(file_path):
-    """Return the conventional output directory for a project build script."""
-    script = find_build_script(file_path)
-    if script is not None:
-        return os.path.join(os.path.dirname(script), 'bin')
+    """Project artifacts belong to the project, never the IDE install folder."""
+    if find_build_script(file_path) is not None:
+        return os.path.join(Settings().project_root_for_source(file_path), 'bin')
     return None
 
 
 def compile_with_build_script(file_path, output_callback=None):
-    """Compile *file_path* through its project-local ``build.sh`` script."""
+    """Compile a project source using the bundled builder and saved settings."""
     script = find_build_script(file_path)
     if script is None:
-        raise FileNotFoundError('No executable build.sh found next to %s' %
+        raise FileNotFoundError('Open the project before compiling %s' %
                                 file_path)
 
-    working_dir = os.path.dirname(script)
+    working_dir = Settings().project_root_for_source(file_path)
     source = os.path.abspath(file_path)
-    status, output = run_command(script, [source], working_dir=working_dir)
+    compiler = GnuCobolCompiler()
+    file_type = get_file_type(source)
+    env = compiler.setup_process_environment(source)
+    env.insert('OCIDE_COMPILE_MODE', '-x' if file_type == FileType.EXECUTABLE else '-m')
+    env.insert('OCIDE_OUTPUT_EXTENSION', compiler.extension_for_type(file_type))
+    pgm, args = compiler.make_command(
+        [os.path.basename(source)], file_type, 'bin', source_path=source,
+        default_listing=os.path.join(working_dir, 'build',
+                                     os.path.splitext(os.path.basename(source))[0] + '.lst'))
+    env.insert('OCIDE_PROJECT_DIR', working_dir)
+    env.insert('COBC', pgm)
+    build_options = Settings().effective_build_options(source)
+    env.insert('OCIDE_GENERATE_LISTING', '1' if build_options['listing'].get('enabled', True) else '0')
+    from .source_format import read_source_format
+    free = read_source_format(source)
+    if free is None:
+        selected = build_options['source_format']
+        free = Settings().free_format if selected == 'inherit' else selected == 'free'
+    if '-free' in args: free = True
+    if '-fixed' in args: free = False
+    env.insert('OCIDE_SOURCE_FORMAT', 'free' if free else 'fixed')
+    env.insert('OCIDE_COMPILER_FLAGS', json.dumps(args[3:-1]))
+    status, output = run_command('bash', [script, source], working_dir=working_dir,
+                                 process_environment=env)
     if output_callback is not None:
         output_callback(output)
     messages = GnuCobolCompiler().parse_output(output, working_dir)
@@ -301,7 +337,7 @@ class GnuCobolCompiler(QtCore.QObject):
             env.insert('COB_LIB_PATH', s.cob_lib_path)
 
         if source_path:
-            override = s.source_environment(source_path)
+            override = s.effective_environment(source_path)
             source_path_value = override.get('path', '')
             mode = override.get('path_mode', 'inherit')
             if mode == 'prepend' and source_path_value:
@@ -311,6 +347,11 @@ class GnuCobolCompiler(QtCore.QObject):
                 env.insert('PATH', source_path_value)
             if override.get('cob_copy_dir'):
                 env.insert('COB_COPY_DIR', override['cob_copy_dir'])
+            for key, variable in (('gixpp_path', 'GIXPP'),
+                                  ('gixsql_copy_dir', 'GIXSQL_COPY_DIR'),
+                                  ('gixsql_library_dir', 'GIXSQL_LIBRARY_DIR')):
+                if override.get(key):
+                    env.insert(variable, override[key])
 
         return env
 
@@ -564,7 +605,7 @@ class GnuCobolCompiler(QtCore.QObject):
             file_type)
 
     def make_command(self, input_file_names, file_type, output_dir=None,
-                     additional_options=None, source_path=None):
+                     additional_options=None, source_path=None, default_listing=None):
         """
         Makes the command needed to compile the specified file.
 
@@ -594,28 +635,34 @@ class GnuCobolCompiler(QtCore.QObject):
         if standard != GnuCobolStandard.none:
             options.append('-std=%s' % gnucobol_standard_name(standard))
         from .compiler_options import listing_options
-        flags = settings.source_flags(source_path or input_file_names[0])
-        if flags is None:
-            flags = settings.compiler_flags
-        options += listing_options(flags, input_file_names[0], settings.automatic_listing)
+        from .project_config import source_options
+        source = source_path or input_file_names[0]
+        build = settings.effective_build_options(source)
+        listing = build['listing']
+        flags = settings.effective_flags(source)
+        explicit_source = source_options(source) or {}
+        if explicit_source.get('listing', {}).get('filename') and explicit_source.get('flags') is None:
+            flags = listing_options(flags, source, syntax_only=True)
+        listing_default = listing.get('filename') or default_listing
+        if listing_default:
+            listing_default = listing_default.replace('{stem}', os.path.splitext(os.path.basename(source))[0])
+        automatic = listing.get('enabled', settings.automatic_listing)
+        options += listing_options(flags, source, automatic,
+                                   syntax_only=not listing.get('enabled', True),
+                                   default_filename=listing_default)
         from .source_format import read_source_format
-        source_format = read_source_format(
-            source_path or (input_file_names[0] if input_file_names else None))
-        if source_format is None and settings.free_format:
-            options.append('-free')
-        if settings.copybook_paths:
-            for pth in settings.copybook_paths.split(';'):
-                if not pth:
-                    continue
-                options.append('-I%s' % pth)
-        if settings.library_search_path:
-            for pth in settings.library_search_path.split(';'):
-                if pth:
-                    options.append('-L%s' % pth)
-        if settings.libraries:
-            for lib in system.shell_split(settings.libraries):
-                if lib:
-                    options.append('-l%s' % lib)
+        if read_source_format(source) is None:
+            selected = build['source_format']
+            if selected == 'inherit':
+                if settings.free_format: options.append('-free')
+            else:
+                options.append('-free' if selected == 'free' else '-fixed')
+        for path in build['copybook_paths']:
+            options.append('-I%s' % path)
+        for path in build['library_paths']:
+            options.append('-L%s' % path)
+        for library in build['libraries']:
+            options.append('-l%s' % library)
         if additional_options:
             options += additional_options
         for ifn in input_file_names:
@@ -623,7 +670,7 @@ class GnuCobolCompiler(QtCore.QObject):
                 ifn = '"%s"' % ifn
             options.append(ifn)
         source = source_path or input_file_names[0]
-        pgm = (Settings().source_environment(source).get('compiler_path') or
+        pgm = (Settings().effective_environment(source).get('compiler_path') or
                Settings().compiler_path)
 
         return pgm, options

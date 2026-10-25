@@ -99,6 +99,18 @@ changelog="$package_root/usr/share/doc/$package_name/changelog"
 printf '%s\n' \
     "$package_name ($package_version) unstable; urgency=medium" \
     '' \
+    '  * Add New Project and Configure Project workflows with portable project.json.' \
+    '  * Migrate legacy project/source preferences and validate settings before builds.' \
+    '  * Add source-relative paths, listing controls and per-source build overrides.' \
+    '  * Build opened projects with the IDE-owned script, never project build.sh.' \
+    '  * Include internal SQL detection, cross-reference listings and verbose output.' \
+    '  * Restore default project listings when IDE flags omit -T/-t.' \
+    '  * Display GixSQL commands and verbose compile/link steps.' \
+    '  * Add persistent project compiler defaults below per-source overrides.' \
+    '  * Apply project defaults to compilation, syntax checking and build scripts.' \
+    '  * Detect module mode from PROCEDURE DIVISION USING without inline LINKAGE.' \
+    '  * Add Open Project and Compile Project while preserving F8 compilation.' \
+    '  * Pass detected source mode and per-source options to GixSQL build scripts.' \
     '  * Correct About runtime diagnostics using cobcrun --info and --runtime-config.' \
     '  * Add automatic listing names and per-source compiler flag overrides.' \
     '  * Detect FREE and FIXED source directives in the editor automatically.' \

@@ -427,19 +427,32 @@ cobc --info</code></pre>
 <li>the appropriate database development headers and client library.</li>
 </ul>
 <p>Configure their paths under <code>Edit -&gt; Preferences -&gt; SQL COBOL</code>. Add required include, copybook, library-search, and library options under the compiler settings, then open and compile the <code>.scb</code> source.</p>
-<h3 id="advanced-sql-cobol-with-a-project-build-script">SQL COBOL with a project build script<a class="permalink" href="#advanced-sql-cobol-with-a-project-build-script">#</a></h3>
-<p>Projects that use another SQL precompiler, such as GixSQL's <code>gixpp</code>, can provide an executable <code>build.sh</code> in the same directory as their COBOL source files or in the project root above them. OpenCobolIDE searches upward as far as the nearest <code>.git</code> directory or <code>Makefile</code>. When <strong>Compile</strong> or <strong>Run</strong> is selected, it invokes the script with the absolute source-file path as its only</p>
-<p>argument instead of calling <code>cobc</code> directly:</p>
-<pre><code>./build.sh /absolute/path/to/program.cbl</code></pre>
-<p>The script is responsible for preprocessing the source, compiling the generated COBOL, and placing the resulting executable in the project-root <code>bin</code> directory. OpenCobolIDE uses that directory for <strong>Run</strong> and <strong>Clean</strong> as well. The script's standard output and standard error are shown in the compiler log. A nonzero exit status marks the compilation as failed.</p>
-<p>The script must be executable:</p>
-<pre><code>chmod +x build.sh</code></pre>
-<p>A generic GixSQL template is included in the source tree at <code>examples/gixsql/build.sh</code>. The Debian package installs the same template at <code>/usr/share/doc/opencobolide/examples/gixsql/build.sh</code>. Start a new project</p>
-<p>by copying it to the project root:</p>
-<pre><code>cp /usr/share/doc/opencobolide/examples/gixsql/build.sh ./build.sh
-chmod +x ./build.sh</code></pre>
-<p>The template uses <code>gixpp</code> followed by <code>cobc</code>, writes intermediate files to <code>build/</code>, and writes executables to <code>bin/</code>. Install GixSQL separately and, when it is installed outside the distribution defaults, set <code>GIXSQL_COPY_DIR</code> and <code>GIXSQL_LIBRARY_DIR</code> in the project script or its environment. The example directory also contains <code>README.md</code> and sample SQLite and MariaDB <code>.conf.example</code> profiles. They document runtime profile selection with <code>DB-FLAG</code> and <code>DB_CONFIG_FILE</code> without hard-coding database paths or credentials in COBOL sources.</p>
-<p>If no executable <code>build.sh</code> is found in that project scope, OpenCobolIDE keeps the normal compiler flow, including the existing DBPRE and esqlOC integrations. Do not modify the original source file in the build script; write preprocessed and listing files to a separate build directory.</p>
+<h3 id="advanced-project-compilation-with-the-internal-build-script">Project compilation with the internal build script<a class="permalink" href="#advanced-project-compilation-with-the-internal-build-script">#</a></h3>
+<p>Choose <strong>Open Project</strong> and select the source directory. OpenCobolIDE uses its own installed <code>open_cobol_ide/build_tools/build.sh</code> for project compilation, F8 and Run. It never executes a <code>build.sh</code> from the project directory. No project-local build script or SQL detector needs to be copied or maintained. Projects previously configured in the IDE also use this internal builder.</p>
+<p>The IDE supplies the project directory and absolute source path. The bundled SQL detector inspects sources and copybooks. SQL sources use GixSQL's <code>gixpp</code> before compilation; plain COBOL sources go directly to <code>cobc</code>. GixSQL must be installed separately when SQL preprocessing is required. Existing DBPRE and esqlOC source extensions retain their dedicated compiler paths.</p>
+<p>The IDE detects <code>-x</code> or <code>-m</code> per source and passes the compiler options and environment resolved from IDE defaults, project defaults and source overrides. Artifacts remain inside the project: <code>bin/</code> for executable/module output and <code>build/</code> for intermediate SQL output and default <code>&lt;source&gt;.lst</code> listings. Explicit <code>-T</code>/<code>-t</code> filenames are preserved. Listings include cross references (<code>--Xref</code>) and symbol tables (<code>-ftsymbols</code>). The compiler log shows the exact commands and verbose preprocessing, translation, compilation and linking steps.</p>
+<p><strong>File → New Project…</strong> asks for a name and parent directory and creates <code>src/</code>, <code>copybooks/</code>, <code>bin/</code>, <code>build/</code>, <code>data/</code> and <code>config/</code> without replacing existing files. A New Project button is also available on the opening screen. New source files default to the project's <code>src/</code> directory and offer source compiler settings after creation.</p>
+<p><strong>Open Project</strong> opens the sources and displays <strong>Configure Project</strong>, which is also available from the File menu. It lists the sources, whether they inherit project defaults or have overrides, and validation results. Use <strong>Project defaults…</strong> or <strong>Selected source settings…</strong> to configure them.</p>
+<p>Project settings are saved atomically in <code>config/project.json</code>. Source keys and project-local paths are relative to the project root, so settings survive moving or copying the project. Existing project and source preferences are imported once when an older project without this file is opened. Existing project.json files are loaded as-is; invalid configuration is reported without replacing it.</p>
+<p><strong>COBOL → Project compiler settings…</strong> edits shared defaults. <strong>Compiler options for this file…</strong> edits a source override. Both support extra compiler flags, compiler and tools paths, copybook and library paths, libraries, source format, listing generation and filenames, and GixSQL preprocessor/copy/library paths. Blank environment fields and Inherit selections fall back to the level above. Priority is source overrides, project defaults, then IDE defaults. Executable and module modes remain automatically detected; do not enter <code>-x</code> or <code>-m</code> in the flags. Source listing filenames can use <code>{stem}</code> for the source basename.</p>
+<p>A minimal portable configuration looks like this:</p>
+<pre><code>{
+  &quot;schema_version&quot;: 1,
+  &quot;name&quot;: &quot;MyProject&quot;,
+  &quot;defaults&quot;: {
+    &quot;enabled&quot;: true,
+    &quot;flags&quot;: [&quot;-Wall&quot;, &quot;-debug&quot;],
+    &quot;environment&quot;: {},
+    &quot;copybook_paths&quot;: [&quot;copybooks&quot;],
+    &quot;listing&quot;: {&quot;enabled&quot;: true, &quot;filename&quot;: &quot;build/{stem}.lst&quot;}
+  },
+  &quot;sources&quot;: {
+    &quot;src/helper.cbl&quot;: {&quot;flags&quot;: [&quot;-Wall&quot;]}
+  }
+}</code></pre>
+<p>Validation runs when reviewing settings, before saving changed settings, and before compiling. Errors introduced by an edit are rejected; existing errors can be repaired incrementally. Compilation is blocked until errors are fixed. Warnings require acknowledgment. Checks include compiler/tool availability, missing directories and COPY dependencies, fixed/free format conflicts, manual mode/output flags, and overlapping binary/listing/intermediate names. The project source files and configuration may not be used as listing targets.</p>
+<p>GixSQL's copy and library directories may be selected with <code>GIXSQL_COPY_DIR</code> and <code>GIXSQL_LIBRARY_DIR</code> in the IDE's environment. The example directory contains SQLite and MariaDB runtime profiles. The optional example <code>build.sh</code> is retained for command-line use; the IDE does not select it.</p>
+<p>Sources opened outside a project retain ordinary single-file compilation.</p>
 <h3 id="advanced-developer-mode">Developer mode<a class="permalink" href="#advanced-developer-mode">#</a></h3>
 <p>OpenCobolIDE normally loads the legacy pure-Python libraries bundled under <code>open_cobol_ide/extlibs</code>. Setting <code>OCIDE_DEV_MODE=1</code> disables that bundled path modification and requires compatible dependencies to be supplied by the development environment.</p>
 <p>The maintained Debian package deliberately uses the distribution PyQt5 package so its native Qt dependencies match the host system. Developer mode is intended for source work and is not required for normal use.</p>

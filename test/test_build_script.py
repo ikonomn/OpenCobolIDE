@@ -1,54 +1,49 @@
 import os
+import pytest
 
 from open_cobol_ide import compilers
 
 
-def test_find_build_script_requires_executable(tmp_path):
+def test_internal_builder_ignores_project_script(tmp_path):
+    from open_cobol_ide.settings import Settings
     source = tmp_path / 'program.cbl'
     source.write_text('IDENTIFICATION DIVISION.')
     script = tmp_path / 'build.sh'
-    script.write_text('#!/bin/sh\n')
-
-    assert compilers.find_build_script(str(source)) is None
-
+    script.write_text('#!/bin/sh\nexit 99\n')
     script.chmod(0o755)
-    assert compilers.find_build_script(str(source)) == str(script)
+    assert compilers.find_build_script(str(source)) is None
+    Settings().register_project(str(tmp_path))
+    selected = compilers.find_build_script(str(source))
+    assert selected != str(script)
+    assert selected.endswith('/open_cobol_ide/build_tools/build.sh')
 
 
-def test_find_build_script_searches_up_to_project_root(tmp_path):
+def test_internal_builder_handles_nested_sources_without_project_script(tmp_path):
+    from open_cobol_ide.settings import Settings
     project = tmp_path / 'project'
     source_dir = project / 'src' / 'batch'
     source_dir.mkdir(parents=True)
     source = source_dir / 'program.cbl'
     source.write_text('IDENTIFICATION DIVISION.')
-    (project / 'Makefile').write_text('all:\n')
-    script = project / 'build.sh'
-    script.write_text('#!/bin/sh\n')
-    script.chmod(0o755)
-
-    assert compilers.find_build_script(str(source)) == str(script)
-    assert compilers.get_build_script_output_directory(str(source)) == \
-        str(project / 'bin')
+    Settings().register_project(str(project))
+    assert compilers.find_build_script(str(source)).endswith('/build_tools/build.sh')
+    assert compilers.get_build_script_output_directory(str(source)) == str(project / 'bin')
 
 
-def test_find_build_script_does_not_escape_project_root(tmp_path):
+def test_internal_builder_does_not_capture_unrelated_or_sql_backend_sources(tmp_path):
+    from open_cobol_ide.settings import Settings
     project = tmp_path / 'project'
-    source_dir = project / 'src'
-    source_dir.mkdir(parents=True)
-    source = source_dir / 'program.cbl'
-    source.write_text('IDENTIFICATION DIVISION.')
-    (project / '.git').mkdir()
-    script = tmp_path / 'build.sh'
-    script.write_text('#!/bin/sh\n')
-    script.chmod(0o755)
-
-    assert compilers.find_build_script(str(source)) is None
-    assert compilers.get_build_script_output_directory(str(source)) is None
+    Settings().register_project(str(project))
+    assert compilers.find_build_script(str(tmp_path / 'other/main.cbl')) is None
+    assert compilers.find_build_script(str(project / 'db.scb')) is None
+    assert compilers.find_build_script(str(project / 'db.sqb')) is None
 
 
 def test_compile_with_build_script_passes_absolute_source(monkeypatch,
                                                           tmp_path):
     source = tmp_path / 'program.cbl'
+    from open_cobol_ide.settings import Settings
+    Settings().register_project(str(tmp_path))
     source.write_text('IDENTIFICATION DIVISION.')
     script = tmp_path / 'build.sh'
     script.write_text('#!/bin/sh\n')
@@ -56,7 +51,12 @@ def test_compile_with_build_script_passes_absolute_source(monkeypatch,
     called = {}
     emitted = []
 
-    def fake_run_command(pgm, args, working_dir=''):
+    def fake_run_command(pgm, args, working_dir='', process_environment=None):
+        called_env = process_environment
+        assert called_env.value('OCIDE_COMPILE_MODE') == '-x'
+        assert called_env.value('OCIDE_PROJECT_DIR') == str(tmp_path)
+        assert called_env.value('COBC')
+        assert called_env.value('OCIDE_COMPILER_FLAGS')
         called.update(pgm=pgm, args=args, working_dir=working_dir)
         return 0, 'Build completed'
 
@@ -69,8 +69,8 @@ def test_compile_with_build_script_passes_absolute_source(monkeypatch,
     assert messages == []
     assert emitted == ['Build completed']
     assert called == {
-        'pgm': str(script),
-        'args': [str(source)],
+        'pgm': 'bash',
+        'args': [compilers.find_build_script(str(source)), str(source)],
         'working_dir': str(tmp_path),
     }
 
@@ -78,6 +78,8 @@ def test_compile_with_build_script_passes_absolute_source(monkeypatch,
 def test_compile_with_build_script_reports_unparsed_failure(monkeypatch,
                                                              tmp_path):
     source = tmp_path / 'program.cbl'
+    from open_cobol_ide.settings import Settings
+    Settings().register_project(str(tmp_path))
     source.write_text('IDENTIFICATION DIVISION.')
     script = tmp_path / 'build.sh'
     script.write_text('#!/bin/sh\n')
@@ -129,3 +131,36 @@ def test_detector_recurses_copy_and_ignores_comments(tmp_path):
     (tmp_path / 'first.cpy').write_text('       COPY second.\n')
     (tmp_path / 'second.cpy').write_text('           EXEC SQL SELECT 1 END-EXEC.\n')
     assert detector.has_sql(source, [tmp_path])
+
+
+@pytest.mark.parametrize('flags,listing', [
+    ([], 'build/plain.lst'),
+    (['-Wall'], 'build/plain.lst'),
+    (['-T', 'listing with spaces.prn'], 'listing with spaces.prn'),
+    (['-t', 'short listing.prn'], 'short listing.prn'),
+])
+def test_ide_flags_create_listing_and_show_compile_steps(tmp_path, flags, listing):
+    import json
+    import shutil
+    import subprocess
+    from pathlib import Path
+    template = Path(__file__).resolve().parents[1] / 'examples/gixsql'
+    for name in ('build.sh', 'detect_sql.py'):
+        shutil.copy2(template / name, tmp_path / name)
+    source = tmp_path / 'plain.cbl'
+    source.write_text('       identification division.\n'
+                      '       program-id. plain.\n'
+                      '       procedure division.\n           goback.\n')
+    env = dict(os.environ, OCIDE_COMPILER_FLAGS=json.dumps(flags))
+    result = subprocess.run(['bash', str(tmp_path / 'build.sh'), str(source)],
+                            cwd=tmp_path, env=env, text=True, capture_output=True)
+    assert result.returncode == 0, result.stderr
+    assert (tmp_path / listing).stat().st_size > 0
+    output = result.stdout + result.stderr
+    assert 'SQL detection: plain' in output
+    assert '$ cobc ' in output
+    assert 'preprocessing:' in output
+    assert 'parsing:' in output
+    assert 'translating:' in output
+    assert 'executing:' in output
+    assert 'Listing:    ' in result.stdout

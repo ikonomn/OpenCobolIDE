@@ -481,12 +481,22 @@ class Settings(object):
         self._settings.setValue('compiler/automatic_listing', int(value))
 
     def source_flags(self, path):
+        from open_cobol_ide.project_config import source_options
+        options = source_options(path)
+        if options is not None:
+            return options.get('flags')
         import hashlib
         key = hashlib.sha256(os.path.normcase(os.path.realpath(path)).encode('utf-8')).hexdigest()
         raw = self._settings.value('compiler/source_flags/' + key, None)
         return None if raw is None else json.loads(raw)
 
     def set_source_flags(self, path, flags):
+        from open_cobol_ide.project_config import source_options, set_source_options, find_root, portable_options
+        options = source_options(path)
+        if options is not None:
+            options['flags'] = flags
+            set_source_options(path, portable_options(find_root(path), options))
+            return
         import hashlib
         key = 'compiler/source_flags/' + hashlib.sha256(
             os.path.normcase(os.path.realpath(path)).encode('utf-8')).hexdigest()
@@ -501,6 +511,10 @@ class Settings(object):
         key = hashlib.sha256(
             os.path.normcase(os.path.realpath(path)).encode('utf-8')).hexdigest()
         raw = self._settings.value('compiler/source_environment/' + key, None)
+        from open_cobol_ide.project_config import source_options
+        options = source_options(path)
+        if options is not None:
+            raw = json.dumps(options.get('environment', {}))
         defaults = {
             'compiler_path': '', 'path_mode': 'inherit',
             'path': '', 'cob_copy_dir': ''}
@@ -511,10 +525,18 @@ class Settings(object):
         except (TypeError, ValueError):
             return defaults
         defaults.update({k: value.get(k, defaults[k]) for k in defaults})
+        defaults.update({k: value[k] for k in ('gixpp_path', 'gixsql_copy_dir',
+                                              'gixsql_library_dir') if value.get(k)})
         return defaults
 
     def set_source_environment(self, path, value):
         """Store or remove per-source compiler/environment overrides."""
+        from open_cobol_ide.project_config import source_options, set_source_options, find_root, portable_options
+        options = source_options(path)
+        if options is not None:
+            options['environment'] = value or {}
+            set_source_options(path, portable_options(find_root(path), options))
+            return
         import hashlib
         key = 'compiler/source_environment/' + hashlib.sha256(
             os.path.normcase(os.path.realpath(path)).encode('utf-8')).hexdigest()
@@ -525,6 +547,172 @@ class Settings(object):
             self._settings.remove(key)
         else:
             self._settings.setValue(key, json.dumps(value))
+
+    def register_project(self, root):
+        roots = json.loads(self._settings.value('compiler/project_roots', '[]'))
+        root = os.path.normcase(os.path.realpath(root))
+        if root not in roots:
+            roots.append(root)
+            self._settings.setValue('compiler/project_roots', json.dumps(roots))
+
+    def project_root_for_source(self, path):
+        from open_cobol_ide.project_config import find_root
+        portable_root = find_root(path)
+        if portable_root:
+            return portable_root
+        roots = json.loads(self._settings.value('compiler/project_roots', '[]'))
+        # Previously configured projects also use the internal builder.
+        roots += list(json.loads(self._settings.value('compiler/projects', '{}')))
+        path = os.path.normcase(os.path.realpath(path))
+        for root in sorted(set(roots), key=len, reverse=True):
+            try:
+                if os.path.commonpath([path, root]) == root:
+                    return root
+            except ValueError:
+                continue
+        return None
+
+    def project_options(self, root):
+        """Saved compiler defaults for one project directory."""
+        from open_cobol_ide.project_config import config_path, load
+        if config_path(root).is_file():
+            return load(root)['defaults']
+        projects = json.loads(self._settings.value('compiler/projects', '{}'))
+        return projects.get(os.path.normcase(os.path.realpath(root)), {})
+
+    def set_project_options(self, root, options):
+        from open_cobol_ide.project_config import config_path, load, save, portable_options
+        if config_path(root).is_file():
+            data = load(root)
+            data['defaults'] = portable_options(root, options or {})
+            save(root, data)
+            return
+        projects = json.loads(self._settings.value('compiler/projects', '{}'))
+        root = os.path.normcase(os.path.realpath(root))
+        if options is None:
+            projects.pop(root, None)
+        else:
+            projects[root] = options
+        self._settings.setValue('compiler/projects', json.dumps(projects))
+
+    def source_project_options(self, path):
+        from open_cobol_ide.project_config import find_root, load
+        root = find_root(path)
+        if root:
+            defaults = load(root)['defaults']
+            return defaults if defaults.get('enabled', True) else {}
+        projects = json.loads(self._settings.value('compiler/projects', '{}'))
+        path = os.path.normcase(os.path.realpath(path))
+        for root in sorted(projects, key=len, reverse=True):
+            try:
+                if os.path.commonpath([path, root]) == root:
+                    return projects[root] if projects[root].get('enabled', True) else {}
+            except ValueError:
+                continue
+        return {}
+
+    def inherited_flags(self, path):
+        flags = self.source_project_options(path).get('flags')
+        return self.compiler_flags if flags is None else flags
+
+    def effective_flags(self, path):
+        flags = self.source_flags(path)
+        flags = self.inherited_flags(path) if flags is None else flags
+        from open_cobol_ide.project_config import map_flags
+        return map_flags(flags, self.project_root_for_source(path))
+
+    def effective_environment(self, path):
+        result = dict(self.source_project_options(path).get('environment', {}))
+        source = self.source_environment(path)
+        for key in ('compiler_path', 'cob_copy_dir', 'gixpp_path',
+                    'gixsql_copy_dir', 'gixsql_library_dir'):
+            if source.get(key):
+                result[key] = source[key]
+        if source.get('path_mode', 'inherit') != 'inherit':
+            result['path_mode'] = source['path_mode']
+            result['path'] = source.get('path', '')
+        from open_cobol_ide.project_config import resolve_path
+        root = self.project_root_for_source(path)
+        for key in ('compiler_path', 'cob_copy_dir', 'gixpp_path',
+                    'gixsql_copy_dir', 'gixsql_library_dir'):
+            if result.get(key) and (key not in ('compiler_path', 'gixpp_path') or
+                                    '/' in result[key] or '\\' in result[key]):
+                result[key] = resolve_path(root, result[key])
+        if result.get('path'):
+            result['path'] = os.pathsep.join(resolve_path(root, p)
+                                              for p in result['path'].split(os.pathsep))
+        return result
+
+    def initialize_project_config(self, root):
+        from open_cobol_ide import project_config as config
+        if config.config_path(root).is_file():
+            return config.load(root)
+        from open_cobol_ide.project import project_sources
+        data = config.default_config(root)
+        if not os.path.isdir(os.path.join(root, 'copybooks')):
+            data['defaults']['copybook_paths'] = None
+        legacy = self.project_options(root)
+        data['defaults'].update(config.portable_options(root, legacy))
+        for source in project_sources(root, self.all_extensions):
+            flags = self.source_flags(source)
+            environment = self.source_environment(source)
+            options = self.source_build_options(source)
+            if flags is not None:
+                options['flags'] = flags
+            if any(v for k, v in environment.items() if k != 'path_mode') or environment.get('path_mode') != 'inherit':
+                options['environment'] = environment
+            if options:
+                data['sources'][config.source_key(root, source)] = config.portable_options(root, options)
+        config.save(root, data)
+        return data
+
+    def set_source_compiler_options(self, path, flags, environment, extra=None):
+        from open_cobol_ide import project_config as config
+        options = config.source_options(path)
+        if options is None:
+            self.set_source_flags(path, flags)
+            self.set_source_environment(path, environment)
+            import hashlib
+            key = hashlib.sha256(os.path.normcase(os.path.realpath(path)).encode('utf-8')).hexdigest()
+            self._settings.setValue('compiler/source_build_options/' + key, json.dumps(extra or {}))
+            return
+        options.update(extra or {})
+        options.update(flags=flags, environment=environment)
+        config.set_source_options(path, config.portable_options(config.find_root(path), options))
+
+    def source_build_options(self, path):
+        from open_cobol_ide.project_config import source_options
+        options = source_options(path)
+        if options is not None:
+            return options
+        import hashlib
+        key = hashlib.sha256(os.path.normcase(os.path.realpath(path)).encode('utf-8')).hexdigest()
+        return json.loads(self._settings.value('compiler/source_build_options/' + key, '{}'))
+
+    def effective_build_options(self, path):
+        from open_cobol_ide import project_config as config
+        root = self.project_root_for_source(path)
+        project = self.source_project_options(path)
+        source = self.source_build_options(path)
+        result = {}
+        for key, fallback in (('copybook_paths', [p for p in self.copybook_paths.split(';') if p]),
+                              ('library_paths', [p for p in self.library_search_path.split(';') if p]),
+                              ('libraries', system.shell_split(self.libraries))):
+            value = source.get(key)
+            if value is None:
+                value = project.get(key)
+            result[key] = list(fallback if value is None else value)
+            if key != 'libraries':
+                result[key] = [config.resolve_path(root, value) for value in result[key]]
+        result['source_format'] = source.get('source_format', 'inherit')
+        if result['source_format'] == 'inherit':
+            result['source_format'] = project.get('source_format', 'inherit')
+        listing = dict(project.get('listing', {}))
+        listing.update(source.get('listing', {}))
+        if listing.get('filename'):
+            listing['filename'] = config.resolve_path(root, listing['filename'])
+        result['listing'] = listing
+        return result
 
     @property
     def copybook_paths(self):

@@ -71,6 +71,7 @@ setup(
     long_description_content_type='text/markdown',
     packages=[p for p in find_packages() if 'test' not in p],
     include_package_data=True,
+    package_data={'open_cobol_ide.build_tools': ['build.sh']},
     # Pygments and future used to be bundled.  Pygments is now a normal
     # dependency and Python 3 no longer needs the future compatibility layer,
     # so Python 3.12+ does not compile either obsolete bundled copy.

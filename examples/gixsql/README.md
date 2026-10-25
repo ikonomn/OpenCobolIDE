@@ -344,3 +344,16 @@ Plain COBOL is compiled directly without requiring gixpp or linking libgixsql.
 Embedded SQL, including SQL in COPY files, selects GixSQL preprocessing.
 The detector handles standard fixed/free source and simple COPY names; it stops
 on unresolved copybooks rather than silently choosing a plain build.
+
+
+### Listings and build output
+
+The template generates `build/<source>.lst` when the IDE does not supply a listing option.
+An explicit `-T` or `-t` filename from project or source options takes priority.
+Relative listing filenames are relative to the project root. The final `Listing:`
+line shows the selected filename. For example, automatic IDE listing names such
+as `ERRLOOKM.prn` are created in the project root, not in `build/`.
+
+The compiler output includes the SQL detection result, the exact GixSQL command
+for SQL sources, and the compiler command. Verbose compiler output shows native
+preprocessing, parsing, translation and compilation/linking steps.
