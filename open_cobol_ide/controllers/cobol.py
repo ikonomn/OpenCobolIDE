@@ -523,8 +523,9 @@ class CobolController(Controller):
                     CheckerMessages.INFO, -1,
                     path=filename))
         else:
-            if status != 0 and not messages:
-                messages = [('Compiler exited with status %s' % status,
+            if status != 0 and not any(
+                    msg[1] == CheckerMessages.ERROR for msg in messages):
+                messages = list(messages) + [('Compiler exited with status %s' % status,
                              CheckerMessages.ERROR, -1, 0, None, None, filename)]
             for msg in messages:
                 msg = CheckerMessage(*msg)

@@ -117,7 +117,12 @@ def run_command(pgm, args, working_dir='', process_environment=None):
 
     print(' '.join([pgm] + args))
 
-    p.waitForFinished()
+    if not p.waitForStarted():
+        os.environ['PATH'] = path_cpy
+        return 127, 'Could not start %s: %s' % (pgm, p.errorString())
+    # Compilation may exceed QProcess's default 30-second wait. Do not read a
+    # still-running process's default exit code as successful completion.
+    p.waitForFinished(-1)
 
     # determine exit code (handle crashed processes)
     if p.exitStatus() != p.Crashed:
@@ -201,7 +206,7 @@ def compile_with_build_script(file_path, output_callback=None):
     if output_callback is not None:
         output_callback(output)
     messages = GnuCobolCompiler().parse_output(output, working_dir)
-    if status != 0 and not messages:
+    if status != 0 and not any(m[1] == CheckerMessages.ERROR for m in messages):
         messages.append((output or 'Build script failed with exit code %d' %
                          status, CheckerMessages.ERROR, -1, 0, None, None,
                          source))
@@ -255,12 +260,17 @@ class GnuCobolCompiler(QtCore.QObject):
     # GC output messages format depends on the underlying compiler
     # See https://github.com/OpenCobolIDE/OpenCobolIDE/issues/206
     OUTPUT_PATTERN_GCC = re.compile(
-        r'^(?P<filename>[\w\.\-_\s]*):(?P<line>\s*\d+):\s*'
+        r'^(?P<filename>.+?):(?P<line>\s*\d+):(?:\d+:)?\s*'
         r'(?P<type>error|warning|note):(?P<error>.*)$', re.IGNORECASE)
     OUTPUT_PATTERN_MSVC = re.compile(
         r'^(?P<filename>[\w\.\-_\s]*)\((?P<line>\s*\d*)\):(?P<type>[\w\s]*):'
         '(?P<error>.*)$')
-    OUTPUT_PATTERN_EXCEPTIONAL_MESSAGES = re.compile(r"^cobc: (?P<error>.*)$")
+    # Unlabelled cobc output includes verbose commands and timings on 3.2.
+    # Only explicit diagnostics belong in the Issues table; exit status supplies
+    # a fallback error for unstructured compiler/linker failures.
+    OUTPUT_PATTERN_EXCEPTIONAL_MESSAGES = re.compile(
+        r"^cobc:\s*(?P<type>fatal error|error|warning|note):(?P<error>.*)$",
+        re.IGNORECASE)
 
     OUTPUT_PATTERNS = [OUTPUT_PATTERN_GCC, OUTPUT_PATTERN_MSVC, OUTPUT_PATTERN_EXCEPTIONAL_MESSAGES]
 
@@ -590,7 +600,8 @@ class GnuCobolCompiler(QtCore.QObject):
         _logger().info('binary file %r created:  %r',
                        output_full_path, binary_created)
 
-        if not len(messages) and (status != 0 or not binary_created):
+        if (status != 0 or not binary_created) and not any(
+                m[1] == CheckerMessages.ERROR for m in messages):
             # compilation failed but the parser failed to extract COBOL related
             # messages, there might be an issue at the C level or at the
             # linker level
@@ -690,22 +701,25 @@ class GnuCobolCompiler(QtCore.QObject):
         """
         issues = []
         for l in output.splitlines():
+            # GnuCOBOL 3.2 reports ignored include directories without a
+            # severity label, despite successfully compiling the program.
+            if re.match(r'^cobc: (?:invalid parameter: -I$|ignoring nonexistent directory )', l):
+                issues.append((l.split(': ', 1)[1], CheckerMessages.WARNING,
+                               -1, 0, None, None, '-'))
+                continue
             if not l:
                 continue
             for ptrn in GnuCobolCompiler.OUTPUT_PATTERNS:
                 m = ptrn.match(l)
                 if m is not None:
-                    try:
-                        filename = m.group('filename')
-                        line = int(m.group('line')) - 1
-                        error_lvl = m.group('type').lower()
-                    except IndexError:
-                        filename = ''
-                        line = 0
-                        error_lvl = 'error'
+                    groups = m.groupdict()
+                    filename = groups.get('filename') or ''
+                    line = int(groups.get('line') or 1) - 1
+                    error_lvl = (groups.get('type') or 'error').lower()
                     message = m.group('error')
-                    lvl = CheckerMessages.WARNING if 'warning' in error_lvl \
-                        else CheckerMessages.ERROR
+                    lvl = {'warning': CheckerMessages.WARNING,
+                           'note': CheckerMessages.INFO}.get(
+                               error_lvl.strip(), CheckerMessages.ERROR)
                     if filename:
                         # make relative path absolute
                         path = os.path.abspath(os.path.join(

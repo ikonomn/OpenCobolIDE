@@ -99,7 +99,6 @@ fi
 if ! "$has_verbose"; then
     cobc_args+=(-v)
 fi
-cobc_args+=(-I "$gixsql_copy_dir")
 gixpp_args=(-e -S -z a -P varchar -I "$gixsql_copy_dir")
 if [[ -d "$project_copy_dir" ]]; then
     gixpp_args+=(-I "$project_copy_dir")
@@ -114,7 +113,7 @@ if [[ "$mode" == "sql" ]]; then
     printf 'Preprocessing %s\n' "$source_file"
     run_logged "$gixpp_command" "${gixpp_args[@]}" \
         -i "$source_file" -o "$preprocessed"
-    cobc_args+=(-L "$gixsql_library_dir" -lgixsql)
+    cobc_args+=(-I "$gixsql_copy_dir" -L "$gixsql_library_dir" -lgixsql)
     compile_input="$preprocessed"
 else
     compile_input="$source_file"

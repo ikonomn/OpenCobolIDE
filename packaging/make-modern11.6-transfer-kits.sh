@@ -22,8 +22,9 @@ for target in mageia10 fedora44; do
     install -m 0644 "$repo/packaging/$folder/opencobolide-modern11.6.spec" "$kit/"
     install -m 0755 "$repo/packaging/$folder/$script" "$kit/"
     install -m 0644 "$repo/packaging/RPM_MODERN11.6.md" "$kit/README.md"
+    install -m 0644 "$repo/packaging/NATIVE_FIX_MODERN11.6.md" "$kit/"
     install -m 0644 "$output/SOURCE_REVISION.txt" "$kit/"
-    (cd "$kit" && sha256sum *.tar.gz *.spec *.sh README.md SOURCE_REVISION.txt > SHA256SUMS)
+    (cd "$kit" && sha256sum *.tar.gz *.spec *.sh README.md NATIVE_FIX_MODERN11.6.md SOURCE_REVISION.txt > SHA256SUMS)
     tar -C "$output" -czf "$output/opencobolide-modern11.6-$target-kit.tar.gz" "$(basename "$kit")"
 done
 (cd "$output" && sha256sum opencobolide*.tar.gz > TRANSFER_SHA256SUMS)

@@ -18,9 +18,9 @@ done
 python3 -c 'from PyQt5 import QtCore, QtGui, QtWidgets, QtNetwork; import pygments'
 mkdir -p "$top_dir"/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS} "$output_dir"
 install -m 0644 "$source_file" "$top_dir/SOURCES/"
-install -m 0644 "$spec_file" "$top_dir/SPECS/"
+install -m 0644 "$spec_file" "$top_dir/SPECS/opencobolide.spec"
 rpmbuild -ba --define "_topdir $top_dir" --define 'dist .fc44' \
-    "$top_dir/SPECS/$(basename "$spec_file")" 2>&1 | tee "$output_dir/rpmbuild.log"
+    "$top_dir/SPECS/opencobolide.spec" 2>&1 | tee "$output_dir/rpmbuild.log"
 mapfile -t packages < <(find "$top_dir/RPMS" "$top_dir/SRPMS" \
     -type f -name 'opencobolide-4.7.6-11.6*.rpm' -print | sort)
 [[ ${#packages[@]} -ge 2 ]] || { echo 'Expected binary and source RPMs were not found.' >&2; exit 1; }

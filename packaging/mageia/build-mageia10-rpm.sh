@@ -42,11 +42,11 @@ python3 -c 'import pygments'
 rpmdev-setuptree
 mkdir -p "$top_dir/SOURCES" "$top_dir/SPECS" "$output_dir"
 install -m 0644 "$source_file" "$top_dir/SOURCES/"
-install -m 0644 "$spec_file" "$top_dir/SPECS/"
+install -m 0644 "$spec_file" "$top_dir/SPECS/opencobolide.spec"
 
 rpmbuild -ba \
     --define "_topdir $top_dir" \
-    "$top_dir/SPECS/$(basename "$spec_file")" 2>&1 | tee "$output_dir/rpmbuild.log"
+    "$top_dir/SPECS/opencobolide.spec" 2>&1 | tee "$output_dir/rpmbuild.log"
 
 mapfile -t packages < <(
     find "$top_dir/RPMS" "$top_dir/SRPMS" \

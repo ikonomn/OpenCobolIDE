@@ -23,7 +23,7 @@ profile changes.
 From this directory, run:
 
 ```sh
-./build.sh src/database-test.cbl
+bash build.sh src/database-test.cbl
 cd bin
 ./database-test
 ```
@@ -198,7 +198,7 @@ inspection.
 `build.sh` also accepts an absolute source path:
 
 ```sh
-./build.sh /absolute/project/src/database-test.cbl
+bash build.sh /absolute/project/src/database-test.cbl
 ```
 
 Expected SQLite output:
@@ -295,7 +295,7 @@ Override them without editing COBOL:
 ```sh
 GIXSQL_COPY_DIR=/opt/gixsql/share/gixsql/copy \
 GIXSQL_LIBRARY_DIR=/opt/gixsql/lib \
-./build.sh src/database-test.cbl
+bash build.sh src/database-test.cbl
 ```
 
 `GIXPP`, `COBC`, and `PROJECT_COPY_DIR` can be overridden similarly.

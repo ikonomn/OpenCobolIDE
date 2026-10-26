@@ -1,3 +1,7 @@
+> Native fix update: RPM release 11.6.1 includes SQL-only GixSQL paths,
+> GnuCOBOL 3.2 diagnostic severity fixes and RPM payload cleanup.
+> See [the verification and remaining native checks](NATIVE_FIX_MODERN11.6.md).
+
 # modern11.6 — Mageia 10 and Fedora 44 USB build/collection plan
 
 The existing persistent USB installations are the native build/test environments. Create the transfer kits on Mint from the committed modern11.6 source. Boot Mageia 10 to build its RPM, boot Fedora 44 to build its RPM, then return to Mint with the results. GitHub push/release uploads wait until both native results are collected and reviewed.

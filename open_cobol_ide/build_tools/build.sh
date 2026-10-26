@@ -105,7 +105,6 @@ fi
 if ! "$has_verbose"; then
     cobc_args+=(-v)
 fi
-cobc_args+=(-I "$gixsql_copy_dir")
 gixpp_args=(-e -S -z a -P varchar -I "$gixsql_copy_dir")
 if [[ -d "$project_copy_dir" ]]; then
     gixpp_args+=(-I "$project_copy_dir")
@@ -120,8 +119,8 @@ if [[ -n "${COB_COPY_DIR:-}" ]]; then
 fi
 for ((i=0; i<${#cobc_args[@]}; i++)); do
     case "${cobc_args[i]}" in
-        -I) ((i+=1)); sql_copy_dirs+=("${cobc_args[i]}") ;;
-        -I*) sql_copy_dirs+=("${cobc_args[i]:2}") ;;
+        -I) ((i+=1)); sql_copy_dirs+=("${cobc_args[i]}"); gixpp_args+=(-I "${cobc_args[i]}") ;;
+        -I*) sql_copy_dirs+=("${cobc_args[i]:2}"); gixpp_args+=(-I "${cobc_args[i]:2}") ;;
     esac
 done
 printf 'Source: %s\nCompile mode: %s\n' "$source_file" "$compile_mode"
@@ -137,7 +136,7 @@ if [[ "$mode" == "sql" ]]; then
     printf 'Preprocessing %s\n' "$source_file"
     run_logged "$gixpp_command" "${gixpp_args[@]}" \
         -i "$source_file" -o "$preprocessed"
-    cobc_args+=(-L "$gixsql_library_dir" -lgixsql)
+    cobc_args+=(-I "$gixsql_copy_dir" -L "$gixsql_library_dir" -lgixsql)
     compile_input="$preprocessed"
 else
     compile_input="$source_file"

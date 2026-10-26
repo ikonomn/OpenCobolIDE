@@ -267,3 +267,23 @@ def test_rapid_open_close_processes_pending_cursor_callbacks(clean_workspace, tm
         assert app.file.close_project()
         app.app.processEvents()
         assert app.file.project_root is None and not paths(app)
+
+
+@pytest.mark.parametrize('status,expected_errors', [(0, 0), (8, 1)])
+def test_native_warning_diagnostics_do_not_block_run(clean_workspace, tmp_path,
+                                                    status, expected_errors, monkeypatch):
+    from open_cobol_ide.compilers import GnuCobolCompiler
+    app = clean_workspace
+    root, source = make_project(tmp_path, 'native-diagnostics')
+    app.file.open_project(str(root))
+    output = ('cobc: invalid parameter: -I\n'
+              'cobc: ignoring nonexistent directory "/usr/share/gixsql/copy"\n')
+    messages = GnuCobolCompiler.parse_output(output, str(root))
+    app.cobol._errors = 0
+    app.cobol._on_file_compiled(str(source), status, messages)
+    assert app.cobol._errors == expected_errors
+    launched = []
+    monkeypatch.setattr(app.cobol, '_run', lambda: launched.append(True))
+    app.cobol._run_requested = True
+    app.cobol._on_compilation_finished()
+    assert bool(launched) == (status == 0)
