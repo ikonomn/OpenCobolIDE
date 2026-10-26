@@ -166,6 +166,8 @@ class CobolController(Controller):
         self.project_compile_action.triggered.connect(self.compile_project)
         self.project_settings_action = self.ui.menuCobol.addAction('Project compiler settings...')
         self.project_settings_action.triggered.connect(self.edit_project_compiler_options)
+        self.project_compile_action.setEnabled(bool(self.app.file.project_root))
+        self.project_settings_action.setEnabled(bool(self.app.file.project_root))
         self._exception_flags = []
         listing_action = self.ui.menuCobol.addAction('Automatic listing filename')
         listing_action.setCheckable(True)
@@ -469,7 +471,7 @@ class CobolController(Controller):
         trace_log.event('compile.ui.finished', errors=self._errors,
                         run_requested=self._run_requested)
         self.enable_compile(True)
-        self.project_compile_action.setEnabled(True)
+        self.project_compile_action.setEnabled(bool(self.app.file.project_root))
         self.enable_run(True)
         self.ui.tabWidgetLogs.setCurrentIndex(LOG_PAGE_ISSUES)
         if self._run_requested:

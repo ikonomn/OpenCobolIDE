@@ -3,6 +3,7 @@ This module contains the FileController.
 
 """
 import pickle
+import weakref
 import logging
 import os
 from pyqode.core import widgets
@@ -59,6 +60,9 @@ class FileController(Controller):
         self.open_project_action.triggered.connect(self.request_open_project)
         self.configure_project_action = self.ui.menuFile.addAction('Configure Project...')
         self.configure_project_action.triggered.connect(self.show_project_setup)
+        self.close_project_action = self.ui.menuFile.addAction('Close Project')
+        self.close_project_action.triggered.connect(self.close_project)
+        self._update_project_actions()
         self.ui.menuFile.addSeparator()
         self.ui.menuFile.addMenu(self.menu_recents)
         self.ui.menuFile.addSeparator()
@@ -93,28 +97,197 @@ class FileController(Controller):
         if path:
             self.open_project(path, configure=True)
 
+    @staticmethod
+    def _inside_project(path, root):
+        if not path:
+            return False
+        path = os.path.normcase(os.path.realpath(path))
+        root = os.path.normcase(os.path.realpath(root))
+        try:
+            return os.path.commonpath([path, root]) == root
+        except ValueError:
+            return False
+
+    def _update_project_actions(self):
+        active = self.project_root is not None
+        self.close_project_action.setEnabled(active)
+        self.configure_project_action.setEnabled(active)
+        cobol = getattr(self.app, 'cobol', None)
+        if cobol is not None:
+            cobol.project_compile_action.setEnabled(active)
+            cobol.project_settings_action.setEnabled(active)
+
+    def _can_change_project(self):
+        cobol = getattr(self.app, 'cobol', None)
+        thread = getattr(cobol, '_compilation_thread', None)
+        if ((thread is not None and thread.isRunning()) or
+                getattr(cobol, '_run_requested', False) or self.ui.consoleOutput.is_running):
+            QtWidgets.QMessageBox.information(
+                self.main_window, 'Project is busy',
+                'Stop the current compilation or running program before closing or changing projects.')
+            return False
+        return True
+
+    def _project_editors(self):
+        """Collect project views across split editors and detached windows."""
+        views, managers = [], set()
+
+        def visit(manager):
+            if id(manager) in managers:
+                return
+            managers.add(id(manager))
+            for editor in manager.widgets(include_clones=True):
+                if self._inside_project(editor.file.path, self.project_root):
+                    if editor not in views:
+                        views.append(editor)
+            def detached(splitter):
+                for window in tuple(splitter.main_tab_widget.detached_tabs):
+                    child = window.centralWidget() if hasattr(window, 'centralWidget') else window
+                    if hasattr(child, 'widgets'):
+                        visit(child)
+                for child in splitter.child_splitters:
+                    detached(child)
+            detached(manager)
+        visit(self.ui.tabWidgetEditors)
+        return views
+
+    def _prepare_project_close(self):
+        views = self._project_editors()
+        dirty, seen = [], set()
+        for view in views:
+            editor = view.original or view
+            if id(editor) not in seen:
+                seen.add(id(editor))
+                if editor.dirty:
+                    dirty.append(editor)
+        if dirty:
+            filenames = '\n'.join(editor.file.path for editor in dirty)
+            choice = QtWidgets.QMessageBox.question(
+                self.main_window, 'Unsaved project files',
+                'Save changes before closing this project?\n\n' + filenames,
+                QtWidgets.QMessageBox.Save | QtWidgets.QMessageBox.Discard | QtWidgets.QMessageBox.Cancel,
+                QtWidgets.QMessageBox.Save)
+            if choice == QtWidgets.QMessageBox.Cancel:
+                return None
+            if choice == QtWidgets.QMessageBox.Save:
+                for editor in dirty:
+                    try:
+                        saved = editor.parent_tab_widget.save_widget(editor)
+                    except Exception as error:
+                        QtWidgets.QMessageBox.warning(self.main_window, 'Cannot save project file', str(error))
+                        return None
+                    if not saved:
+                        return None
+                    # The legacy tab API can return True after a failed save.
+                    if editor.dirty:
+                        QtWidgets.QMessageBox.warning(
+                            self.main_window, 'Cannot close project',
+                            'The file was not saved. The project remains open:\n' + editor.file.path)
+                        return None
+            elif choice != QtWidgets.QMessageBox.Discard:
+                return None
+        return views
+
+    def _release_project(self, views):
+        if self._project_setup_dialog is not None:
+            self._project_setup_dialog.close()
+            self._project_setup_dialog = None
+        self.project_root = None
+        Settings().lock_fs_path = ''
+        self.ui.btFSLock.setChecked(False)
+        for editor in views:
+            tab = editor.parent_tab_widget
+            index = tab.indexOf(editor)
+            if index >= 0:
+                tab.remove_tab(index)
+        manager = self.ui.tabWidgetEditors
+        remaining = manager.widgets(include_clones=True)
+        current = manager.current_widget()
+        if current not in remaining:
+            current = remaining[0] if remaining else None
+        manager._current = weakref.ref(current) if current is not None else None
+        if current is None:
+            self.app.cobol.enable_compile(False)
+            self.app.cobol.enable_run(False)
+        tree = self.ui.tvFileSystem
+        tree._path_to_set = None
+        tree._root_path = None
+        tree.root_path = ''
+        tree.setModel(None)
+        self.ui.errorsTable.clear()
+        self.ui.textEditCompilerOutput.clear()
+        self.ui.consoleOutput.clear()
+        self._update_project_actions()
+
+    def close_project(self):
+        if self.project_root is None:
+            return True
+        if not self._can_change_project():
+            return False
+        old_root = self.project_root
+        views = self._prepare_project_close()
+        if views is None:
+            return False
+        self._release_project(views)
+        Settings().last_path = os.path.dirname(old_root)
+        editor = self.ui.tabWidgetEditors.current_widget()
+        if editor is None:
+            self.main_window.setWindowTitle(self.app.title)
+            self.app.view.show_home_page()
+        else:
+            self.app.view.show_edit_page()
+            self.ui.tvFileSystem.set_root_path(os.path.dirname(editor.file.path))
+            self.main_window.setWindowTitle('%s [%s] - %s' % (
+                editor.file.name, editor.file.path, self.app.title))
+        return True
+
     def open_project(self, path, configure=False):
         path = os.path.abspath(path)
         if not os.path.isdir(path):
             raise NotADirectoryError(path)
+        if not self._can_change_project():
+            return False
+        # Validate an existing document before asking to leave the current project.
+        from open_cobol_ide.project_config import config_path, load
+        try:
+            if config_path(path).is_file():
+                load(path)
+        except (ValueError, OSError) as error:
+            QtWidgets.QMessageBox.warning(self.main_window, 'Cannot open project', str(error))
+            return False
+        changing = (self.project_root is not None and
+                    os.path.normcase(os.path.realpath(path)) !=
+                    os.path.normcase(os.path.realpath(self.project_root)))
+        views = self._prepare_project_close() if changing else []
+        if views is None:
+            return False
         try:
             Settings().initialize_project_config(path)
         except (ValueError, OSError) as error:
             QtWidgets.QMessageBox.warning(self.main_window, 'Cannot open project', str(error))
-            return
+            return False
+        if changing:
+            self._release_project(views)
         self.project_root = path
         Settings().register_project(path)
+        self._update_project_actions()
         self.app.view.show_edit_page()
         self.ui.tvFileSystem.set_root_path(path)
         self.ui.dockWidgetFileSystem.show()
         from open_cobol_ide.project import project_sources
-        for source in project_sources(path, Settings().all_extensions):
+        sources = project_sources(path, Settings().all_extensions)
+        for source in sources:
             self.open_file(source)
+        if not sources:
+            self.main_window.setWindowTitle('%s [%s] - %s' % (os.path.basename(path), path, self.app.title))
         Settings().last_path = path
         if configure:
             self.show_project_setup()
+        return True
 
     def request_new_project(self):
+        if not self._can_change_project():
+            return
         from open_cobol_ide.view.dialogs.project_setup import NewProjectDialog
         from open_cobol_ide.project_config import create_project
         dialog = NewProjectDialog(self.main_window, Settings().last_path)

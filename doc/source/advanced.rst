@@ -121,6 +121,23 @@ also available from the File menu. It lists the sources, whether they inherit
 project defaults or have overrides, and validation results. Use **Project
 defaults…** or **Selected source settings…** to configure them.
 
+**File → Close Project** closes the active project's documents and its settings
+review window, clears the project tree and old build messages, and returns to the
+opening screen when no standalone documents remain. Project files and saved
+configuration are not deleted. Unrelated standalone tabs are kept open.
+
+Opening a different project first closes documents belonging to the previous
+project, including split views and detached windows. Unsaved project documents
+show **Save**, **Discard** and **Cancel**. Cancel, a canceled Save As, or a failed
+save keeps the previous project open. An invalid target configuration is reported
+before closing the current project. Reopening the same project preserves its
+existing editors and unsaved changes.
+
+Closing or changing projects is blocked while compilation or an embedded program
+is active. Stop the active operation first. Closing the last source tab alone
+keeps the project active and leaves the project menus available; use Close Project
+to end the project session.
+
 Project settings are saved atomically in ``config/project.json``. Source keys and
 project-local paths are relative to the project root, so settings survive moving
 or copying the project. Existing project and source preferences are imported

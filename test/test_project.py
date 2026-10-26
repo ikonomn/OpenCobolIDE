@@ -42,15 +42,14 @@ def test_detection_ignores_comments_and_literals_and_honors_override(tmp_path, f
     assert compilers.get_file_type(str(source)) == FileType.EXECUTABLE
 
 
-def test_open_project_without_editor(tmp_path):
-    calls = []
-    ui = SimpleNamespace(tvFileSystem=SimpleNamespace(set_root_path=calls.append),
-                         dockWidgetFileSystem=SimpleNamespace(show=lambda: calls.append('show')))
-    fake = SimpleNamespace(ui=ui, app=SimpleNamespace(view=SimpleNamespace(
-        show_edit_page=lambda: calls.append('edit'))))
-    FileController.open_project(fake, str(tmp_path))
-    assert fake.project_root == str(tmp_path)
-    assert calls == ['edit', str(tmp_path), 'show']
+def test_open_project_without_editor(app, tmp_path):
+    assert app.file.close_project()
+    app.win.show()
+    app.app.processEvents()
+    assert app.file.open_project(str(tmp_path))
+    assert app.file.project_root == str(tmp_path)
+    assert app.win.ui.tvFileSystem.root_path == str(tmp_path)
+    assert app.file.close_project_action.isEnabled()
 
 
 def test_batch_dispatch_deduplicates_and_continues_after_failure(monkeypatch, tmp_path):

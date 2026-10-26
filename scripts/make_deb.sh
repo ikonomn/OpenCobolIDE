@@ -99,6 +99,9 @@ changelog="$package_root/usr/share/doc/$package_name/changelog"
 printf '%s\n' \
     "$package_name ($package_version) unstable; urgency=medium" \
     '' \
+    '  * Add Close Project and isolate source tabs when switching projects.' \
+    '  * Protect unsaved edits with Save/Discard/Cancel and failed-save checks.' \
+    '  * Fix closed-document lifetime and detached-window cleanup.' \
     '  * Add New Project and Configure Project workflows with portable project.json.' \
     '  * Migrate legacy project/source preferences and validate settings before builds.' \
     '  * Add source-relative paths, listing controls and per-source build overrides.' \

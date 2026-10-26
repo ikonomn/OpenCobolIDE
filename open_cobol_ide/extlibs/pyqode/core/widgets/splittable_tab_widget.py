@@ -285,8 +285,13 @@ class BaseTabWidget(QtWidgets.QTabWidget):
         new_tab_widget.last_tab_closed.connect(self._remove_detached_tab)
 
     def _remove_detached_tab(self):
-        self.detached_tabs.remove(self.sender())
-        self.sender().close()
+        sender = self.sender()
+        for window in tuple(self.detached_tabs):
+            content = window.centralWidget() if hasattr(window, 'centralWidget') else window
+            if window is sender or content is sender:
+                self.detached_tabs.remove(window)
+                window.close()
+                break
 
     def save_widget(self, editor):
         """
@@ -509,9 +514,16 @@ class BaseTabWidget(QtWidgets.QTabWidget):
         self.tab_closed.emit(widget)
         self.removeTab(index)
         self._restore_original(clones)
+        if document is not None:
+            # A queued cursor/paint callback may still target a closed editor.
+            # Keep its document Qt-owned, or transfer it to a surviving clone.
+            owner = clones[0] if clones else (getattr(widget, 'original', None) or widget)
+            document.setParent(owner)
+            try:
+                owner.syntax_highlighter.setParent(document)
+            except AttributeError:
+                pass
         widget._original_tab_widget._tabs.remove(widget)
-        if self.count() == 0:
-            self.last_tab_closed.emit()
         if SplittableTabWidget.tab_under_menu == widget:
             SplittableTabWidget.tab_under_menu = None
         if not clones:
@@ -521,6 +533,10 @@ class BaseTabWidget(QtWidgets.QTabWidget):
                 clones[0].syntax_highlighter.setDocument(document)
             except AttributeError:
                 pass  # not a QPlainTextEdit
+        # A detached window may be destroyed by this signal. Finish touching
+        # the removed editor first, then let listeners close its former window.
+        if self.count() == 0:
+            self.last_tab_closed.emit()
 
     def _on_split_requested(self):
         """

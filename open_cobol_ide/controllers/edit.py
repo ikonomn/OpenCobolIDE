@@ -192,7 +192,13 @@ class EditController(Controller):
         self.main_window.save_state()
         self.main_window.setWindowTitle(self.app.title)
         self.ui.twNavigation.set_editor(None)
-        self.app.view.show_home_page()
+        if self.app.file.project_root:
+            root = self.app.file.project_root
+            self.main_window.setWindowTitle('%s [%s] - %s' % (os.path.basename(root), root, self.app.title))
+            self.app.view.show_edit_page()
+            self.ui.dockWidgetFileSystem.show()
+        else:
+            self.app.view.show_home_page()
 
     def _current_changed(self, new_index):
         """
