@@ -46,7 +46,7 @@ class Application(QtCore.QObject):
     and to the various controllers so that they can collaborate each others.
     """
     def apply_mimetypes_preferences(self):
-        for ext in Settings().all_extensions:
+        for ext in set(Settings().all_extensions + ['.cpy']):
             mimetypes.add_type('text/x-cobol', ext)
             mimetypes.add_type('text/x-cobol', ext.upper())
 

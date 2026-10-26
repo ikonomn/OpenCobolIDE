@@ -3,9 +3,9 @@ set -euo pipefail
 
 script_dir="$(cd "$(dirname "$0")" && pwd)"
 project_root="$(cd "$script_dir/../.." && pwd)"
-version="4.7.6-modern11.5"
+version="4.7.6-modern11.6"
 source_name="opencobolide-${version}.tar.gz"
-kit_name="opencobolide-modern11.5-mageia10-build-kit"
+kit_name="opencobolide-modern11.6-mageia10-build-kit"
 output_dir="${OCIDE_KIT_OUTPUT_DIR:-$project_root/dist}"
 working_dir="$(mktemp -d "${TMPDIR:-/tmp}/ocide-mageia-kit.XXXXXX")"
 
@@ -28,7 +28,7 @@ git -C "$project_root" archive \
     -o "$working_dir/$kit_name/$source_name" \
     HEAD
 
-install -m 0644 "$script_dir/opencobolide-modern11.5.spec" \
+install -m 0644 "$script_dir/opencobolide-modern11.6.spec" \
     "$working_dir/$kit_name/"
 install -m 0755 "$script_dir/build-mageia10-rpm.sh" \
     "$working_dir/$kit_name/"

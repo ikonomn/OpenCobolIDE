@@ -313,7 +313,7 @@ class CobolController(Controller):
             self.ui.actionProgram.setChecked(ftype == FileType.EXECUTABLE)
             self.ui.actionSubprogram.setChecked(ftype != FileType.EXECUTABLE)
             for item in self.run_buttons + [self.ui.actionRun]:
-                item.setEnabled(not self.ui.consoleOutput.is_running)
+                item.setEnabled(not self.ui.consoleOutput.is_running and self._can_build_current_source())
 
     def _on_program_type_changed(self, action):
         """
@@ -408,6 +408,8 @@ class CobolController(Controller):
         # make sure the associated compiler is working, otherwise disable
         # compile/run actions
         path = self.app.edit.current_editor.file.path
+        if os.path.splitext(path)[1].lower() == '.cpy':
+            return
         trace_log.event('compile.requested', source=path,
                         run_requested=self._run_requested)
         dotted_extension = os.path.splitext(path)[1].upper()
@@ -549,6 +551,8 @@ class CobolController(Controller):
         if self.app.edit.current_editor is None:
             return
         source = os.path.abspath(self.app.edit.current_editor.file.path)
+        if os.path.splitext(source)[1].lower() == '.cpy':
+            return
         trace_log.event('run.requested', source=source)
         settings = QtCore.QSettings('OpenCobolIDE', 'OpenCobolIDE4')
         key = 'programArguments/' + source
@@ -716,11 +720,17 @@ class CobolController(Controller):
         self.enable_compile(True)
         self.enable_run(True)
 
+    def _can_build_current_source(self):
+        editor = self.app.edit.current_editor
+        return editor is not None and os.path.splitext(editor.file.path or '')[1].lower() != '.cpy'
+
     def enable_compile(self, enable):
-        for item in self.compile_buttons + [self.ui.actionCompile]:
+        enable = enable and self._can_build_current_source()
+        for item in self.compile_buttons + [self.ui.actionCompile, self.ui.actionClean, self.ui.actionRebuild]:
             item.setEnabled(enable)
 
     def enable_run(self, enable):
+        enable = enable and self._can_build_current_source()
         for item in self.run_buttons + [self.ui.actionRun]:
             item.setEnabled(enable)
 

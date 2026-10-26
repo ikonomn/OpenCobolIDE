@@ -1,0 +1,6 @@
+/bin/*
+!/bin/.gitkeep
+/build/*
+!/build/.gitkeep
+__pycache__/
+*.pyc

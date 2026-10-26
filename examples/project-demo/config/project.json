@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "name": "OpenCobolIDE project demonstration",
+  "defaults": {
+    "enabled": true,
+    "flags": [
+      "-Wall",
+      "-debug"
+    ],
+    "environment": {},
+    "copybook_paths": [
+      "copybooks"
+    ],
+    "source_format": "fixed",
+    "listing": {
+      "enabled": true,
+      "filename": "build/{stem}.lst"
+    }
+  },
+  "sources": {
+    "src/worker.cbl": {
+      "flags": [
+        "-Wall"
+      ]
+    }
+  }
+}

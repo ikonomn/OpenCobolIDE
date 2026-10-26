@@ -315,6 +315,8 @@ class FileController(Controller):
 
     def open_created_file(self, path):
         self.open_file(path)
+        if os.path.splitext(path)[1].lower() == '.cpy':
+            return
         if Settings().project_root_for_source(path):
             choice = QtWidgets.QMessageBox.question(
                 self.main_window, 'Source compiler settings',

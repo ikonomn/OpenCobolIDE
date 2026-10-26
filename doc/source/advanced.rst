@@ -116,6 +116,17 @@ existing files. A New Project button is also available on the opening screen.
 New source files default to the project's ``src/`` directory and offer source
 compiler settings after creation.
 
+The New File extension list also includes ``.cpy`` and ``.CPY``. Selecting one
+creates an empty copybook without a PROGRAM-ID/PROCEDURE DIVISION template.
+When the directory is still the project's default source/root folder, it changes
+to ``copybooks/`` automatically; manually chosen directories are preserved.
+Switching back to a source extension restores the previous source template and
+automatic folder choice. Copybooks open in the COBOL editor, without a standalone
+compiler-settings prompt. Compile/Run and program-type controls are disabled for
+the selected copybook; Compile Project remains available and excludes copybooks
+as independent targets. Programs consume them through their COPY statements.
+
+
 **Open Project** opens the sources and displays **Configure Project**, which is
 also available from the File menu. It lists the sources, whether they inherit
 project defaults or have overrides, and validation results. Use **Project

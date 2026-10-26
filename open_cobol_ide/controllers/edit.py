@@ -261,6 +261,7 @@ class EditController(Controller):
                 self.app.cobol.enable_run(False)
             else:
                 self.ui.menuCobol.setEnabled(True)
+                self.ui.menuProgramType.setEnabled(os.path.splitext(editor.file.path)[1].lower() != '.cpy')
                 self.app.cobol.enable_compile(
                     not self.ui.consoleOutput.is_running)
                 self.app.cobol.enable_run(

@@ -2,8 +2,8 @@
 set -euo pipefail
 
 script_dir="$(cd "$(dirname "$0")" && pwd)"
-spec_file="${OCIDE_SPEC_FILE:-$script_dir/opencobolide-modern11.5.spec}"
-source_file="${OCIDE_SOURCE_FILE:-$script_dir/opencobolide-4.7.6-modern11.5.tar.gz}"
+spec_file="${OCIDE_SPEC_FILE:-$script_dir/opencobolide-modern11.6.spec}"
+source_file="${OCIDE_SOURCE_FILE:-$script_dir/opencobolide-4.7.6-modern11.6.tar.gz}"
 top_dir="${OCIDE_RPM_TOPDIR:-$HOME/rpmbuild}"
 output_dir="${OCIDE_RPM_OUTPUT:-$script_dir/mageia10-rpm-output}"
 
@@ -46,11 +46,11 @@ install -m 0644 "$spec_file" "$top_dir/SPECS/"
 
 rpmbuild -ba \
     --define "_topdir $top_dir" \
-    "$top_dir/SPECS/$(basename "$spec_file")"
+    "$top_dir/SPECS/$(basename "$spec_file")" 2>&1 | tee "$output_dir/rpmbuild.log"
 
 mapfile -t packages < <(
     find "$top_dir/RPMS" "$top_dir/SRPMS" \
-        -type f -iname 'opencobolide-4.7.6-11.5*.rpm' -print | sort
+        -type f -iname 'opencobolide-4.7.6-11.6*.rpm' -print | sort
 )
 
 if [ "${#packages[@]}" -lt 2 ]; then
@@ -66,7 +66,7 @@ set +e
 rpmlint "${packages[@]}" | tee "$output_dir/rpmlint.log"
 rpmlint_status="${PIPESTATUS[0]}"
 set -e
-sha256sum "${packages[@]}" | tee "$output_dir/SHA256SUMS"
+(cd "$output_dir" && sha256sum ./*.rpm > SHA256SUMS)
 
 echo
 echo "Mageia 10 RPM build completed."

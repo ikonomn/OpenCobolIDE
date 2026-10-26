@@ -1,5 +1,7 @@
 # Installing OpenCobolIDE from source
 
+For the consolidated modern11.6 features, use its supplied source archive or local `modern11.6` checkout. The older remote `modern-python` examples below do not imply the unpublished local changes are already available on GitHub. Native Windows project-builder support remains unverified; the current internal builder requires Bash.
+
 These instructions use Python's standard virtual-environment and `pip`
 workflow. They do not use the deprecated `setup.py install` command.
 

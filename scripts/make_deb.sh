@@ -53,6 +53,14 @@ install -m 0644 share/OpenCobolIDE.png \
 # The Help action opens this self-contained manual without network access.
 install -m 0644 doc/OpenCobolIDE-modern11.6.html \
     "$package_root/usr/share/doc/$package_name/manual.html"
+# Keep the source and installed Markdown guide names identical.
+for guide in README.md HOWTO_MODERN11.6.md REVIEW_MODERN11.6.md RELEASE_NOTES_MODERN11.6.md INSTALL_FROM_SOURCE.md AUTHORS.rst LICENSE; do
+    install -m 0644 "$guide" "$package_root/usr/share/doc/$package_name/$guide"
+done
+mkdir -p "$package_root/usr/share/doc/$package_name/packaging"
+install -m 0644 packaging/RPM_MODERN11.6.md "$package_root/usr/share/doc/$package_name/packaging/"
+mkdir -p "$package_root/usr/share/doc/$package_name/examples"
+cp -a examples/project-demo "$package_root/usr/share/doc/$package_name/examples/"
 example_target="$package_root/usr/share/doc/$package_name/examples/gixsql"
 install -m 0755 examples/gixsql/build.sh "$example_target/build.sh"
 install -m 0644 examples/gixsql/detect_sql.py "$example_target/detect_sql.py"
@@ -99,6 +107,10 @@ changelog="$package_root/usr/share/doc/$package_name/changelog"
 printf '%s\n' \
     "$package_name ($package_version) unstable; urgency=medium" \
     '' \
+    '  * Consolidate the project development series under the modern11.6 version.' \
+    '  * Ship updated README, how-to, development review and a portable demo project.' \
+    '  * Add .cpy/.CPY creation with blank copybooks and project folder defaults.' \
+    '  * Edit copybooks as COBOL while excluding standalone compile/run actions.' \
     '  * Add Close Project and isolate source tabs when switching projects.' \
     '  * Protect unsaved edits with Save/Discard/Cancel and failed-save checks.' \
     '  * Fix closed-document lifetime and detached-window cleanup.' \
@@ -142,7 +154,7 @@ printf '%s\n' \
     '  * Remove obsolete release assets and runtime-unneeded bundled tests.' \
     '  * Complete compatibility and packaging work with OpenAI Codex assistance.' \
     '' \
-    ' -- OpenCobolIDE compatibility build <noreply@opencobolide.invalid>  Fri, 23 Oct 2026 12:00:00 +0300' \
+    " -- OpenCobolIDE compatibility build <noreply@opencobolide.invalid>  $(LC_ALL=C date -R)" \
     > "$changelog"
 gzip -n -9 "$changelog"
 
@@ -160,8 +172,8 @@ printf '%s\n' \
     'Maintainer: Colin Duquesnoy <colin.duquesnoy@gmail.com>' \
     'Homepage: https://github.com/OpenCobolIDE/OpenCobolIDE' \
     'Description: COBOL IDE polished for modern Debian Linux' \
-    ' This unofficial compatibility package preserves the original project' \
-    ' ownership and adds modern Python and PyQt5 compatibility with assistance' \
+    ' This unofficial modern build preserves the original project' \
+    ' authorship and adds modern Python, PyQt5 and project workflows with assistance' \
     ' from OpenAI Codex. It is not a new or official upstream release.' \
     > "$control"
 

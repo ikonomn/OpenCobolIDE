@@ -1,227 +1,101 @@
-# OpenCobolIDE 4.7.6 for Modern Python on Debian-Based Linux
+# OpenCobolIDE 4.7.6 modern11.6
 
-This package is the original OpenCobolIDE 4.7.6 release, polished with assistance from OpenAI Codex so it can run with modern Python, PyQt5, and current Debian-based Linux distributions.
+An unofficial maintained modern build of OpenCobolIDE, preserving its original authorship and GPL licensing while adding current Python/PyQt5 compatibility and a portable COBOL project workflow.
 
-It is not a new upstream OpenCobolIDE release, does not change the original project ownership or maintainership, and does not add major new IDE features. The binary package remains an unofficial compatibility polish for Debian-family systems, including Debian, Ubuntu, Linux Mint, and compatible derivatives. A modern source-installation workflow is also provided for testing on other Linux distributions and Windows.
+This consolidated modern11.6 includes the project1–project8 development packages and the subsequent copybook-creation work. The public-facing version is **4.7.6+modern11.6**, without a `+projectN` suffix. It is not a new upstream OpenCobolIDE release or a transfer of the original project's ownership.
 
-The original OpenCobolIDE authors and maintainer retain full credit for the project. OpenAI Codex assisted only with the modern Python, PyQt5, Linux compatibility, packaging, and testing work described below.
+## Information and guides
 
-## Compatibility Updates
+- [How to use modern11.6](HOWTO_MODERN11.6.md): installation, projects, copybooks, settings, compilation, listings, runtime and troubleshooting.
+- [Development review](REVIEW_MODERN11.6.md): changes from the earlier modern line and each modern11.6 project iteration, verification and remaining platform work.
+- [Release notes](RELEASE_NOTES_MODERN11.6.md).
+- [RPM build and USB collection plan](packaging/RPM_MODERN11.6.md).
+- [Source installation](INSTALL_FROM_SOURCE.md).
 
-- Updated for Python 3.8 and newer.
-- Updated for PyQt5 5.15 and newer.
-- Fixed APIs removed from modern Python.
-- Replaced the obsolete bundled Pygments/Future runtime copies with a maintained
-  Pygments dependency and native Python 3 built-ins, eliminating their Python
-  3.12 invalid-escape warnings from installed builds.
-- Fixed file opening after Python removed the legacy universal-newline mode.
-- Fixed GnuCOBOL standard selection on Python 3.11 and newer so options such
-  as `mf` are passed as `-std=mf` instead of their numeric enum value.
-- Fixed bundled legacy modules that conflicted with the Python standard library.
-- Fixed PyQt5 drawing, sizing, color, margin, and editor-panel errors.
-- Updated GnuCOBOL detection and compilation support.
-- Updated Debian and Python packaging metadata.
-- Updated the Linux desktop launcher.
-- Added a Debian installation package.
-- Added modern virtual-environment and ``pip`` source installers for Linux and
-  Windows without the deprecated ``setup.py install`` workflow.
-- Added a self-contained offline manual generated from all maintained RST
-  documentation pages; the Help action opens it locally.
+## What is included
 
-## Dependencies
+| Area | Behavior |
+| --- | --- |
+| New Project | Creates src, copybooks, bin, build, data and config folders without replacing existing contents. |
+| Open / Configure Project | Opens recognized sources and reviews shared/default and per-source settings. |
+| Close / Switch Project | Closes previous project documents safely; Save/Discard/Cancel protects unsaved edits. |
+| Portable settings | `config/project.json` stores project defaults and relative per-source overrides. |
+| Validation | Checks known flag, source-format, directory, compiler and output/listing conflicts before compilation. |
+| Internal builder | Uses the IDE-owned builder; project-local build.sh files are ignored. |
+| Compile Project / F8 | Batch compilation plus current-source compilation with existing dependency detection. |
+| Automatic mode | Detects `-x` / `-m` for each source; PROCEDURE DIVISION USING selects a module. |
+| Copybooks | New File offers .cpy/.CPY, blank templates and project copybooks-folder defaults; copybooks are not standalone build targets. |
+| GixSQL | Detects SQL in sources/COPY dependencies and preprocesses only sources that need it. |
+| Listings | Separate source listings with `--Xref -ftsymbols`, custom filenames and source-level overrides. |
+| Diagnostics | Full compile/link output, runtime information, optional trace logging and retained shutdown fixes. |
 
-The following dependencies are required:
+Existing runtime-argument entry, source format directives, per-source compiler selection and offline Help are retained.
 
-- Python 3.8 or newer
-- PyQt5 5.15 or newer
-- GnuCOBOL
-- Standard Debian package-management tools
+## Debian / Ubuntu-family installation
 
-The Debian package declares these dependencies, allowing `apt` to install missing packages from the configured Debian or Ubuntu repositories.
-
-## GnuCOBOL Compiler
-
-The GnuCOBOL compiler is not bundled with this package.
-
-OpenCobolIDE requires a system installation of GnuCOBOL. The package has been tested with GnuCOBOL 3.1.2.
-
-Other recent GnuCOBOL versions may work but have not yet been fully tested.
-
-If necessary, install the compiler manually:
-
-```bash
-sudo apt update
-sudo apt install gnucobol
-```
-
-Confirm that it is available:
-
-```bash
-cobc --version
-```
-
-## Installation
-
-Download:
+The package is:
 
 ```text
 opencobolide_4.7.6+modern11.6_all.deb
 ```
 
-Open a terminal in the directory containing the downloaded file and install it with:
+For a first installation, close the IDE and run from the package directory:
 
 ```bash
 sudo apt install ./opencobolide_4.7.6+modern11.6_all.deb
 ```
 
-Using `apt` is recommended because it resolves missing dependencies automatically.
-
-If GnuCOBOL was installed from source and `cobc` is already available, avoid
-installing the distribution compiler package with:
+To replace an earlier modern11.6 package or a `+projectN` test package:
 
 ```bash
-sudo apt install --no-install-recommends ./opencobolide_4.7.6+modern11.6_all.deb
+sudo apt install --reinstall --allow-downgrades ./opencobolide_4.7.6+modern11.6_all.deb
 ```
 
-Launch the application from the desktop menu or run:
+The plain version sorts before `+projectN` in Debian's version comparison. The flags above allow the intentional version-label consolidation and ensure an older package with the same plain version is replaced. Use the accompanying SHA-256 file to identify this consolidated build.
 
-```bash
-opencobolide
+Python 3.8+, distribution PyQt5 and Pygments are package dependencies. GnuCOBOL is recommended by the package and is required to compile/run COBOL; it is not bundled. If using an existing source-built compiler, `--no-install-recommends` can avoid installing another compiler package.
+
+Start with `opencobolide`. Open an existing project or create one. The updated Markdown files and offline HTML manual are installed under `/usr/share/doc/opencobolide/`.
+
+## Included demonstration project
+
+A clean main-program/module/shared-copybook example is supplied at:
+
+```text
+/usr/share/doc/opencobolide/examples/project-demo
 ```
 
-## Installation from source
-
-The source tree now uses the standard Python virtual-environment and `pip`
-workflow on Linux and Windows. It no longer requires the deprecated
-`setup.py install` command.
-
-Install Git first, then clone the repository and enter its directory.
-
-Linux:
+Copy it to a fresh writable folder, then choose **Open Project**:
 
 ```bash
-git clone --branch modern-python https://github.com/ikonomn/OpenCobolIDE.git
-cd OpenCobolIDE
+cp -a /usr/share/doc/opencobolide/examples/project-demo "$HOME/OpenCobolIDE-demo"
+```
+
+The example compiles `test01` and `worker.so`, uses `copybooks/copybook.cpy`, demonstrates a source-specific flag override, and produces separate cross-reference listings. It includes no precompiled binaries or old listings.
+
+## Linux targets and RPM work
+
+The Debian build is prepared and verified on Linux Mint. Mageia 10 and Fedora 44 RPMs must be built and tested on their respective persistent USB installations.
+
+The tested Mageia build-script logic is retained with modern11.6 references. Fedora has a separate RPM setup. Build kits, logs, native RPMs and source RPMs are collected before returning to Mint for the planned GitHub push and release uploads. Neither RPM is represented as built/tested merely because a spec or kit exists.
+
+See [the RPM plan](packaging/RPM_MODERN11.6.md). Other Fedora-based or RPM distributions require separate compatibility checks. Native Windows support for this new Bash-based project workflow has not been validated.
+
+## Source installation and verification
+
+Use the supplied consolidated source archive or the local `modern11.6` checkout:
+
+```bash
 ./scripts/install_from_source.sh
 ./.venv/bin/opencobolide
 ```
 
-Windows PowerShell:
+The GitHub publication is a later step; an older published branch should not be assumed to contain these local changes.
 
-```powershell
-git clone --branch modern-python https://github.com/ikonomn/OpenCobolIDE.git
-cd OpenCobolIDE
-Set-ExecutionPolicy -Scope Process Bypass
-.\scripts\install_from_source.ps1
-.\.venv\Scripts\opencobolide.exe
-```
+The current regression set covers project creation/migration/relocation, safe closing/switching, copybooks, executable/module compilation, GixSQL routing, listings, syntax checking, F8/run behavior, arguments, help and source installation. Exact release test results and package checks are recorded alongside the release assets.
 
-GnuCOBOL must be installed separately and `cobc` (or `cobc.exe`) must be
-available through `PATH`. See [INSTALL_FROM_SOURCE.md](INSTALL_FROM_SOURCE.md)
-for prerequisites, manual commands, wheel-building instructions, and current
-cross-platform limitations.
+## Attribution and licence
 
-## Removal
+OpenCobolIDE retains its original authors, Colin Duquesnoy's original project attribution, bundled component notices and GPL licence. See [AUTHORS.rst](AUTHORS.rst) and [LICENSE](LICENSE).
 
-To remove OpenCobolIDE:
-
-```bash
-sudo apt remove opencobolide
-```
-
-## Package Checksum
-
-After downloading, calculate the SHA-256 checksum with:
-
-```bash
-sha256sum opencobolide_4.7.6+modern11.6_all.deb
-```
-
-Compare it with the checksum published alongside the GitHub release asset.
-
-## Testing
-
-This package was built and tested on a Debian-based Linux system with:
-
-- Python 3.10.12 (package build and full application checks)
-- Python 3.12.14 (bundled Pygments compatibility checks)
-- PyQt5 5.15
-- GnuCOBOL 3.1.2
-
-The package was also checked with Debian Lintian, verified through a simulated `apt` installation, checked for correct runtime dependency declarations and package permissions, and passed the complete test suite, including regression checks for opening files without Python's removed `U` mode and for stable GnuCOBOL standard names on Python 3.11 and newer. The source-installation work additionally passed 66 tests, a Python 3.12 warning-as-error compilation check, a wheel-content audit, an isolated virtual-environment import test, and a Debian-package regression build.
-
-## Attribution and Development Assistance
-
-The modernization, Python and PyQt5 compatibility fixes, Debian packaging, and testing were completed with assistance from OpenAI Codex.
-
-This project remains based on the original OpenCobolIDE 4.7.6 source code and retains its original authorship and maintainer attribution. This compatibility package is not an official continuation, a transfer of ownership, or a new upstream release.
-
-### Disclaimer
-
-This is an unofficial, community-maintained compatibility build provided for testing and convenience. It is supplied **as is**, without any warranty or guarantee that it will work correctly on every system.
-
-Use this software and the provided Debian package at your own risk. The original developers, contributors, package maintainer, and development-assistance providers accept no responsibility or liability for data loss, system damage, compilation errors, security issues, interrupted work, or any other consequences resulting from installing or using this software.
-
-Always back up important source code, configuration, and project files before installation or use. This disclaimer does not replace or modify the terms of the GNU General Public License under which OpenCobolIDE is distributed.
-
-## Program arguments (modern11.5)
-
-Press **Run** to enter optional arguments for the COBOL program. For example,
-for `bio2.cbl`, enter `18090212 18650415`. Enter only the arguments; the IDE
-supplies the program name. The last entry is remembered separately for each
-source file. An empty entry runs without arguments; Cancel stops the launch.
-
-Use double quotes for an argument containing spaces, for example
-`123 "customer name"`. Unmatched quotes are reported before compilation.
-Arguments are passed to the program in both the embedded console and external
-terminal. These are runtime arguments, separate from compiler options.
-
-## Compiler workflow in modern11.5
-
-Automatic listing names, optional source-install launcher, per-file compiler
-flags, compiler/environment overrides, and path validation are described in
-[the workflow guide](doc/modern11.5-workflow.md).
-
-## Linux shutdown lifecycle service fix
-
-modern11.5 retains the modern11.4 correction that defers Python-side
-application cleanup until after the Qt event loop
-returns and prevents repeated cleanup. The correction applies to Linux source
-installations across distributions and desktop sessions. The Debian package is
-provided for Debian-family systems; other distributions should use the source
-installer.
-
-## Mageia 10 RPM packaging
-
-The Mageia 10 RPM specification, build scripts, dependency list, validation
-steps, and contributor instructions are kept together under
-[`packaging/mageia`](packaging/mageia/README.md). A Mageia binary RPM must be
-built and tested on Mageia 10. RPM compatibility with Fedora, openSUSE, and
-other distributions is not assumed.
-
-## Native-crash trace log
-
-For an intermittent native crash, start the source installation with tracing
-enabled:
-
-```bash
-cd /path/to/OpenCobolIDE
-OCIDE_TRACE_LOG="$HOME/opencobolide-trace.jsonl" .venv/bin/opencobolide
-```
-
-Repeat the action that triggers the problem and close the IDE normally if it
-does not crash. The JSONL file records startup, compilation, program launch,
-process completion, window shutdown, and Qt cleanup in order. Every event is
-flushed to disk immediately, and Python's native fault handler writes thread
-stacks to the same file when the runtime receives a supported fatal signal.
-Program argument values and the full environment are not recorded; only the
-argument count and a small set of display/runtime conditions are included.
-
-`OCIDE_TRACE_LOG=1` uses an automatically named file below
-`~/.cache/OpenCobolIDE/`. Leave the variable unset for normal operation.
-
-## modern11.6 local test build
-
-Corrects the About runtime diagnostics to use `cobcrun --info` and
-`cobcrun --runtime-config`. See [release notes](RELEASE_NOTES_MODERN11.6.md).
-Scrolling and tooltip reports remain under investigation.
+Modern compatibility, project-workflow, packaging and verification work was developed with assistance from OpenAI Codex. This is an unofficial community-maintained modern build, provided under the existing licence without a warranty of suitability for every platform.

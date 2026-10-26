@@ -92,7 +92,7 @@ class FileIconProvider(PyQodeIconProvider):
         if isinstance(type_or_info, QtCore.QFileInfo):
             # COBOL file
             if ('.' + type_or_info.suffix().lower() in
-                    Settings().all_extensions):
+                    Settings().all_extensions + ['.cpy']):
                 return QtGui.QIcon(icons.ICON_MIMETYPE)
             if 'linux' not in sys.platform:
                 # use hardcoded icon on windows/OSX

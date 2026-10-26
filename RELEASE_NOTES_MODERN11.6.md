@@ -1,28 +1,41 @@
-# OpenCobolIDE 4.7.6+modern11.6 — local test build
+# OpenCobolIDE 4.7.6+modern11.6 — consolidated modern build
 
-The About diagnostic report now requests `cobcrun --info` for runtime build
-information and `cobcrun --runtime-config` for runtime configuration, replacing
-`cobcrun --runtime-env`. Errors identify the command that failed.
+Prepared 26 October 2026. This consolidates the project development iterations under the plain modern11.6 version; original upstream authorship and licence are retained.
 
-The compiler workflow and settings remain compatible with modern11.5.
-The offline Help manual and Debian package identify this build as modern11.6.
+## Projects
 
-## Verification and limits
+- New Project wizard and standard src/copybooks/bin/build/data/config folders.
+- Open Project on the opening screen; recursive source discovery and rooted tree.
+- Configure Project with shared defaults, per-source overrides and diagnostics.
+- Portable config/project.json; relative paths, one-time migration and atomic writes.
+- Close Project and safe switching with Save/Discard/Cancel, failed-save protection and split/detached view cleanup.
 
-The functional change previously passed the complete 112-test suite and two
-exploratory checks. See `doc/broader-verification-2026-10-23.md` for scope and
-environment. Verification of this release preparation is recorded separately
-in `doc/modern11.6-validation.md`.
+## Builds and source files
 
-Vincent's scrolling and toolbar-tooltip reports are not claimed as fixed.
-Mageia 10 compatibility and desktop tooltip timing remain unverified.
-This build is prepared for local installation and user testing, not published.
+- Internal IDE-owned project builder, independent of project-local build.sh.
+- Compile Project plus retained F8/current-source operation.
+- Automatic executable/module detection from PROCEDURE DIVISION USING.
+- Plain/GixSQL routing through source and COPY dependency inspection.
+- Default/custom source listings, `--Xref -ftsymbols` and full compile/link output.
+- New File .cpy/.CPY choices, empty copybooks, project folder defaults and COBOL editing; copybooks are not standalone compile/run targets.
+- Compiler/path/format/artifact conflict checks and cross-reference-safe syntax checking.
 
-## Debian package
+The earlier modern runtime arguments, source directives, environment settings, optional trace, shutdown corrections and runtime diagnostics remain included.
 
-`opencobolide_4.7.6+modern11.6_all.deb`
+## Documentation and example
 
-Install the package locally with apt, then confirm modern11.6 in the title/About
-and check the compiler and runtime information. Test compiling and running,
-per-source options, source format directives, and Down Arrow/Page Down with
-Logs both open and closed. Check toolbar tooltip timing on the actual desktop.
+The package includes an updated README, HOWTO_MODERN11.6.md, REVIEW_MODERN11.6.md, offline HTML manual and a portable main/module/shared-copybook demonstration derived from the reviewed user project. Generated demo binaries/listings are excluded.
+
+## Installing over test builds
+
+```bash
+sudo apt install --reinstall --allow-downgrades ./opencobolide_4.7.6+modern11.6_all.deb
+```
+
+The plain version sorts earlier than +projectN. Reinstall also ensures a previous package with the same plain version is replaced. Check the accompanying SHA-256 checksum.
+
+## Platform and publication state
+
+The Debian package is prepared/verified on Mint. Mageia 10 and Fedora 44 RPM kits use the same committed source; their native builds and desktop tests are pending on the persistent USB installations. GitHub push and release uploads are deferred until both RPM results are collected and reviewed back on Mint. Windows and other RPM distributions are not newly certified by this build.
+
+See README.md, HOWTO_MODERN11.6.md, REVIEW_MODERN11.6.md and packaging/RPM_MODERN11.6.md for details.
