@@ -6,6 +6,18 @@ from pathlib import Path
 import tempfile
 
 FOLDERS = ('src', 'copybooks', 'bin', 'build', 'data', 'config')
+_active_root = None
+
+
+def get_active_root():
+    return str(_active_root) if _active_root is not None else None
+
+
+def set_active_root(root):
+    """Keep sources attached to the project explicitly opened in this session."""
+    global _active_root
+    _active_root = Path(root).resolve() if root else None
+
 ENV_KEYS = ('compiler_path', 'path_mode', 'path', 'cob_copy_dir',
             'gixpp_path', 'gixsql_copy_dir', 'gixsql_library_dir')
 
@@ -14,8 +26,24 @@ def config_path(root):
     return Path(root) / 'config' / 'project.json'
 
 
+def roots_for_source(source):
+    """Return enclosing portable project folders, nearest first."""
+    path = Path(source).resolve().parent
+    return [str(directory) for directory in (path,) + tuple(path.parents)
+            if config_path(directory).is_file()]
+
+
 def find_root(source):
     path = Path(source).resolve().parent
+    # A leftover src/config/project.json must not hijack an opened parent
+    # project's copybooks, source overrides or output directories.
+    if _active_root is not None and config_path(_active_root).is_file():
+        try:
+            path.relative_to(_active_root)
+        except ValueError:
+            pass
+        else:
+            return str(_active_root)
     for directory in (path,) + tuple(path.parents):
         if config_path(directory).is_file():
             return str(directory)

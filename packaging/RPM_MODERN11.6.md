@@ -1,5 +1,7 @@
-> Native fix update: RPM release 11.6.1 includes SQL-only GixSQL paths,
+> Native fix update: RPM release 11.6.2 includes SQL-only GixSQL paths,
 > GnuCOBOL 3.2 diagnostic severity fixes and RPM payload cleanup.
+> It also keeps the explicitly opened project root authoritative when a nested
+> src/config/project.json exists. See [the project-root fix](PROJECT_ROOT_FIX_MODERN11.6.md).
 > See [the verification and remaining native checks](NATIVE_FIX_MODERN11.6.md).
 
 # modern11.6 — Mageia 10 and Fedora 44 USB build/collection plan

@@ -324,6 +324,10 @@ class CheckerMode(Mode, QtCore.QObject):
                 5, 'delaying analysis (previous analysis not finished)')
             QtCore.QTimer.singleShot(500, self.request_analysis)
 
+    def request_context(self):
+        """Optional serializable context supplied by a specialized checker."""
+        return {}
+
     def _request(self):
         """ Requests a checking of the editor content. """
         try:
@@ -342,6 +346,7 @@ class CheckerMode(Mode, QtCore.QObject):
             'ignore_rules': self.ignore_rules,
             'max_line_length': max_line_length,
         }
+        request_data.update(self.request_context())
         try:
             self.editor.backend.send_request(
                 self._worker, request_data, on_receive=self._on_work_finished)

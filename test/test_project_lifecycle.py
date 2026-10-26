@@ -287,3 +287,83 @@ def test_native_warning_diagnostics_do_not_block_run(clean_workspace, tmp_path,
     app.cobol._run_requested = True
     app.cobol._on_compilation_finished()
     assert bool(launched) == (status == 0)
+
+
+def test_opened_parent_controls_sources_with_nested_config(clean_workspace, tmp_path):
+    from open_cobol_ide.settings import Settings
+    from open_cobol_ide.compilers import compile_with_build_script
+    from open_cobol_ide.project_validation import validate_project
+    app = clean_workspace
+    root, source = make_project(tmp_path, 'parent-project')
+    source.write_text('       identification division.\n       program-id. example.\n'
+                      '       data division.\n       working-storage section.\n'
+                      '       COPY copybook.\n       procedure division.\n           goback.\n')
+    (root/'copybooks/copybook.cpy').write_text('       01 VALUE-ITEM PIC X.\n')
+    nested = root/'src'
+    config.save(nested, config.default_config(nested))
+    nested_before = config.config_path(nested).read_bytes()
+    assert config.find_root(source) == str(nested)
+    assert app.file.open_project(str(root))
+    assert config.find_root(source) == str(root)
+    assert Settings().project_root_for_source(str(source)) == str(root)
+    assert not [d for d in validate_project(str(root), Settings()) if d['level']=='error']
+    status, messages = compile_with_build_script(str(source))
+    assert status == 0, messages
+    assert (root/'bin/shared').exists()
+    assert (root/'build/shared.lst').exists()
+    from open_cobol_ide.linter import lint
+    from pyqode.core.modes import CheckerMessages
+    context = app.edit.current_editor.linter_mode.request_context()
+    assert context['project_root'] == str(root)
+    # Simulate a backend with no session state of its own.
+    config.set_active_root(None)
+    lint_messages = lint(dict(context, code=source.read_text(), path=str(source)))
+    assert not [m for m in lint_messages if m[1] == CheckerMessages.ERROR]
+    assert config.get_active_root() is None
+    config.set_active_root(root)
+    assert config.config_path(nested).read_bytes() == nested_before
+    assert app.file.close_project()
+    assert config.find_root(source) == str(nested)
+    # Explicitly selecting the nested project still makes it the active root.
+    assert app.file.open_project(str(nested))
+    assert Settings().project_root_for_source(str(source)) == str(nested)
+
+
+def test_open_single_file_detects_project_and_keeps_standalone_tab(clean_workspace, tmp_path):
+    app = clean_workspace
+    loose = tmp_path/'standalone.cbl'
+    loose.write_text('       identification division.\n')
+    app.file.open_file(str(loose))
+    root, source = make_project(tmp_path, 'detected-project')
+    app.file.open_file(str(source))
+    assert app.file.project_root == str(root)
+    assert config.find_root(source) == str(root)
+    assert str(loose) in paths(app)
+    assert app.edit.current_editor.file.path == str(source)
+
+
+def test_open_single_file_with_two_projects_asks_owner(clean_workspace, tmp_path, monkeypatch):
+    app = clean_workspace
+    root, source = make_project(tmp_path, 'parent')
+    config.save(root/'src', config.default_config(root/'src'))
+    choices = []
+    def choose(parent, title, label, items, *args):
+        choices.extend(items)
+        return str(root), True
+    monkeypatch.setattr(QtWidgets.QInputDialog, 'getItem', choose)
+    app.file.open_file(str(source))
+    assert set(choices) == {str(root), str(root/'src')}
+    assert app.file.project_root == str(root)
+    assert config.find_root(source) == str(root)
+
+
+def test_open_foreign_project_file_does_not_switch_current_project(clean_workspace, tmp_path):
+    app = clean_workspace
+    root, source = make_project(tmp_path, 'first')
+    other, other_source = make_project(tmp_path, 'other')
+    app.file.open_project(str(root))
+    app.file.open_file(str(other_source))
+    assert app.file.project_root == str(root)
+    assert str(source) in paths(app)
+    assert str(other_source) in paths(app)
+    assert str(other) in app.win.statusBar().currentMessage()

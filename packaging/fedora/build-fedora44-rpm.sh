@@ -22,7 +22,7 @@ install -m 0644 "$spec_file" "$top_dir/SPECS/opencobolide.spec"
 rpmbuild -ba --define "_topdir $top_dir" --define 'dist .fc44' \
     "$top_dir/SPECS/opencobolide.spec" 2>&1 | tee "$output_dir/rpmbuild.log"
 mapfile -t packages < <(find "$top_dir/RPMS" "$top_dir/SRPMS" \
-    -type f -name 'opencobolide-4.7.6-11.6*.rpm' -print | sort)
+    -type f -name 'opencobolide-4.7.6-11.6.2*.rpm' -print | sort)
 [[ ${#packages[@]} -ge 2 ]] || { echo 'Expected binary and source RPMs were not found.' >&2; exit 1; }
 for package in "${packages[@]}"; do install -m 0644 "$package" "$output_dir/"; done
 set +e

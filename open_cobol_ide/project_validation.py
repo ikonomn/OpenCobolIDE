@@ -146,9 +146,15 @@ def validate_project(root, settings, document=None, sources=None):
                 selected_format == 'free' if selected_format != 'inherit' else free or settings.free_format)
             copy_environment = env.get('cob_copy_dir') or (
                 settings.cob_copy_dir if settings.cob_copy_dir_enabled else os.environ.get('COB_COPY_DIR', ''))
-            sql_dirs = include_dirs + [p for p in copy_environment.split(os.pathsep) if p]
-            sql = has_sql(path, [config.resolve_path(root, p) for p in sql_dirs] +
-                          [config.resolve_path(root, env.get('gixsql_copy_dir') or '/usr/share/gixsql/copy')], free=free_mode)
+            # Match the bundled builder: project/copybooks is an implicit
+            # search directory even with empty/inherited project settings.
+            # Otherwise validation rejects COPYs the build itself can resolve.
+            project_copy = os.environ.get('PROJECT_COPY_DIR') or os.path.join(root, 'copybooks')
+            gixsql_copy = (env.get('gixsql_copy_dir') or
+                           os.environ.get('GIXSQL_COPY_DIR') or '/usr/share/gixsql/copy')
+            sql_dirs = [project_copy, gixsql_copy] + [
+                p for p in copy_environment.split(os.pathsep) if p] + include_dirs
+            sql = has_sql(path, [config.resolve_path(root, p) for p in sql_dirs], free=free_mode)
             if sql:
                 gixpp = env.get('gixpp_path') or os.environ.get('GIXPP', 'gixpp')
                 if '/' in gixpp: gixpp = config.resolve_path(root, gixpp)

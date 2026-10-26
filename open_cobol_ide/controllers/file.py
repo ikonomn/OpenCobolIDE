@@ -8,7 +8,7 @@ import logging
 import os
 from pyqode.core import widgets
 from pyqode.qt import QtGui, QtWidgets
-from open_cobol_ide import system
+from open_cobol_ide import system, project_config
 from open_cobol_ide.view.editors import CobolCodeEdit
 from open_cobol_ide.settings import Settings
 from open_cobol_ide.view.dialogs.new_file import DlgNewFile
@@ -53,6 +53,7 @@ class FileController(Controller):
         self.ui.menuFile.addAction(self.ui.actionNew)
         self.ui.menuFile.addAction(self.ui.actionOpen)
         self.project_root = None
+        project_config.set_active_root(None)
         self._project_setup_dialog = None
         self.new_project_action = self.ui.menuFile.addAction('New Project...')
         self.new_project_action.triggered.connect(self.request_new_project)
@@ -193,6 +194,7 @@ class FileController(Controller):
             self._project_setup_dialog.close()
             self._project_setup_dialog = None
         self.project_root = None
+        project_config.set_active_root(None)
         Settings().lock_fs_path = ''
         self.ui.btFSLock.setChecked(False)
         for editor in views:
@@ -269,6 +271,7 @@ class FileController(Controller):
         if changing:
             self._release_project(views)
         self.project_root = path
+        project_config.set_active_root(path)
         Settings().register_project(path)
         self._update_project_actions()
         self.app.view.show_edit_page()
@@ -368,6 +371,22 @@ class FileController(Controller):
                     QtWidgets.QMessageBox.No)
                 if answer == QtWidgets.QMessageBox.No:
                     return
+        candidates = project_config.roots_for_source(path)
+        if self.project_root is None and candidates:
+            owner = candidates[0]
+            if len(candidates) > 1:
+                owner, accepted = QtWidgets.QInputDialog.getItem(
+                    self.main_window, 'Choose project for this file',
+                    'More than one project contains this file. Which project should open?',
+                    list(reversed(candidates)), 0, False)
+                if not accepted:
+                    return
+            if not self.open_project(owner):
+                return
+        elif candidates and not self._inside_project(path, self.project_root):
+            self.main_window.statusBar().showMessage(
+                'This file belongs to %s. The current project remains %s.' %
+                (candidates[0], self.project_root), 10000)
         self.app.edit.add_editor(path)
         self.app.view.show_edit_page()
         self.app.file.recent_files_manager.open_file(path)

@@ -378,3 +378,40 @@ def test_source_can_disable_listing_inherited_from_project_flags(tmp_path):
     assert status == 0, messages
     assert (root / 'bin/main').is_file()
     assert not list((root / 'build').glob('*.lst'))
+
+
+@pytest.mark.parametrize('paths,enabled', [(None, True), ([], True), (['copybooks'], False)])
+@pytest.mark.parametrize('sql', [False, True])
+def test_validation_uses_implicit_project_copybooks(tmp_path, monkeypatch, paths, enabled, sql):
+    root, source = make_project(tmp_path)
+    source.write_text('       COPY copybook.\n')
+    (root/'copybooks/copybook.cpy').write_text(
+        '           EXEC SQL SELECT 1 END-EXEC.\n' if sql else '       01 VALUE-ITEM PIC X.\n')
+    data = config.load(root)
+    data['defaults'].update(copybook_paths=paths, enabled=enabled)
+    data['sources']['src/main.cbl'] = {'copybook_paths': None}
+    monkeypatch.setattr(Settings, 'copybook_paths', property(lambda self: ''))
+    monkeypatch.setattr(Settings, 'cob_copy_dir_enabled', property(lambda self: False))
+    monkeypatch.delenv('COB_COPY_DIR', raising=False)
+    monkeypatch.delenv('PROJECT_COPY_DIR', raising=False)
+    monkeypatch.setenv('GIXPP', 'ocide-test-missing-gixpp')
+    messages = errors(root, data)
+    assert not any('Cannot inspect' in m for m in messages), messages
+    assert any('GixSQL preprocessor not found' in m for m in messages) == sql
+
+
+def test_validation_implicit_copybooks_still_reports_missing_copy(tmp_path, monkeypatch):
+    root, source = make_project(tmp_path)
+    source.write_text('       COPY missing-copybook.\n')
+    monkeypatch.delenv('PROJECT_COPY_DIR', raising=False)
+    assert any('Cannot inspect COPY missing-copybook' in m for m in errors(root))
+
+
+def test_validation_uses_builder_project_copy_override(tmp_path, monkeypatch):
+    root, source = make_project(tmp_path)
+    source.write_text('       COPY custom-book.\n')
+    custom = root/'custom-copy'
+    custom.mkdir()
+    (custom/'custom-book.cpy').write_text('       01 VALUE-ITEM PIC X.\n')
+    monkeypatch.setenv('PROJECT_COPY_DIR', 'custom-copy')
+    assert not errors(root)

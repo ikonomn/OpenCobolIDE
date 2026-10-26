@@ -47,6 +47,17 @@ def make_linter_command(cobol_file_name, original_file_path, source_code=None):
 
 
 def lint(request_data):
+    # Backend processes cannot see the GUI process's in-memory project choice.
+    from . import project_config as config
+    previous = config.get_active_root()
+    config.set_active_root(request_data.get('project_root'))
+    try:
+        return _lint(request_data)
+    finally:
+        config.set_active_root(previous)
+
+
+def _lint(request_data):
     """
     Performs linting of a COBOL document.
 
@@ -97,5 +108,9 @@ def lint(request_data):
 
 
 class CobolLinterMode(CheckerMode):
+    def request_context(self):
+        return {'project_root': settings.Settings().project_root_for_source(
+            self.editor.file.path)}
+
     def __init__(self):
         super().__init__(lint)
