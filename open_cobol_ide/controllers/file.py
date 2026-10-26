@@ -116,6 +116,7 @@ class FileController(Controller):
         cobol = getattr(self.app, 'cobol', None)
         if cobol is not None:
             cobol.project_compile_action.setEnabled(active)
+            cobol.project_rebuild_action.setEnabled(active)
             cobol.project_settings_action.setEnabled(active)
 
     def _can_change_project(self):

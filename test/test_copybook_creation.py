@@ -90,7 +90,7 @@ def test_create_and_edit_copybook_without_compiler_prompt(app, tmp_path, monkeyp
     assert not app.win.ui.menuProgramType.isEnabled()
     assert app.cobol.project_compile_action.isEnabled()
     calls = []
-    monkeypatch.setattr(app.cobol, '_start_compilation', calls.append)
+    monkeypatch.setattr(app.cobol, '_start_compilation', lambda paths, **kwargs: calls.append(paths))
     app.cobol.compile_project()
     assert calls == [[str(source)]]
     assert str(path) not in project_sources(str(root), Settings().all_extensions + ['.cpy'])

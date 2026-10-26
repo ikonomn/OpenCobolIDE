@@ -82,7 +82,7 @@ def test_switch_same_named_sources_closes_old_tabs_and_compiles_only_new(clean_w
     assert app.win.ui.tvFileSystem.root_path == str(new)
     assert not review.isVisible()
     calls = []
-    monkeypatch.setattr(app.cobol, '_start_compilation', calls.append)
+    monkeypatch.setattr(app.cobol, '_start_compilation', lambda paths, **kw: calls.append(paths))
     app.cobol.compile_project()
     assert calls == [[str(second)]]
     assert first.is_file()

@@ -13,7 +13,8 @@ Prepared 26 October 2026. This consolidates the project development iterations u
 ## Builds and source files
 
 - Internal IDE-owned project builder, independent of project-local build.sh.
-- Compile Project plus retained F8/current-source operation.
+- Compile Project (Ctrl+F8) builds changed sources and changed-copybook dependents; Rebuild Project (Ctrl+Shift+F8) forces all sources. F8 remains current-source compilation.
+- Keyboard shortcuts for modern project/settings/support actions, with an in-app shortcut list.
 - Automatic executable/module detection from PROCEDURE DIVISION USING.
 - Plain/GixSQL routing through source and COPY dependency inspection.
 - Default/custom source listings, `--Xref -ftsymbols` and full compile/link output.

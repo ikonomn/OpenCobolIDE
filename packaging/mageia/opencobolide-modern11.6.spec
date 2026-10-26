@@ -1,6 +1,6 @@
 Name:           opencobolide
 Version:        4.7.6
-Release:        11.6.2%{?dist}
+Release:        11.6.3%{?dist}
 Summary:        COBOL IDE with portable projects for modern Python and PyQt5
 License:        GPLv3+
 URL:            https://github.com/ikonomn/OpenCobolIDE
@@ -39,7 +39,7 @@ install -Dpm 0644 share/opencobolide.1 %{buildroot}%{_mandir}/man1/opencobolide.
 install -Dpm 0644 doc/OpenCobolIDE-modern11.6.html %{buildroot}%{_docdir}/%{name}/manual.html
 install -pm 0644 README.md HOWTO_MODERN11.6.md REVIEW_MODERN11.6.md RELEASE_NOTES_MODERN11.6.md INSTALL_FROM_SOURCE.md AUTHORS.rst LICENSE %{buildroot}%{_docdir}/%{name}/
 install -d %{buildroot}%{_docdir}/%{name}/packaging
-install -pm 0644 packaging/RPM_MODERN11.6.md packaging/NATIVE_FIX_MODERN11.6.md packaging/PROJECT_ROOT_FIX_MODERN11.6.md %{buildroot}%{_docdir}/%{name}/packaging/
+install -pm 0644 packaging/RPM_MODERN11.6.md packaging/NATIVE_FIX_MODERN11.6.md packaging/PROJECT_ROOT_FIX_MODERN11.6.md packaging/INCREMENTAL_BUILD_MODERN11.6.md %{buildroot}%{_docdir}/%{name}/packaging/
 cp -a examples %{buildroot}%{_docdir}/%{name}/
 find %{buildroot}%{_docdir}/%{name}/examples -type f \( -name '.gitkeep' -o -name '.gitignore' -o -name '*.pyc' \) -delete
 find %{buildroot}%{_docdir}/%{name}/examples -type d -name __pycache__ -prune -exec rm -rf {} +
@@ -69,6 +69,10 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/OpenCobolIDE.desktop
 %{_mandir}/man1/opencobolide.1*
 
 %changelog
+* Mon Oct 26 2026 OpenCobolIDE modern build <noreply@opencobolide.invalid> - 4.7.6-11.6.3%{?dist}
+- Compile changed project sources and copybook dependents; add Rebuild Project.
+- Add modern action shortcuts and document incremental compilation clearly.
+
 * Mon Oct 26 2026 OpenCobolIDE modern build <noreply@opencobolide.invalid> - 4.7.6-11.6.2%{?dist}
 - Keep opened project root authoritative and match builder copybook lookup.
 

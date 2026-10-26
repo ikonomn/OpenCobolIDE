@@ -163,7 +163,7 @@ def test_project_action_and_f8_remain_independent(app, tmp_path, monkeypatch):
     assert app.file.project_root == str(tmp_path)
     assert app.win.ui.tvFileSystem.root_path == str(tmp_path)
     calls = []
-    monkeypatch.setattr(app.cobol, '_start_compilation', lambda paths=None: calls.append(paths))
+    monkeypatch.setattr(app.cobol, '_start_compilation', lambda paths=None, **kwargs: calls.append(paths))
     monkeypatch.setattr(app.cobol, 'check_compiler', lambda extension: (True, ''))
     app.cobol.project_compile_action.trigger()
     app.win.ui.actionCompile.trigger()

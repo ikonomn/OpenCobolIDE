@@ -71,6 +71,8 @@ class CompilationThread(QtCore.QThread):
     #: path of the file to compile
     file_path = ''
     file_paths = None
+    incremental = False
+    force_project = False
 
     def run(self):
         """
@@ -107,8 +109,27 @@ class CompilationThread(QtCore.QThread):
 
         _logger().info('running compilation thread: %r', files)
 
+        states = {}
+        built, skipped = 0, 0
         for f in dict.fromkeys(files):
+            state, inputs = None, None
             try:
+                from open_cobol_ide.project_build import BuildState, snapshot
+                root = Settings().project_root_for_source(f)
+                if root:
+                    if root not in states:
+                        states[root] = BuildState(root)
+                    state = states[root]
+                    try:
+                        inputs = snapshot(f)
+                    except (OSError, ValueError):
+                        inputs = None
+                    if self.incremental and not self.force_project and state.current(f, inputs):
+                        skipped += 1
+                        self.output_available.emit('Up to date: %s\n' % f)
+                        continue
+                    state.invalidate(f)
+                built += 1
                 trace_log.event('compile.file.start', source=f)
                 build_script = find_build_script(f)
                 if build_script:
@@ -129,7 +150,16 @@ class CompilationThread(QtCore.QThread):
             else:
                 trace_log.event('compile.file.finished', source=f,
                                 status=status, messages=len(messages))
+                if state is not None and status == 0 and not any(
+                        message[1] == CheckerMessages.ERROR for message in messages):
+                    try:
+                        if inputs == snapshot(f):
+                            state.record(f, inputs)
+                    except (OSError, ValueError):
+                        pass
                 self.file_compiled.emit(f, status, messages)
+        if self.incremental:
+            self.output_available.emit('Project build: %d compiled, %d up to date.\n' % (built, skipped))
         trace_log.event('compile.thread.finished', files_count=len(files))
         self.finished.emit()
 
@@ -163,18 +193,25 @@ class CobolController(Controller):
         self.ui.actionClean.triggered.connect(self.clean)
         self.ui.actionRebuild.triggered.connect(self.rebuild)
         self.project_compile_action = self.ui.menuCobol.addAction('Compile Project')
+        self.project_compile_action.setToolTip('Compile changed sources and sources whose copybooks changed')
         self.project_compile_action.triggered.connect(self.compile_project)
+        self.project_rebuild_action = self.ui.menuCobol.addAction('Rebuild Project')
+        self.project_rebuild_action.setToolTip('Compile every project source, even when unchanged')
+        self.project_rebuild_action.triggered.connect(self.rebuild_project)
+        self.project_rebuild_action.setEnabled(bool(self.app.file.project_root))
         self.project_settings_action = self.ui.menuCobol.addAction('Project compiler settings...')
         self.project_settings_action.triggered.connect(self.edit_project_compiler_options)
         self.project_compile_action.setEnabled(bool(self.app.file.project_root))
         self.project_settings_action.setEnabled(bool(self.app.file.project_root))
         self._exception_flags = []
         listing_action = self.ui.menuCobol.addAction('Automatic listing filename')
+        self.listing_action = listing_action
         listing_action.setCheckable(True)
         listing_action.setChecked(Settings().automatic_listing)
         listing_action.toggled.connect(
             lambda enabled: setattr(Settings(), 'automatic_listing', enabled))
         source_action = self.ui.menuCobol.addAction('Compiler options for this file...')
+        self.source_settings_action = source_action
         source_action.triggered.connect(self.edit_source_compiler_options)
 
     def edit_project_compiler_options(self):
@@ -319,6 +356,8 @@ class CobolController(Controller):
         """
         Updates current editor file type and enables/disables run action.
         """
+        if not self._can_build_current_source():
+            return
         if action == self.ui.actionProgram:
             self.ui.tabWidgetEditors.current_widget().file_type = \
                 FileType.EXECUTABLE
@@ -346,7 +385,13 @@ class CobolController(Controller):
                 'configuration'
         return compiler_works, msg
 
-    def compile_project(self):
+    def compile_project(self, checked=False):
+        self._compile_project(False)
+
+    def rebuild_project(self, checked=False):
+        self._compile_project(True)
+
+    def _compile_project(self, force):
         from open_cobol_ide.project import project_sources
         root = self.app.file.project_root
         if not root:
@@ -361,9 +406,9 @@ class CobolController(Controller):
                 self.main_window, 'Compile Project', 'No COBOL sources found.')
             return
         self._run_requested = False
-        self._start_compilation(paths)
+        self._start_compilation(paths, force_project=force)
 
-    def _start_compilation(self, paths=None):
+    def _start_compilation(self, paths=None, force_project=False):
         if self._compilation_thread is not None and self._compilation_thread.isRunning():
             return
         try:
@@ -382,6 +427,7 @@ class CobolController(Controller):
                     return
         self.enable_compile(False)
         self.project_compile_action.setEnabled(False)
+        self.project_rebuild_action.setEnabled(False)
         self.enable_run(False)
         self.ui.errorsTable.clear()
         self._errors = 0
@@ -389,6 +435,8 @@ class CobolController(Controller):
         self.ui.tabWidgetLogs.setCurrentIndex(LOG_PAGE_COMPILER)
         self._compilation_thread = CompilationThread()
         self._compilation_thread.file_paths = paths
+        self._compilation_thread.incremental = paths is not None
+        self._compilation_thread.force_project = force_project
         self._compilation_thread.file_path = (
             paths[0] if paths else self.app.edit.current_editor.file.path)
         self._compilation_thread.file_compiled.connect(self._on_file_compiled)
@@ -474,6 +522,7 @@ class CobolController(Controller):
                         run_requested=self._run_requested)
         self.enable_compile(True)
         self.project_compile_action.setEnabled(bool(self.app.file.project_root))
+        self.project_rebuild_action.setEnabled(bool(self.app.file.project_root))
         self.enable_run(True)
         self.ui.tabWidgetLogs.setCurrentIndex(LOG_PAGE_ISSUES)
         if self._run_requested:

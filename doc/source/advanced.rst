@@ -207,3 +207,76 @@ development environment.
 The maintained Debian package deliberately uses the distribution PyQt5 package
 so its native Qt dependencies match the host system. Developer mode is intended
 for source work and is not required for normal use.
+
+Incremental project builds and shortcuts
+--------------------------------------
+
+Compile Project (Ctrl+F8) compiles changed sources and sources affected by changed
+copybooks. Rebuild Project (Ctrl+Shift+F8) compiles every source, even unchanged.
+F8 still compiles the current source; Shift+F8 rebuilds the current source only.
+The first project build compiles everything. Recursive COPY and SQL INCLUDE
+dependencies are tracked by content, along with effective settings and outputs.
+Missing binaries/listings and failed builds are rebuilt. History is stored in
+``build/.ocide-build-state.json`` and can safely be deleted. Legacy SQL backends
+are conservatively rebuilt. The compiler log reports skipped and compiled files.
+
+Open Keyboard shortcuts from the Help menu with Ctrl+Alt+H. Ctrl+Alt+K toggles
+background syntax checking, leaving Ctrl+Shift+L available to editor selection.
+
+.. list-table:: Modern workflow keyboard shortcuts
+   :header-rows: 1
+
+   * - Action
+     - Shortcut
+   * - New Project
+     - Ctrl+Alt+N
+   * - Open Project
+     - Ctrl+Alt+O
+   * - Close Project
+     - Ctrl+Alt+W
+   * - Configure Project
+     - Ctrl+Alt+P
+   * - Compile Project — changed files
+     - Ctrl+F8
+   * - Rebuild Project — all files
+     - Ctrl+Shift+F8
+   * - Project compiler settings
+     - Ctrl+Alt+B
+   * - Source compiler settings
+     - Ctrl+Alt+S
+   * - Automatic listing filename
+     - Ctrl+Alt+G
+   * - Cancel compilation or run
+     - Shift+F5
+   * - Background syntax checking
+     - Ctrl+Alt+K
+   * - Import preferences
+     - Ctrl+Alt+I
+   * - Export preferences
+     - Ctrl+Alt+E
+   * - Executable program override
+     - Ctrl+Alt+X
+   * - Module program override
+     - Ctrl+Alt+U
+   * - About OpenCobolIDE
+     - Ctrl+F1
+   * - Report an issue
+     - Ctrl+Shift+F1
+   * - Restore factory defaults
+     - Ctrl+K, Ctrl+R
+   * - New file / copybook
+     - Ctrl+N
+   * - Open file (detect project)
+     - Ctrl+O
+   * - Compile current file
+     - F8
+   * - Rebuild current file
+     - Shift+F8
+   * - Run current program
+     - F5
+   * - Offline manual
+     - F1
+   * - File tree / outline / offsets / output
+     - Ctrl+Alt+1 / 2 / 3 / 4
+   * - Keyboard shortcuts
+     - Ctrl+Alt+H

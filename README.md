@@ -22,7 +22,7 @@ This consolidated modern11.6 includes the project1–project8 development packag
 | Portable settings | `config/project.json` stores project defaults and relative per-source overrides. |
 | Validation | Checks known flag, source-format, directory, compiler and output/listing conflicts before compilation. |
 | Internal builder | Uses the IDE-owned builder; project-local build.sh files are ignored. |
-| Compile Project / F8 | Batch compilation plus current-source compilation with existing dependency detection. |
+| Compile Project / Rebuild Project | Ctrl+F8 compiles changed sources, including changed copybook dependents; Ctrl+Shift+F8 compiles everything. F8 keeps its current-file behavior. |
 | Automatic mode | Detects `-x` / `-m` for each source; PROCEDURE DIVISION USING selects a module. |
 | Copybooks | New File offers .cpy/.CPY, blank templates and project copybooks-folder defaults; copybooks are not standalone build targets. |
 | GixSQL | Detects SQL in sources/COPY dependencies and preprocesses only sources that need it. |
@@ -99,3 +99,5 @@ The current regression set covers project creation/migration/relocation, safe cl
 OpenCobolIDE retains its original authors, Colin Duquesnoy's original project attribution, bundled component notices and GPL licence. See [AUTHORS.rst](AUTHORS.rst) and [LICENSE](LICENSE).
 
 Modern compatibility, project-workflow, packaging and verification work was developed with assistance from OpenAI Codex. This is an unofficial community-maintained modern build, provided under the existing licence without a warranty of suitability for every platform.
+
+Project compilation and the complete keyboard shortcut table are explained in [the How-to guide](HOWTO_MODERN11.6.md#18-keyboard-shortcuts).

@@ -50,7 +50,7 @@ rpmbuild -ba \
 
 mapfile -t packages < <(
     find "$top_dir/RPMS" "$top_dir/SRPMS" \
-        -type f -iname 'opencobolide-4.7.6-11.6.2*.rpm' -print | sort
+        -type f -iname 'opencobolide-4.7.6-11.6.3*.rpm' -print | sort
 )
 
 if [ "${#packages[@]}" -lt 2 ]; then

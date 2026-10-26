@@ -23,6 +23,7 @@ For installation of this exact build, use the package and replacement commands i
 15. [Verification and Debian package](#15-verification-and-debian-package)
 16. [Troubleshooting](#16-troubleshooting)
 17. [Implementation map and current scope](#17-implementation-map-and-current-scope)
+18. [Keyboard shortcuts](#18-keyboard-shortcuts)
 
 ## 1. Overview
 
@@ -38,7 +39,8 @@ The main additions are:
 | Open Project | Opens recognized COBOL sources and keeps the file tree at the project root. |
 | Configure Project | Shows source inheritance/overrides and validation results. |
 | Portable configuration | Saves project defaults and source overrides in `config/project.json`. |
-| Compile Project | Compiles discovered sources in one background batch. |
+| Compile Project | Compiles changed sources and sources affected by changed copybooks. |
+| Rebuild Project | Compiles every project source, including unchanged files. |
 | Internal builder | Uses the IDE-owned script instead of a project-folder `build.sh`. |
 | Automatic mode | Selects `-x` or `-m` per source. |
 | GixSQL detection | Preprocesses sources that contain SQL, including SQL found through COPY dependencies. |
@@ -392,17 +394,32 @@ These are implementation details; users normally configure the dialogs instead o
 
 The source's absolute filename is passed as an argument. The process runs with the project root as its working directory. Artifacts are written into the project, not into the IDE installation.
 
-### Batch compilation and F8
+### Compile changed files versus rebuild everything
 
-**Compile Project** compiles discovered sources in deterministic order. Each selected source is compiled once in the batch; an individual failure is reported and does not prevent the thread from attempting later sources.
+| Menu action | Shortcut | What it does |
+|---|---|---|
+| **Compile Project** | **Ctrl+F8** | Compiles changed sources and sources whose copybooks changed. Skips sources already up to date. |
+| **Rebuild Project** | **Ctrl+Shift+F8** | Forces every source in the project to compile, even when unchanged. |
+| Compile current file | F8 | Retains current-file compilation and existing CALL dependency detection. |
+| Rebuild current file | Shift+F8 | Cleans and recompiles the current file. This is not Rebuild Project. |
 
-Settings validation occurs before the batch starts. A validation error prevents the compilation thread from starting.
+**Compile Project means compile changed files. Rebuild Project means compile all files.**
+The first project build compiles everything. Later builds compare file contents,
+including recursively used COPY files and SQL INCLUDE copybooks. A shared copybook
+change recompiles every source that uses it; unrelated sources remain up to date.
+Source/compiler setting changes, compiler/builder changes, or missing/modified
+binaries and listings also cause rebuilding. Failed builds are never marked up
+to date and are attempted again. The compiler log shows each skipped source and
+a final compiled/up-to-date count.
 
-**F8** retains current-source compilation and its existing dependency-autodetection behavior when enabled. A source belonging to a project uses the internal project builder. Ordinary files outside recognized projects retain the normal single-file compiler path.
+The IDE saves editor changes and validates settings before selecting work. Build
+history is stored in `build/.ocide-build-state.json`; deleting it safely causes
+a complete build next time. Moving projects between computers also rebuilds them.
+Unresolved dependencies and legacy DBPRE/esqlOC backends are conservatively rebuilt.
+Source discovery order stays deterministic; this adds copybook invalidation,
+not a new static linker target or CALL-based build-order system.
 
-The internal script handles `.cbl`, `.cob` and `.pco` project sources. Existing DBPRE/esqlOC extensions retain their dedicated compiler dispatch paths.
-
-Compile Project is batch compilation; it does not introduce a make-style dependency graph, dependency-based build ordering or a new multi-source linker-target system.
+Settings validation occurs before the batch starts. Validation errors prevent compilation.
 
 ## 9. Automatic executable/module detection
 
@@ -653,7 +670,7 @@ Mageia 10 and Fedora 44 use distinct native build setups. Boot the corresponding
 | GixSQL is missing | Set/install `gixpp` for SQL sources; plain sources do not need SQL preprocessing. |
 | Executable requested for a USING source | Remove manual `-x`/`-m` from flags; inspect source format and any legacy file-type selection. |
 | No listing is visible | Check whether listing generation is disabled and read the final `Listing:` output line. |
-| An old `.lst` file is unchanged | A custom setting may select a different path, such as a project-root `.prn`; inspect the actual compiler command. |
+| An old `.lst` file is unchanged | Compile Project skips up-to-date sources; choose Rebuild Project to force regeneration. A custom setting may select a different path, such as a project-root `.prn`; inspect the actual compiler command. |
 | No cross-reference section | Confirm the enabled listing was rebuilt by the internal builder and look for `--Xref` in the command. |
 | `-Xrefr` rejected | Use supported `--Xref` or `-X`. |
 | Two sources conflict | Compare their basenames and their resolved output/listing destinations. |
@@ -670,6 +687,8 @@ Mageia 10 and Fedora 44 use distinct native build setups. Boot the corresponding
 | File or group | Responsibility |
 | --- | --- |
 | `open_cobol_ide/project.py` | Sorted recursive source discovery and exclusions. |
+| `open_cobol_ide/project_build.py` | Content fingerprints, recursive copybook dependencies and successful-build history. |
+| `open_cobol_ide/shortcuts.py` | Modern action shortcuts and in-app reference. |
 | `open_cobol_ide/project_config.py` | Schema, safe creation, loading, atomic saving and portable path handling. |
 | `open_cobol_ide/project_validation.py` | Merged-settings checks and destination collisions. |
 | `open_cobol_ide/settings.py` | Preference migration, JSON-backed settings and inheritance. |
@@ -697,4 +716,44 @@ This is the consolidated **modern11.6** continuation of OpenCobolIDE. Original p
 
 The Debian build and new project workflow were verified on Linux. The internal builder uses Bash and Linux-oriented tool/library defaults. A native Windows implementation of this new workflow has not been validated, and this package should not be presented as a tested Windows release.
 
-The feature set does not add a new debugger, automatic database setup, automatic toolchain installation or a dependency-graph build system. Compiler and runtime behavior still depends on the installed GnuCOBOL/GixSQL toolchain and the application's own runtime configuration.
+The feature set does not add a new debugger, automatic database setup, automatic toolchain installation or a static-link target/build-order system. Copybook dependencies are tracked for incremental recompilation. Compiler and runtime behavior still depends on the installed GnuCOBOL/GixSQL toolchain and the application's own runtime configuration.
+
+## 18. Keyboard shortcuts
+
+The shortcuts below cover modern project, build, settings and support actions.
+Open **? → Keyboard shortcuts…** (**Ctrl+Alt+H**) inside the IDE for the list.
+Existing editor keys remain available. Background syntax checking now uses
+**Ctrl+Alt+K** so **Ctrl+Shift+L** remains available for editor selection.
+New copybooks use **Ctrl+N**, followed by choosing the `.cpy` extension. Automatic
+project recognition, automatic -x/-m detection and SQL routing need no extra key.
+For Restore factory defaults, press **Ctrl+K**, release, then press **Ctrl+R**;
+the existing confirmation dialog still applies.
+
+| Action | Shortcut |
+|---|---|
+| New Project | **Ctrl+Alt+N** |
+| Open Project | **Ctrl+Alt+O** |
+| Close Project | **Ctrl+Alt+W** |
+| Configure Project | **Ctrl+Alt+P** |
+| Compile Project — changed files | **Ctrl+F8** |
+| Rebuild Project — all files | **Ctrl+Shift+F8** |
+| Project compiler settings | **Ctrl+Alt+B** |
+| Source compiler settings | **Ctrl+Alt+S** |
+| Automatic listing filename | **Ctrl+Alt+G** |
+| Cancel compilation or run | **Shift+F5** |
+| Background syntax checking | **Ctrl+Alt+K** |
+| Import preferences | **Ctrl+Alt+I** |
+| Export preferences | **Ctrl+Alt+E** |
+| Executable program override | **Ctrl+Alt+X** |
+| Module program override | **Ctrl+Alt+U** |
+| About OpenCobolIDE | **Ctrl+F1** |
+| Report an issue | **Ctrl+Shift+F1** |
+| Restore factory defaults | **Ctrl+K, Ctrl+R** |
+| New file / copybook | **Ctrl+N** |
+| Open file (detect project) | **Ctrl+O** |
+| Compile current file | **F8** |
+| Rebuild current file | **Shift+F8** |
+| Run current program | **F5** |
+| Offline manual | **F1** |
+| File tree / outline / offsets / output | **Ctrl+Alt+1 / 2 / 3 / 4** |
+| Keyboard shortcuts | **Ctrl+Alt+H** |

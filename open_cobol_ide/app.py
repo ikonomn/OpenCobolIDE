@@ -99,6 +99,8 @@ class Application(QtCore.QObject):
         self.cobol = CobolController(self)
         trace_log.event('controllers.created')
         self.help = HelpController(self)
+        from .shortcuts import install_shortcuts
+        install_shortcuts(self)
         self.win.app = self
 
         self.view.show_perspective(Settings().perspective)

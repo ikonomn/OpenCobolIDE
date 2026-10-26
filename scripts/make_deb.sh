@@ -58,7 +58,7 @@ for guide in README.md HOWTO_MODERN11.6.md REVIEW_MODERN11.6.md RELEASE_NOTES_MO
     install -m 0644 "$guide" "$package_root/usr/share/doc/$package_name/$guide"
 done
 mkdir -p "$package_root/usr/share/doc/$package_name/packaging"
-install -m 0644 packaging/RPM_MODERN11.6.md packaging/NATIVE_FIX_MODERN11.6.md packaging/PROJECT_ROOT_FIX_MODERN11.6.md "$package_root/usr/share/doc/$package_name/packaging/"
+install -m 0644 packaging/RPM_MODERN11.6.md packaging/NATIVE_FIX_MODERN11.6.md packaging/PROJECT_ROOT_FIX_MODERN11.6.md packaging/INCREMENTAL_BUILD_MODERN11.6.md "$package_root/usr/share/doc/$package_name/packaging/"
 mkdir -p "$package_root/usr/share/doc/$package_name/examples"
 cp -a examples/project-demo "$package_root/usr/share/doc/$package_name/examples/"
 example_target="$package_root/usr/share/doc/$package_name/examples/gixsql"

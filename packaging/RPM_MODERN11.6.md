@@ -1,4 +1,7 @@
-> Native fix update: RPM release 11.6.2 includes SQL-only GixSQL paths,
+> Compile Project now means changed files (Ctrl+F8); Rebuild Project means all
+> files (Ctrl+Shift+F8). See [build and shortcut verification](INCREMENTAL_BUILD_MODERN11.6.md).
+
+> Native fix update: RPM release 11.6.3 includes SQL-only GixSQL paths,
 > GnuCOBOL 3.2 diagnostic severity fixes and RPM payload cleanup.
 > It also keeps the explicitly opened project root authoritative when a nested
 > src/config/project.json exists. See [the project-root fix](PROJECT_ROOT_FIX_MODERN11.6.md).
