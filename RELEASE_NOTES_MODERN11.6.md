@@ -213,6 +213,53 @@ reinstall/downgrade options also replace an older package with the same version.
 Verify the published checksum before installation. GnuCOBOL is required for
 compilation; GixSQL is needed only for SQL projects.
 
+## Installing the Fedora 44 and Mageia 10 RPMs
+
+Run the commands on the matching distribution, from the directory containing
+its downloaded RPM. DNF installs the local package and resolves dependencies
+from the enabled distribution repositories. Include GnuCOBOL for compilation.
+
+### Fedora 44
+
+```bash
+sudo dnf install gnucobol ./opencobolide-4.7.6-11.6.3.fc44.noarch.rpm
+```
+
+### Mageia 10
+
+```bash
+sudo dnf install gnucobol ./opencobolide-4.7.6-11.6.3.mga10.noarch.rpm
+```
+
+Mageia 10 uses DNF5 alongside urpmi. If DNF is absent on an upgraded installation,
+install it first with Mageia's existing package manager:
+
+```bash
+sudo urpmi dnf5
+```
+
+If the command is available as `dnf5` rather than `dnf`, use:
+
+```bash
+sudo dnf5 install gnucobol ./opencobolide-4.7.6-11.6.3.mga10.noarch.rpm
+```
+
+### Verify installation and start the IDE
+
+On either distribution:
+
+```bash
+rpm -q opencobolide
+cobc --version
+opencobolide
+```
+
+GixSQL is optional and is distributed separately for SQL projects. The commands
+above install the IDE and COBOL compiler without requiring a GixSQL package.
+
+References: [DNF5 local RPM installation](https://dnf5.readthedocs.io/en/latest/commands/install.8.html#examples)
+and [Mageia 10 release notes — DNF](https://ftp.us2.freshrpms.net/linux/mageia/distrib/10/x86_64/release-notes.html).
+
 ## Scope and known limits
 
 - This release continues the original OpenCobolIDE project; original attribution
