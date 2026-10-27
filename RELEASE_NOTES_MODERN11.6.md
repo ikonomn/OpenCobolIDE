@@ -115,8 +115,7 @@ copybook. The guides explain project settings, automatic `-x`/`-m` detection,
 changed-file versus full builds, listings, SQL routing and shortcuts.
 
 See [HOWTO_MODERN11.6.md](HOWTO_MODERN11.6.md) for the complete workflow and
-shortcut table. Release collection/provenance is recorded separately in
-[RELEASE_HANDOFF_MODERN11.6.md](RELEASE_HANDOFF_MODERN11.6.md).
+shortcut table.
 
 ## Tests and verification
 
@@ -161,8 +160,8 @@ this compatibility check.
 Native package builds are confirmed. The collected build/lint logs do not by
 themselves establish that every new GUI workflow passed a complete installation
 acceptance test on each distribution. Source tests on Mint must not be described
-as native Fedora/Mageia GUI tests. Remaining native acceptance checks are listed
-in the release handoff.
+as native Fedora/Mageia GUI tests. Complete native installation and GUI acceptance
+checks before describing every workflow as tested on each distribution.
 
 ### Optional SQL integration evidence
 
@@ -194,9 +193,8 @@ The RPM packaging release is **11.6.3**; the Debian version remains
 **4.7.6+modern11.6**. Retain the actual filenames and versions.
 
 Also retain the two source RPMs, exact build-source archive, Fedora/Mageia build
-kits, this release note, the How-to guide and fresh `SHA256SUMS`. The release
-handoff gives their verified local locations. Documentation commits made after
-package construction do not change the package code revision recorded above;
+kits, this release note, the How-to guide and fresh `SHA256SUMS`.
+Documentation commits made after package construction do not change the package code revision recorded above;
 these updated release notes can be attached separately without claiming that
 the older package archives already contain this revision of the notes.
 
