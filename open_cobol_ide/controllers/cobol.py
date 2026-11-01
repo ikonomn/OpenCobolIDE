@@ -153,8 +153,10 @@ class CompilationThread(QtCore.QThread):
                 if state is not None and status == 0 and not any(
                         message[1] == CheckerMessages.ERROR for message in messages):
                     try:
-                        if inputs == snapshot(f):
-                            state.record(f, inputs)
+                        refreshed = snapshot(f)
+                        if (inputs is not None and refreshed is not None and
+                                inputs['fingerprint'] == refreshed['fingerprint']):
+                            state.record(f, refreshed)
                     except (OSError, ValueError):
                         pass
                 self.file_compiled.emit(f, status, messages)
@@ -656,6 +658,7 @@ class CobolController(Controller):
         if 'PATH' not in Settings().run_environemnt.keys():
             env['PATH'] = GnuCobolCompiler.setup_process_environment().value(
                 'PATH')
+        env.update(getattr(self, '_project_runtime_environment', {}))
         if file_type == FileType.MODULE:
             program = QtCore.QFileInfo(program).baseName()
         if system.windows:
@@ -725,6 +728,14 @@ class CobolController(Controller):
             wd = Settings().working_dir
         else:
             wd = output_dir
+        from open_cobol_ide.project_runtime import launch_settings
+        try:
+            wd, self._project_runtime_environment = launch_settings(
+                Settings().project_root_for_source(editor.file.path), wd, Settings().run_environemnt)
+        except (ValueError, OSError) as error:
+            QtWidgets.QMessageBox.warning(self.main_window, 'Project runtime folders', str(error))
+            self.enable_run(True)
+            return
         filename = os.path.splitext(editor.file.name)[0] + \
             GnuCobolCompiler().extension_for_type(file_type)
         program = os.path.join(output_dir, filename)
@@ -747,7 +758,7 @@ class CobolController(Controller):
             for item in self.run_buttons + [self.ui.actionRun]:
                 item.setEnabled(False)
             path = GnuCobolCompiler.setup_process_environment().value('PATH')
-            env = Settings().run_environemnt
+            env = dict(self._project_runtime_environment)
             if 'PATH' not in env.keys():
                 env['PATH'] = path
             if file_type == FileType.MODULE:

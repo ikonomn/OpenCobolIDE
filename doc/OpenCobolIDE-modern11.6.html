@@ -37,7 +37,9 @@ footer { margin-top:3rem; padding-top:1rem; border-top:1px solid var(--border);
 @media (max-width:640px) { nav { columns:1; } h1 { font-size:1.8rem; } }
 </style>
 </head>
-<body><main>
+<body>
+<section style="padding:1em;border:1px solid #888"><h2>modern12 local test build</h2><p>File → Rescan Project Folders (Ctrl+Alt+D) scans source/copybook assignments and proposes runtime working and data search directories. Review and Save to accept per-project settings; Cancel preserves them. Configure Project → Runtime folders / debug also opens this review.</p><p>Debug compilation is optional per project: -g -fsource-location -ftraceall -O0 -save-temps. Only generated .c and .h files are retained under debug_data/source-path/; executables/modules remain in bin and listings in build. No debugger integration is included yet.</p><p>Compile Project (Ctrl+F8) compiles changed sources and copybook dependents; Rebuild Project (Ctrl+Shift+F8) compiles all sources. Read MODERN12.md in the installed documentation for limitations and test instructions.</p></section>
+<main>
 <p><strong>Compile Project (Ctrl+F8): changed files. Rebuild Project (Ctrl+Shift+F8): all files.</strong> <a href="#incremental-project-builds">Build behavior and keyboard shortcuts</a>.</p>
 <header><h1>OpenCobolIDE 4.7.6 modern11.6 manual</h1>
 <p class="subtitle">Offline documentation for the Debian-family Linux compatibility build.</p>

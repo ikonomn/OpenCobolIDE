@@ -12,7 +12,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 package_name="opencobolide"
-package_version="${OCIDE_PACKAGE_VERSION:-4.7.6+modern11.6}"
+package_version="${OCIDE_PACKAGE_VERSION:-4.7.6+modern12}"
 package_root="${OCIDE_PACKAGE_ROOT:-build/deb-root}"
 output_file="${OCIDE_OUTPUT_FILE:-dist/${package_name}_${package_version}_all.deb}"
 
@@ -54,7 +54,7 @@ install -m 0644 share/OpenCobolIDE.png \
 install -m 0644 doc/OpenCobolIDE-modern11.6.html \
     "$package_root/usr/share/doc/$package_name/manual.html"
 # Keep the source and installed Markdown guide names identical.
-for guide in README.md HOWTO_MODERN11.6.md REVIEW_MODERN11.6.md RELEASE_NOTES_MODERN11.6.md INSTALL_FROM_SOURCE.md AUTHORS.rst LICENSE; do
+for guide in MODERN12.md README.md HOWTO_MODERN11.6.md REVIEW_MODERN11.6.md RELEASE_NOTES_MODERN11.6.md INSTALL_FROM_SOURCE.md AUTHORS.rst LICENSE; do
     install -m 0644 "$guide" "$package_root/usr/share/doc/$package_name/$guide"
 done
 mkdir -p "$package_root/usr/share/doc/$package_name/packaging"
@@ -107,7 +107,8 @@ changelog="$package_root/usr/share/doc/$package_name/changelog"
 printf '%s\n' \
     "$package_name ($package_version) unstable; urgency=medium" \
     '' \
-    '  * Consolidate the project development series under the modern11.6 version.' \
+    '  * Add modern12 project runtime folder discovery and user-reviewed settings.' \
+    '  * Retain debug C sources and headers in debug_data for independent debugging.' \
     '  * Ship updated README, how-to, development review and a portable demo project.' \
     '  * Add .cpy/.CPY creation with blank copybooks and project folder defaults.' \
     '  * Edit copybooks as COBOL while excluding standalone compile/run actions.' \

@@ -107,13 +107,21 @@ def snapshot(source):
     for command in (pgm, env.value('GIXPP') or 'gixpp'):
         path = shutil.which(command, path=env.value('PATH'))
         tools[command] = [path, artifact_stamp(path)] if path else None
-    payload = [1, inputs, pgm, args, sorted(env.toStringList()), tools, options, mode]
+    from . import project_config
+    debug = project_config.debug_enabled(root)
+    payload = [1, inputs, pgm, args, sorted(env.toStringList()), tools, options, mode, debug]
     fingerprint = hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()
     outputs = [str(Path(root)/'bin'/(source.stem+compiler.extension_for_type(mode)))]
     if options['listing'].get('enabled', True):
         for i, arg in enumerate(args[:-1]):
             if arg in ('-T', '-t'):
                 outputs.append(args[i+1])
+    if debug:
+        debug_dir = Path(root)/'debug_data'/source.relative_to(root).with_suffix('')
+        generated = sorted(str(p) for p in debug_dir.glob('*') if p.suffix in ('.c', '.h'))
+        if not any(p.endswith('.c') for p in generated):
+            generated.append(str(debug_dir/(source.stem+'.c')))
+        outputs.extend(generated)
     outputs = [str(Path(root)/p) if not os.path.isabs(p) else p for p in outputs]
     return {'fingerprint': fingerprint, 'outputs': outputs}
 

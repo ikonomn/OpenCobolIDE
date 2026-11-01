@@ -55,12 +55,15 @@ class FileController(Controller):
         self.project_root = None
         project_config.set_active_root(None)
         self._project_setup_dialog = None
+        self._runtime_folders_dialog = None
         self.new_project_action = self.ui.menuFile.addAction('New Project...')
         self.new_project_action.triggered.connect(self.request_new_project)
         self.open_project_action = self.ui.menuFile.addAction('Open Project...')
         self.open_project_action.triggered.connect(self.request_open_project)
         self.configure_project_action = self.ui.menuFile.addAction('Configure Project...')
         self.configure_project_action.triggered.connect(self.show_project_setup)
+        self.runtime_folders_action = self.ui.menuFile.addAction('Rescan Project Folders...')
+        self.runtime_folders_action.triggered.connect(self.review_runtime_folders)
         self.close_project_action = self.ui.menuFile.addAction('Close Project')
         self.close_project_action.triggered.connect(self.close_project)
         self._update_project_actions()
@@ -113,6 +116,7 @@ class FileController(Controller):
         active = self.project_root is not None
         self.close_project_action.setEnabled(active)
         self.configure_project_action.setEnabled(active)
+        self.runtime_folders_action.setEnabled(active)
         cobol = getattr(self.app, 'cobol', None)
         if cobol is not None:
             cobol.project_compile_action.setEnabled(active)
@@ -191,6 +195,9 @@ class FileController(Controller):
         return views
 
     def _release_project(self, views):
+        if self._runtime_folders_dialog is not None:
+            self._runtime_folders_dialog.close()
+            self._runtime_folders_dialog = None
         if self._project_setup_dialog is not None:
             self._project_setup_dialog.close()
             self._project_setup_dialog = None
@@ -287,6 +294,8 @@ class FileController(Controller):
         Settings().last_path = path
         if configure:
             self.show_project_setup()
+            if not project_config.load(path).get('runtime', {}).get('accepted'):
+                self.review_runtime_folders()
         return True
 
     def request_new_project(self):
@@ -306,6 +315,15 @@ class FileController(Controller):
                 continue
             self.open_project(root, configure=True)
             break
+
+    def review_runtime_folders(self):
+        if not self.project_root or not self._can_change_project():
+            return
+        from open_cobol_ide.view.dialogs.project_runtime import RuntimeFoldersDialog
+        if self._runtime_folders_dialog is not None:
+            self._runtime_folders_dialog.close()
+        self._runtime_folders_dialog = RuntimeFoldersDialog(self.project_root, self.main_window)
+        self._runtime_folders_dialog.show()
 
     def show_project_setup(self):
         if not self.project_root:

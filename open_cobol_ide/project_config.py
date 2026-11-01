@@ -99,6 +99,11 @@ def validate_schema(data):
         raise ValueError('Unsupported project configuration. Expected schema_version 1.')
     if not isinstance(data.get('name'), str) or not isinstance(data.get('sources'), dict):
         raise ValueError('Project configuration requires name and sources.')
+    from .project_runtime import validate_runtime
+    if 'runtime' in data: validate_runtime(data['runtime'])
+    debug = data.get('debug', {})
+    if not isinstance(debug, dict) or not isinstance(debug.get('enabled', False), bool):
+        raise ValueError('Debug enabled must be true or false.')
     validate_options(data.get('defaults'))
     for key, options in data['sources'].items():
         if (not isinstance(key, str) or not key or '\\' in key or
@@ -244,3 +249,9 @@ def has_overrides(options):
         return True
     env = options.get('environment', {})
     return any(value for key, value in env.items() if key != 'path_mode') or env.get('path_mode', 'inherit') != 'inherit'
+
+
+def debug_enabled(root):
+    """Legacy registered directories have no portable config until migrated."""
+    return bool(root and config_path(root).is_file() and load(root).get(
+        "debug", {}).get("enabled", False))

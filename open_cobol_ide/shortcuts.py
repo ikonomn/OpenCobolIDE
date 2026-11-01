@@ -8,6 +8,7 @@ SHORTCUTS = (
     ('New Project', 'Ctrl+Alt+N', 'file.new_project_action'),
     ('Open Project', 'Ctrl+Alt+O', 'file.open_project_action'),
     ('Close Project', 'Ctrl+Alt+W', 'file.close_project_action'),
+    ('Rescan Project Folders', 'Ctrl+Alt+D', 'file.runtime_folders_action'),
     ('Configure Project', 'Ctrl+Alt+P', 'file.configure_project_action'),
     ('Compile Project — changed files', 'Ctrl+F8', 'cobol.project_compile_action'),
     ('Rebuild Project — all files', 'Ctrl+Shift+F8', 'cobol.project_rebuild_action'),

@@ -61,6 +61,9 @@ class ProjectSetupDialog(QtWidgets.QDialog):
         self.source_button = QtWidgets.QPushButton('Selected source settings…')
         self.source_button.clicked.connect(self.edit_source)
         row.addWidget(self.source_button)
+        folders = QtWidgets.QPushButton('Runtime folders / debug…')
+        folders.clicked.connect(self.edit_runtime)
+        row.addWidget(folders)
         check = QtWidgets.QPushButton('Validate settings')
         check.clicked.connect(self.refresh)
         row.addWidget(check)
@@ -102,6 +105,10 @@ class ProjectSetupDialog(QtWidgets.QDialog):
                 'Settings are valid. All sources inherit project defaults unless overridden.')
         except (ValueError, OSError) as error:
             self.report.setPlainText(str(error))
+
+    def edit_runtime(self):
+        from .project_runtime import RuntimeFoldersDialog
+        RuntimeFoldersDialog(self.root, self).exec_()
 
     def edit_defaults(self):
         self.controller.edit_project_compiler_options()

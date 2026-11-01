@@ -188,6 +188,8 @@ def compile_with_build_script(file_path, output_callback=None):
         [os.path.basename(source)], file_type, 'bin', source_path=source,
         default_listing=os.path.join(working_dir, 'build',
                                      os.path.splitext(os.path.basename(source))[0] + '.lst'))
+    from . import project_config
+    env.insert('OCIDE_DEBUG_BUILD', '1' if project_config.debug_enabled(working_dir) else '0')
     env.insert('OCIDE_PROJECT_DIR', working_dir)
     env.insert('COBC', pgm)
     build_options = Settings().effective_build_options(source)

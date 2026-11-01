@@ -1,8 +1,10 @@
-# OpenCobolIDE 4.7.6 modern11.6
+# OpenCobolIDE 4.7.6 modern12
 
 An unofficial maintained modern build of OpenCobolIDE, preserving its original authorship and GPL licensing while adding current Python/PyQt5 compatibility and a portable COBOL project workflow.
 
-This consolidated modern11.6 includes the project1–project8 development packages and the subsequent copybook-creation work. The public-facing version is **4.7.6+modern11.6**, without a `+projectN` suffix. It is not a new upstream OpenCobolIDE release or a transfer of the original project's ownership.
+This is the local **4.7.6+modern12** test build. See [modern12 changes and testing instructions](MODERN12.md). The following modern11.6 documentation describes the inherited features.
+
+The consolidated modern11.6 included the project1–project8 development packages and the subsequent copybook-creation work. Its published version was **4.7.6+modern11.6**, without a `+projectN` suffix. It is not a new upstream OpenCobolIDE release or a transfer of the original project's ownership.
 
 ## Information and guides
 

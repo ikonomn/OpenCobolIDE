@@ -7,7 +7,7 @@ def project_sources(root, extensions):
     sources = []
     for directory, dirs, files in os.walk(root, followlinks=False):
         dirs[:] = sorted(d for d in dirs if not d.startswith('.') and
-                         d not in ('bin', 'build', '__pycache__', 'venv'))
+                         d not in ('bin', 'build', 'debug_data', '__pycache__', 'venv'))
         for name in sorted(files):
             path = os.path.join(directory, name)
             if (not name.startswith('.') and not os.path.islink(path) and

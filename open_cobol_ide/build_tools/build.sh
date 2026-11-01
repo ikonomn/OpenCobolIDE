@@ -61,10 +61,17 @@ run_logged() {
     "$@"
 }
 
+flags_file=''
+debug_scratch=''
+cleanup() {
+    [[ -z "$flags_file" ]] || rm -f "$flags_file"
+    [[ -z "$debug_scratch" ]] || rm -rf "$debug_scratch"
+    return 0
+}
+trap cleanup EXIT
 cobc_args=("$compile_mode")
 if [[ -n "${OCIDE_COMPILER_FLAGS+x}" ]]; then
     flags_file=$(mktemp)
-    trap 'rm -f "$flags_file"' EXIT
     python3 -c 'import json, os, sys; flags=json.loads(os.environ["OCIDE_COMPILER_FLAGS"]); sys.stdout.buffer.write(b"".join(f.encode()+b"\0" for f in flags))' > "$flags_file"
     mapfile -d '' -t ide_flags < "$flags_file"
     cobc_args+=("${ide_flags[@]}")
@@ -142,7 +149,22 @@ else
     compile_input="$source_file"
 fi
 printf 'Compiling %s (%s)\n' "$compile_input" "$mode"
-run_logged "$cobc_command" "${cobc_args[@]}" -o "$executable" "$compile_input"
+if [[ "${OCIDE_DEBUG_BUILD:-0}" == 1 ]]; then
+    # Compile in a disposable build folder. Only matching C/header artifacts
+    # are retained; object files and other intermediates are discarded.
+    debug_scratch=$(mktemp -d "$build_dir/.debug-XXXXXXXX")
+    debug_target=$(python3 -c 'import pathlib,sys; r=pathlib.Path(sys.argv[1]).resolve(); s=pathlib.Path(sys.argv[2]).resolve(); print(r/"debug_data"/s.relative_to(r).with_suffix(""))' "$project_dir" "$source_file")
+    run_logged bash -c 'cd "$1"; shift; exec "$@"' _ "$debug_scratch" \
+        "$cobc_command" "${cobc_args[@]}" -g -fsource-location -ftraceall -O0 -save-temps \
+        -A "-fdebug-prefix-map=$debug_scratch=$debug_target" \
+        -o "$executable" "$compile_input"
+    mkdir -p "$debug_target"
+    find "$debug_target" -maxdepth 1 -type f \( -name '*.c' -o -name '*.h' \) -delete
+    find "$debug_scratch" -maxdepth 1 -type f \( -name '*.c' -o -name '*.h' \) -exec cp -- {} "$debug_target/" \;
+    printf 'Debug C sources and headers: %s\n' "$debug_target"
+else
+    run_logged "$cobc_command" "${cobc_args[@]}" -o "$executable" "$compile_input"
+fi
 
 printf 'Output:     %s\n' "$executable"
 if [[ "${OCIDE_GENERATE_LISTING:-1}" == 1 ]]; then
