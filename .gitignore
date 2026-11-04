@@ -60,3 +60,9 @@ deb_dist
 # hackedit project files
 .hackedit
 
+
+# Local development environment and generated root-level packages.
+/.venv/
+/.pytest_cache/
+/*.deb
+/scripts/*.log
