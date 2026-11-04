@@ -84,7 +84,7 @@ def test_project_settings_reach_compiler_linter_and_script(tmp_path, monkeypatch
     assert settings.effective_flags(str(source)) == ['-w']
 
 
-def test_project_settings_menu_saves_defaults(app, tmp_path, monkeypatch):
+def test_project_settings_preferences_saves_defaults(app, tmp_path, monkeypatch):
     from open_cobol_ide.view.dialogs.source_compiler_options import SourceCompilerOptionsDialog
     from pyqode.qt import QtWidgets
     app.file.open_project(str(tmp_path))
@@ -94,7 +94,13 @@ def test_project_settings_menu_saves_defaults(app, tmp_path, monkeypatch):
         dialog.flags.setText('-Wall -T {stem}.prn')
         return QtWidgets.QDialog.Accepted
     monkeypatch.setattr(SourceCompilerOptionsDialog, 'exec_', accept)
-    app.cobol.project_settings_action.trigger()
+    from open_cobol_ide.view.dialogs.preferences import DlgPreferences
+    preferences = DlgPreferences(app.win, project_controller=app.cobol)
+    try:
+        preferences.project_defaults_button.click()
+    finally:
+        preferences.stop_backend()
+        preferences.close()
     options = Settings().project_options(str(tmp_path))
     assert options['enabled'] is True
     assert options['flags'] == ['-Wall', '-T', '{stem}.prn']

@@ -320,9 +320,10 @@ class EditController(Controller):
             self._cb_free_format.blockSignals(False)
             self._lbl_path.setText('n/a')
 
-    def edit_preferences(self):
+    def edit_preferences(self, checked=False, page=None):
         try:
-            DlgPreferences.edit_preferences(self.main_window)
+            DlgPreferences.edit_preferences(
+                self.main_window, project_controller=self.app.cobol, page=page)
         except ValueError:
             # dialog canceled
             _logger().info('settings dialog canceled')

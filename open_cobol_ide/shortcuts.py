@@ -47,6 +47,9 @@ def install_shortcuts(app):
         action.setShortcut(QtGui.QKeySequence(key))
         app.win.addAction(action)
     action = app.win.ui.menu.addAction('Keyboard shortcuts...')
+    action.setIcon(QtGui.QIcon.fromTheme(
+        'preferences-desktop-keyboard-shortcuts', QtGui.QIcon(':/ide-icons/rc/Preferences-system.png')))
+    action.setIconVisibleInMenu(True)
     action.setShortcut(QtGui.QKeySequence('Ctrl+Alt+H'))
     app.win.addAction(action)
     rows = [(label, key) for label, key, path in SHORTCUTS]

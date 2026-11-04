@@ -98,8 +98,9 @@ def launch_settings(root, fallback, environment):
     """Use per-project accepted paths for both embedded and external consoles."""
     env = dict(environment)
     runtime = config.load(root).get('runtime', {}) if root and config.config_path(root).is_file() else {}
-    if not runtime.get('accepted'): return fallback, env
-    cwd = config.resolve_path(root, runtime.get('working_directory', '.'))
+    if not runtime.get('accepted'):
+        return (config.resolve_path(root, 'bin') if root else fallback), env
+    cwd = config.resolve_path(root, runtime.get('working_directory', 'bin'))
     paths = [config.resolve_path(root, p) for p in runtime.get('data_directories', [])]
     for path in [cwd] + paths:
         if not os.path.isdir(path):

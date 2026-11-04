@@ -66,6 +66,16 @@ class FileController(Controller):
         self.runtime_folders_action.triggered.connect(self.review_runtime_folders)
         self.close_project_action = self.ui.menuFile.addAction('Close Project')
         self.close_project_action.triggered.connect(self.close_project)
+        for action, theme, fallback in (
+                (self.new_project_action, 'folder-new', 'document-new.png'),
+                (self.open_project_action, 'folder-open', 'document-open.png'),
+                (self.configure_project_action, 'preferences-system', 'Preferences-system.png'),
+                (self.runtime_folders_action, 'view-refresh', 'view-refresh.png'),
+                (self.close_project_action, 'window-close', 'system-log-out.png'),
+                (self.ui.actionImport_preferences, 'document-import', 'document-open.png'),
+                (self.ui.actionExport_preferences, 'document-export', 'document-save.png')):
+            action.setIcon(QtGui.QIcon.fromTheme(theme, QtGui.QIcon(':/ide-icons/rc/' + fallback)))
+            action.setIconVisibleInMenu(True)
         self._update_project_actions()
         self.ui.menuFile.addSeparator()
         self.ui.menuFile.addMenu(self.menu_recents)

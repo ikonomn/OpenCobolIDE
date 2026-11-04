@@ -201,10 +201,15 @@ class CobolController(Controller):
         self.project_rebuild_action.setToolTip('Compile every project source, even when unchanged')
         self.project_rebuild_action.triggered.connect(self.rebuild_project)
         self.project_rebuild_action.setEnabled(bool(self.app.file.project_root))
-        self.project_settings_action = self.ui.menuCobol.addAction('Project compiler settings...')
-        self.project_settings_action.triggered.connect(self.edit_project_compiler_options)
+        self.project_settings_action = QtWidgets.QAction('Project compiler settings (Preferences)', self.main_window)
+        self.project_settings_action.triggered.connect(
+            lambda: self.app.edit.edit_preferences(page='Compiler'))
         self.project_compile_action.setEnabled(bool(self.app.file.project_root))
         self.project_settings_action.setEnabled(bool(self.app.file.project_root))
+        self.debug_action = self.ui.menuCobol.addAction('Debug executable…')
+        self.debug_action.setToolTip('Open this executable in our independent Python debugger')
+        self.debug_action.triggered.connect(self.debug_executable)
+        self.debug_action.setEnabled(False)
         self._exception_flags = []
         listing_action = self.ui.menuCobol.addAction('Automatic listing filename')
         self.listing_action = listing_action
@@ -212,9 +217,72 @@ class CobolController(Controller):
         listing_action.setChecked(Settings().automatic_listing)
         listing_action.toggled.connect(
             lambda enabled: setattr(Settings(), 'automatic_listing', enabled))
-        source_action = self.ui.menuCobol.addAction('Compiler options for this file...')
+        source_action = QtWidgets.QAction('File compiler settings (Preferences)', self.main_window)
         self.source_settings_action = source_action
-        source_action.triggered.connect(self.edit_source_compiler_options)
+        source_action.triggered.connect(
+            lambda: self.app.edit.edit_preferences(page='Compiler'))
+
+        for action, theme, fallback in (
+                (self.project_compile_action, 'run-build', 'application-x-executable.png'),
+                (self.project_rebuild_action, 'view-refresh', 'view-refresh.png'),
+                (self.debug_action, 'debug-run', 'application-x-executable.png'),
+                (self.listing_action, 'text-x-generic', 'text-x-generic.png'),
+                (self.project_settings_action, 'preferences-system', 'Preferences-system.png'),
+                (self.source_settings_action, 'document-properties', 'text-x-generic.png')):
+            action.setIcon(QtGui.QIcon.fromTheme(theme, QtGui.QIcon(':/ide-icons/rc/' + fallback)))
+            action.setIconVisibleInMenu(True)
+
+    def _debug_executable_path(self):
+        editor = self.app.edit.current_editor
+        if (not self._can_build_current_source() or
+                getattr(editor, 'file_type', None) != FileType.EXECUTABLE or
+                (self._compilation_thread is not None and self._compilation_thread.isRunning())):
+            return None
+        source = editor.file.path
+        output_dir = get_build_script_output_directory(source)
+        if output_dir is None:
+            output_dir = Settings().output_directory
+            if not os.path.isabs(output_dir):
+                output_dir = os.path.join(os.path.dirname(source), output_dir)
+        filename = os.path.splitext(editor.file.name)[0] + GnuCobolCompiler().extension_for_type(FileType.EXECUTABLE)
+        return os.path.abspath(os.path.join(output_dir, filename))
+
+    def _installed_debugger_launcher(self, command=None):
+        launcher = os.path.expanduser(command if command is not None else Settings().debugger_command)
+        launcher = launcher if os.path.isfile(launcher) else system.which(launcher)
+        if not launcher or not os.access(launcher, os.X_OK):
+            raise ValueError('Install cobgdb-python and choose its GUI launcher in Preferences → Debugger.')
+        return launcher
+
+    def open_debugger(self, command=None):
+        """Open the installed debugger for manual executable selection."""
+        try:
+            subprocess.Popen([self._installed_debugger_launcher(command)], start_new_session=True)
+        except (ValueError, OSError) as error:
+            QtWidgets.QMessageBox.warning(self.main_window, 'Cannot launch debugger', str(error))
+
+    def debug_executable(self):
+        program = self._debug_executable_path()
+        if program is None:
+            return
+        settings = Settings()
+        source = self.app.edit.current_editor.file.path
+        try:
+            if not os.path.isfile(program):
+                raise ValueError('Build the executable before debugging: ' + program)
+            launcher = self._installed_debugger_launcher()
+            from open_cobol_ide.project_runtime import launch_settings
+            cwd, runtime = launch_settings(settings.project_root_for_source(source),
+                settings.working_dir or os.path.dirname(program), settings.run_environemnt)
+            environment = GnuCobolCompiler.setup_process_environment(source)
+            env = {key: environment.value(key) for key in environment.keys()}
+            env.update(runtime)
+            command = [launcher, program, '--source', os.path.abspath(source)]
+            subprocess.Popen(command, cwd=cwd, env=env, start_new_session=True)
+        except (ValueError, OSError) as error:
+            QtWidgets.QMessageBox.warning(self.main_window, 'Cannot launch debugger', str(error))
+            return
+        trace_log.event('debugger.external.launched', program=program, source=source)
 
     def edit_project_compiler_options(self):
         root = self.app.file.project_root
@@ -354,6 +422,10 @@ class CobolController(Controller):
             for item in self.run_buttons + [self.ui.actionRun]:
                 item.setEnabled(not self.ui.consoleOutput.is_running and self._can_build_current_source())
 
+        program = self._debug_executable_path()
+        self.debug_action.setEnabled(bool(program and os.path.isfile(program) and
+                                          not self.ui.consoleOutput.is_running))
+
     def _on_program_type_changed(self, action):
         """
         Updates current editor file type and enables/disables run action.
@@ -370,6 +442,10 @@ class CobolController(Controller):
                 FileType.MODULE
             for item in self.run_buttons + [self.ui.actionRun]:
                 item.setEnabled(False)
+
+        program = self._debug_executable_path()
+        self.debug_action.setEnabled(bool(program and os.path.isfile(program) and
+                                          not self.ui.consoleOutput.is_running))
 
     def check_compiler(self, dotted_extension):
         compiler_works = False
@@ -792,6 +868,8 @@ class CobolController(Controller):
 
     def enable_run(self, enable):
         enable = enable and self._can_build_current_source()
+        program = self._debug_executable_path() if enable else None
+        self.debug_action.setEnabled(bool(program and os.path.isfile(program)))
         for item in self.run_buttons + [self.ui.actionRun]:
             item.setEnabled(enable)
 

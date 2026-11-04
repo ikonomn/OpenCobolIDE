@@ -107,6 +107,10 @@ changelog="$package_root/usr/share/doc/$package_name/changelog"
 printf '%s\n' \
     "$package_name ($package_version) unstable; urgency=medium" \
     '' \
+    '  * Default project runtime working directories to bin in the IDE/debugger.' \
+    '  * Move project/file compiler controls into Preferences and separate GixSQL.' \
+    '  * Call the installed debugger launcher with an executable or no arguments.' \
+    '  * Add staged runtime/debug Preferences and fix duplicate reset paths.' \
     '  * Add modern12 project runtime folder discovery and user-reviewed settings.' \
     '  * Retain debug C sources and headers in debug_data for independent debugging.' \
     '  * Ship updated README, how-to, development review and a portable demo project.' \
@@ -169,6 +173,7 @@ printf '%s\n' \
     'Architecture: all' \
     'Depends: python3 (>= 3.8), python3-pyqt5 (>= 5.15), python3-pygments (>= 2.11)' \
     'Recommends: gnucobol' \
+    'Suggests: cobgdb-python (>= 0.1.0-4)' \
     "Installed-Size: $installed_size" \
     'Maintainer: Colin Duquesnoy <colin.duquesnoy@gmail.com>' \
     'Homepage: https://github.com/OpenCobolIDE/OpenCobolIDE' \

@@ -48,11 +48,16 @@ class DlgPreferences(QtWidgets.QDialog, dlg_preferences_ui.Ui_Dialog):
         '-g', '-ftrace', '-ftraceall', '-fdebugging-line', '-static', '-debug', '-W', '-Wall'
     ]
 
-    def __init__(self, parent):
+    def __init__(self, parent, project_controller=None):
         super().__init__(parent, QtCore.Qt.WindowSystemMenuHint |
                          QtCore.Qt.WindowTitleHint |
                          QtCore.Qt.WindowCloseButtonHint)
         self.setupUi(self)
+        self.project_controller = project_controller
+        self.project_controls = None
+        self.gix_fields = {}
+        self._gix_initial = {}
+        self._setup_project_pages()
         self._help_dlg = None
         themes = system.icon_themes()
         if themes:
@@ -171,6 +176,195 @@ class DlgPreferences(QtWidgets.QDialog, dlg_preferences_ui.Ui_Dialog):
 
         self.initial_settings = Settings().export_to_dict()
         self.reset(all_tabs=True)
+
+    def _setup_project_pages(self):
+        # Append pages so existing persisted tab indices keep their meaning.
+        self.tabProjects = QtWidgets.QWidget()
+        self.tabDebugger = QtWidgets.QWidget()
+        projects = QtWidgets.QVBoxLayout(self.tabProjects)
+        debugger = QtWidgets.QVBoxLayout(self.tabDebugger)
+        form = QtWidgets.QFormLayout()
+        self.debugger_command = QtWidgets.QLineEdit()
+        form.addRow('Installed debugger launcher:', self.debugger_command)
+        debugger.addLayout(form)
+        self.open_debugger_button = QtWidgets.QPushButton('Open installed debugger…')
+        self.open_debugger_button.setEnabled(self.project_controller is not None)
+        self.open_debugger_button.clicked.connect(
+            lambda: self.project_controller.open_debugger(self.debugger_command.text()))
+        debugger.addWidget(self.open_debugger_button)
+        note = QtWidgets.QLabel(
+            'Select the installed cobgdb-python-gui launcher (version 0.1.0-2 or later). '
+            'Use COBOL → Debug executable to open the current binary. '
+            'Enable debug compilation and rebuild for source-level debugging.')
+        note.setWordWrap(True)
+        debugger.addWidget(note)
+        self.tabWidget.addTab(self.tabProjects, 'Projects')
+        self.tabWidget.addTab(self.tabDebugger, 'Debugger')
+        self.tabWidget.setTabText(4, 'SQL COBOL')
+        self.tabGixSQL = QtWidgets.QWidget()
+        gixsql = QtWidgets.QVBoxLayout(self.tabGixSQL)
+        self.tabWidget.addTab(self.tabGixSQL, 'GixSQL')
+        project_icon = QtGui.QIcon.fromTheme('folder-development',
+                                            QtGui.QIcon(':/ide-icons/rc/folder.png'))
+        debugger_icon = QtGui.QIcon.fromTheme('debug-run',
+                                             QtGui.QIcon(':/ide-icons/rc/application-x-executable.png'))
+        sql_icon = QtGui.QIcon.fromTheme('database',
+                                        QtGui.QIcon(':/ide-icons/rc/database.png'))
+        for page, icon in ((self.tabProjects, project_icon),
+                           (self.tabDebugger, debugger_icon), (self.tabGixSQL, sql_icon)):
+            self.tabWidget.setTabIcon(self.tabWidget.indexOf(page), icon)
+        self.open_debugger_button.setIcon(debugger_icon)
+        root = (self.project_controller.app.file.project_root
+                if self.project_controller else None)
+        for layout in (projects, debugger):
+            label = QtWidgets.QLabel('Active project: ' + root if root else
+                                     'Open a project to configure project settings.')
+            label.setWordWrap(True)
+            layout.addWidget(label)
+        self.project_root = root
+        editor = (getattr(self.project_controller.app.edit, 'current_editor', None)
+                  if self.project_controller and hasattr(self.project_controller.app, 'edit') else None)
+        self.current_source = editor.file.path if editor and editor.file.path else None
+        self.project_defaults_button = QtWidgets.QPushButton('Project compiler settings…')
+        self.project_defaults_button.setIcon(QtGui.QIcon.fromTheme(
+            'preferences-system', QtGui.QIcon(':/ide-icons/rc/Preferences-system.png')))
+        self.project_defaults_button.setEnabled(bool(root))
+        self.project_defaults_button.clicked.connect(self._edit_project_defaults)
+        self.source_settings_button = QtWidgets.QPushButton('File compiler settings…')
+        self.source_settings_button.setIcon(QtGui.QIcon.fromTheme(
+            'document-properties', QtGui.QIcon(':/ide-icons/rc/text-x-generic.png')))
+        self.source_settings_button.setEnabled(bool(self.current_source))
+        self.source_settings_button.clicked.connect(self._edit_source_options)
+        compiler_buttons = QtWidgets.QHBoxLayout()
+        compiler_buttons.addWidget(self.project_defaults_button)
+        compiler_buttons.addWidget(self.source_settings_button)
+        self.tabCompiler.layout().insertLayout(0, compiler_buttons)
+        compiler_note = QtWidgets.QLabel(
+            'Project and file dialogs save with their own OK. '
+            'Preferences Cancel does not undo settings accepted in those dialogs.')
+        compiler_note.setWordWrap(True)
+        self.tabCompiler.layout().insertWidget(1, compiler_note)
+        source_note = QtWidgets.QLabel('Current file: ' + self.current_source if self.current_source else
+                                      'Open a saved source file to edit file compiler settings.')
+        source_note.setWordWrap(True)
+        self.tabCompiler.layout().insertWidget(2, source_note)
+        note = QtWidgets.QLabel(
+            'Project GixSQL paths. Blank fields inherit toolchain defaults; '
+            'file overrides take precedence. These paths apply when project defaults are enabled. '
+            'Edits save with Preferences OK; Cancel discards them.')
+        note.setWordWrap(True)
+        gixsql.addWidget(note)
+        active = QtWidgets.QLabel('Active project: ' + root if root else
+                                 'Open a project to configure GixSQL paths.')
+        active.setWordWrap(True)
+        gixsql.addWidget(active)
+        form = QtWidgets.QFormLayout()
+        for key, title in (('gixpp_path', 'GixSQL preprocessor:'),
+                           ('gixsql_copy_dir', 'GixSQL copybook directory:'),
+                           ('gixsql_library_dir', 'GixSQL library directory:')):
+            field = QtWidgets.QLineEdit()
+            field.setPlaceholderText('Inherit')
+            field.setEnabled(bool(root))
+            self.gix_fields[key] = field
+            form.addRow(title, field)
+        gixsql.addLayout(form)
+        self.gix_source_button = QtWidgets.QPushButton('File compiler / GixSQL overrides…')
+        self.gix_source_button.setIcon(sql_icon)
+        self.gix_source_button.setEnabled(bool(self.current_source))
+        self.gix_source_button.clicked.connect(self._edit_source_options)
+        gixsql.addWidget(self.gix_source_button)
+        gixsql.addStretch()
+        if root:
+            from .project_runtime import RuntimeFoldersWidget
+            try:
+                self.project_controls = RuntimeFoldersWidget(root, self.tabProjects)
+            except (ValueError, OSError) as error:
+                projects.addWidget(QtWidgets.QLabel('Cannot load project settings: ' + str(error)))
+            else:
+                projects.addWidget(self.project_controls)
+                # Move the shared debug control to its own page.
+                self.project_controls.layout().removeWidget(self.project_controls.debug)
+                debugger.addWidget(self.project_controls.debug)
+                note = QtWidgets.QLabel(
+                    'Adds -g -fsource-location -ftraceall -O0 -save-temps. '
+                    'Generated C/header files remain in debug_data/. '
+                    'The independent debugger opens externally on the selected executable.')
+                note.setWordWrap(True)
+                debugger.addWidget(note)
+                note = QtWidgets.QLabel(
+                    'Runtime and debug edits are saved with Preferences OK; Cancel discards them. '
+                    'Enable Use these runtime folders to accept the reviewed suggestions. '
+                    'Compiler/source dialogs below save independently when their own OK is chosen.')
+                note.setWordWrap(True)
+                projects.addWidget(note)
+            configure = QtWidgets.QPushButton('Project defaults, source overrides and validation…')
+            configure.setIcon(project_icon)
+            configure.clicked.connect(self._configure_project)
+            projects.addWidget(configure)
+        projects.addStretch()
+        debugger.addStretch()
+
+    def _reload_gixsql(self):
+        if not self.project_root:
+            return
+        from open_cobol_ide import project_config as config
+        try:
+            environment = config.load(self.project_root).get('defaults', {}).get('environment', {})
+        except (ValueError, OSError) as error:
+            QtWidgets.QMessageBox.warning(self, 'Cannot load GixSQL settings', str(error))
+            return
+        self._gix_initial = {key: environment.get(key, '') for key in self.gix_fields}
+        for key, field in self.gix_fields.items():
+            field.setText(self._gix_initial[key])
+
+    def _update_gixsql_config(self, candidate):
+        from open_cobol_ide import project_config as config
+        changed = {key: clean_directory_path(field.text())
+                   for key, field in self.gix_fields.items()
+                   if clean_directory_path(field.text()) != self._gix_initial.get(key, '')}
+        if not changed:
+            return False
+        defaults = dict(candidate.get('defaults', {}))
+        environment = dict(defaults.get('environment', {}))
+        for key, value in changed.items():
+            if value:
+                environment[key] = config.portable_path(self.project_root, value)
+            else:
+                environment.pop(key, None)
+        defaults['environment'] = environment
+        candidate['defaults'] = defaults
+        return True
+
+    def _edit_source_options(self):
+        if self.current_source:
+            self.project_controller.edit_source_compiler_options(self.current_source)
+
+    def _edit_project_defaults(self):
+        self.project_controller.edit_project_compiler_options()
+
+    def _configure_project(self):
+        from .project_setup import ProjectSetupDialog
+        ProjectSetupDialog(self.project_controller.app.file.project_root,
+                           self.project_controller, self).exec_()
+
+    def accept(self):
+        if self.project_root:
+            from open_cobol_ide import project_config as config
+            try:
+                original = config.load(self.project_root)
+                candidate = dict(original)
+                if self.project_controls:
+                    self.project_controls.update_config(candidate)
+                gix_changed = self._update_gixsql_config(candidate)
+                if gix_changed and not self.project_controller.validate_project_settings(
+                        self.project_root, candidate):
+                    return
+                if candidate != original:
+                    config.save(self.project_root, candidate)
+            except (ValueError, OSError) as error:
+                QtWidgets.QMessageBox.warning(self, 'Cannot save project settings', str(error))
+                return
+        super().accept()
 
     def _select_working_dir(self):
         path = QtWidgets.QFileDialog.getExistingDirectory(
@@ -463,9 +657,11 @@ class DlgPreferences(QtWidgets.QDialog, dlg_preferences_ui.Ui_Dialog):
                 except ValueError:
                     pass
             self.lineEditLibs.setText(settings.libraries)
+            self.listWidgetLibPaths.clear()
             self.listWidgetLibPaths.addItems(
                 [pth for pth in settings.library_search_path.split(';')
                  if pth])
+            self.listWidgetCopyPaths.clear()
             self.listWidgetCopyPaths.addItems(
                 [pth for pth in settings.copybook_paths.split(';')
                  if pth])
@@ -503,9 +699,29 @@ class DlgPreferences(QtWidgets.QDialog, dlg_preferences_ui.Ui_Dialog):
             self.lineEditESQLOC.setText(settings.esqloc)
             self.lineEditesqlOcExts.setText(';'.join(Settings().esqloc_extensions))
 
+        if all_tabs or self.tabWidget.currentWidget() is self.tabDebugger:
+            self.debugger_command.setText(settings.debugger_command)
+        if all_tabs or self.tabWidget.currentWidget() is self.tabGixSQL:
+            self._reload_gixsql()
+
+        if self.project_controls:
+            if all_tabs or self.tabWidget.currentWidget() is self.tabProjects:
+                self.project_controls.reload_runtime()
+            if all_tabs or self.tabWidget.currentWidget() is self.tabDebugger:
+                self.project_controls.reload_debug()
+
     def restore_defaults(self):
         settings = Settings()
         index = self.tabWidget.currentIndex()
+        if self.tabWidget.currentWidget() is self.tabDebugger:
+            self.debugger_command.setText('cobgdb-python-gui')
+            if self.project_controls:
+                self.project_controls.debug.setChecked(False)
+            return
+        if self.tabWidget.currentWidget() is self.tabGixSQL:
+            for field in self.gix_fields.values():
+                field.clear()
+            return
         # Editor
         if index == 0:
             settings.show_cursor_pos_in_bytes = False
@@ -576,6 +792,14 @@ class DlgPreferences(QtWidgets.QDialog, dlg_preferences_ui.Ui_Dialog):
             settings.dbsocket = 'null'
             settings.esqloc = ''
             settings.esqloc_extensions = ['.sqb']
+        if self.project_controls and self.tabWidget.currentWidget() is self.tabProjects:
+            self.project_controls.use_runtime.setChecked(False)
+            self.project_controls.cwd.setCurrentText('bin')
+            self.project_controls.paths.clear()
+            return
+        if self.project_controls and self.tabWidget.currentWidget() is self.tabDebugger:
+            self.project_controls.debug.setChecked(False)
+            return
         self.reset()
 
     def apply(self):
@@ -712,7 +936,7 @@ class DlgPreferences(QtWidgets.QDialog, dlg_preferences_ui.Ui_Dialog):
         settings.working_dir = self.edit_working_dir.text()
 
     @classmethod
-    def edit_preferences(cls, parent):
+    def edit_preferences(cls, parent, project_controller=None, page=None):
         def restore_state(dlg):
             s = Settings()
             dlg.resize(s.preferences_width, s.preferences_height)
@@ -724,8 +948,10 @@ class DlgPreferences(QtWidgets.QDialog, dlg_preferences_ui.Ui_Dialog):
             s.preferences_height = dlg.height()
             s.preferences_index = dlg.tabWidget.currentIndex()
 
-        dlg = cls(parent)
+        dlg = cls(parent, project_controller=project_controller)
         restore_state(dlg)
+        if page == 'Compiler':
+            dlg.tabWidget.setCurrentWidget(dlg.tabCompiler)
         ret_val = dlg.exec_()
         dlg.stop_backend()
         if ret_val != dlg.Accepted:
@@ -733,3 +959,5 @@ class DlgPreferences(QtWidgets.QDialog, dlg_preferences_ui.Ui_Dialog):
             raise ValueError()
         save_state(dlg)
         dlg.apply()
+        settings = Settings()
+        settings.debugger_command = clean_directory_path(dlg.debugger_command.text())

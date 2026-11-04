@@ -31,7 +31,7 @@ def test_discovery_matches_ambiguity_dynamic_and_comments(tmp_path):
     assert 'Dynamic' in rows['VARIABLE-FILE']['status']
     assert result['working_directory'] == '.'
     assert not config.load(root).get('runtime')
-    assert launch_settings(str(root), 'fallback', {'A':'B'}) == ('fallback', {'A':'B'})
+    assert launch_settings(str(root), 'fallback', {'A':'B'}) == (str(root/'bin'), {'A':'B'})
 
 
 def test_portable_accepted_paths_and_missing_folder(tmp_path):
@@ -199,3 +199,27 @@ def test_scan_uses_project_source_format_and_named_folder(tmp_path):
     result = scan(root)
     assert result['rows'][0]['select'] == 'f'
     assert 'customer-data' in result['folders']
+
+
+@pytest.mark.parametrize('runtime, expected', [
+    (None, 'bin'),
+    ({'accepted': False, 'working_directory': '.'}, 'bin'),
+    ({'accepted': True}, 'bin'),
+    ({'accepted': True, 'working_directory': '.'}, '.'),
+])
+def test_project_runtime_defaults_to_bin_with_explicit_override(tmp_path, runtime, expected):
+    root = project(tmp_path)
+    data = config.load(root)
+    if runtime is not None:
+        data['runtime'] = runtime
+    config.save(root, data)
+    env = {'KEEP': 'value'}
+    cwd, actual = launch_settings(str(root), '/global/working/directory', env)
+    assert cwd == str((root/expected).resolve())
+    assert actual == env
+    assert config.load(root) == data
+
+
+def test_standalone_runtime_keeps_global_working_directory():
+    assert launch_settings(None, '/chosen/standalone', {'KEEP': 'value'}) == (
+        '/chosen/standalone', {'KEEP': 'value'})

@@ -25,6 +25,14 @@ class Settings(object):
         """
         self._settings.clear()
 
+    @property
+    def debugger_command(self):
+        return str(self._settings.value('debugger/command', 'cobgdb-python-gui'))
+
+    @debugger_command.setter
+    def debugger_command(self, value):
+        self._settings.setValue('debugger/command', value)
+
     def export_to_dict(self):
         """
         Exports all settings to a dict of strings

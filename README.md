@@ -33,6 +33,95 @@ The consolidated modern11.6 included the project1–project8 development package
 
 Existing runtime-argument entry, source format directives, per-source compiler selection and offline Help are retained.
 
+## Runtime working directory and data search folders
+
+The original default working directory for project executables is **`bin/`**, in both OpenCobolIDE and the independent debugger. An explicitly saved project working directory overrides it. Changing data search folders does not change the working directory or move any files.
+
+The IDE field **Data search folders (one per line)** supplies directories for GnuCOBOL runtime data-file access. For example:
+
+```text
+MyProject/
+├── bin/customers
+├── data/customers.dat
+├── config/
+└── src/
+```
+
+For a COBOL declaration containing a bare filename:
+
+```cobol
+SELECT CUSTOMER-FILE ASSIGN TO "customers.dat".
+```
+
+entering this directory in the field:
+
+```text
+data
+```
+
+sets the launched program's environment to the equivalent of:
+
+```text
+COB_FILE_PATH=/absolute/path/MyProject/data
+```
+
+The program still runs from `MyProject/bin/`. Relative entries in this field are resolved against the **project root**, so `data` means `MyProject/data`, not `MyProject/bin/data`. Project-relative settings remain portable when the project is moved.
+
+### Current limitation: use one directory
+
+Although the field accepts one directory per line, the current implementation joins multiple entries with the platform path separator (`:` on Linux) into `COB_FILE_PATH`. **Do not currently use multiple entries with the tested GnuCOBOL 3.3-dev runtime.** A real file-open check succeeded with either single directory, but failed with status 35 when the two directories were joined with `:`. The current label therefore implies a multiple-directory search capability that is not working on this runtime.
+
+Use a single existing directory, such as `data`, or leave the field empty. Multiple-directory handling still needs correction; accepting multiple lines in the interface is not proof that the runtime searches them. See the [GnuCOBOL runtime documentation](https://gnucobol.sourceforge.io/doc/gnucobol.html) for `COB_FILE_PATH`.
+
+### Entry and save rules
+
+- Enter directories, not individual filenames. Absolute paths are also accepted.
+- Do not add shell quotes around a path containing spaces. Use literal paths, not shell variables or `~` shortcuts.
+- Blank lines are ignored; accepted directories must already exist.
+- Review the suggestions before accepting them. The scanner does not create or relocate runtime files.
+- In Preferences, enable **Use these runtime folders for this project**, then choose **OK**. The standalone Review Project Folders dialog saves with **Save**. Cancel discards that dialog's unaccepted edits.
+- An empty directory list does not set or clear `COB_FILE_PATH`; an inherited value may remain active.
+
+Settings are stored in the project's `config/project.json`, for example:
+
+```json
+"runtime": {
+  "accepted": true,
+  "working_directory": "bin",
+  "data_directories": ["data"]
+}
+```
+
+OpenCobolIDE and the independent debugger read this same portable configuration. The debugger does not automatically scan or accept folder suggestions. Reopen the executable in an existing debugger session after changing its runtime settings.
+
+### Different paths have different purposes
+
+| Setting | Purpose |
+| --- | --- |
+| Working directory (`bin`) | Starting directory for relative runtime paths. |
+| Data directory (`data`) | Supplies `COB_FILE_PATH` for COBOL runtime data-file access. |
+| Compiler COPY paths | Locate copybooks during compilation; unrelated to this runtime field. |
+| GixSQL paths | Locate the SQL preprocessor, SQL copybooks and libraries. |
+| SQLite datasource URL | Selects the database file through the database driver; not controlled by `COB_FILE_PATH`. |
+
+Keep explicit relative filenames consistent with the working directory; do not rely on this field to rewrite paths already containing directories. Absolute filenames identify their own location.
+
+### GixSQL example
+
+For the supplied `gixsql-example`, use working directory **`bin`** and leave data search folders empty unless the application needs additional COBOL data files. Its COBOL loader opens:
+
+```text
+../config/application-sqlite.conf
+```
+
+and that profile contains:
+
+```text
+sqlite://../build/application.db
+```
+
+Both paths are intended to resolve from `bin/`. Running from the project root instead can make the configuration-file open fail with status 35. Adding `config` or `build` to the data-search field is not the fix: restore the intended working directory. An inherited `DB_CONFIG_FILE` can separately override the profile chosen by the example program.
+
 ## Debian / Ubuntu-family installation
 
 The package is:
