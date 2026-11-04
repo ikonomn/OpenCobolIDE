@@ -164,13 +164,11 @@ cp -a /usr/share/doc/opencobolide/examples/project-demo "$HOME/OpenCobolIDE-demo
 
 The example compiles `test01` and `worker.so`, uses `copybooks/copybook.cpy`, demonstrates a source-specific flag override, and produces separate cross-reference listings. It includes no precompiled binaries or old listings.
 
-## Linux targets and RPM work
+## Linux targets and Windows release packages
 
-The Debian build is prepared and verified on Linux Mint. Mageia 10 and Fedora 44 RPMs must be built and tested on their respective persistent USB installations.
+Current modern12 RPM definitions and matched two-application transfer kits target **Mageia 10** and **Fedora 44**. The original modern11.6 files remain historical. The native RPM builds/install/desktop tests are pending; a kit is not a tested RPM release. See [modern12 packaging instructions](packaging/RPM_MODERN12.md).
 
-The tested Mageia build-script logic is retained with modern11.6 references. Fedora has a separate RPM setup. Build kits, logs, native RPMs and source RPMs are collected before returning to Mint for the planned GitHub push and release uploads. Neither RPM is represented as built/tested merely because a spec or kit exists.
-
-See [the RPM plan](packaging/RPM_MODERN11.6.md). Other Fedora-based or RPM distributions require separate compatibility checks. Native Windows support for this new Bash-based project workflow has not been validated.
+Planned application versions are **OpenCobolIDE 4.7.6 modern12** and **independent debugger 0.1.0**. Windows deliverables will include a standalone `.exe` and an **Inno Setup `.exe` installer** for each application, built and tested on Windows separately. Publication is not authorized by preparing packaging files.
 
 ## Source installation and verification
 
