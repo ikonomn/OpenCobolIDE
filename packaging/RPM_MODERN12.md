@@ -1,11 +1,15 @@
 # modern12 native RPM build kits — Fedora 44 and Mageia 10
 
-This plan supersedes the modern11.6 transfer-kit plan for the current local source. Old specs remain as historical build definitions. Preparing these kits is not a completed native RPM build or an installation/GUI test.
+Use this guide for the **current modern12 release**. Each target kit builds **OpenCobolIDE and COBGDB together** from recorded source revisions. Run the single `build-rpms.sh` entry point on the matching distribution. It produces two binary RPMs and two source RPMs.
+
+The archived modern11.6 workflow builds only the IDE with its own source archive and target-specific scripts. Fedora and Mageia use the same native build hosts across both releases, so some prerequisite commands overlap. See the [archived modern11.6 guide](RPM_MODERN11.6.md).
+
+Native RPM builds and desktop tests are pending.
 
 | Application | Application version | Fedora RPM | Mageia RPM |
 | --- | --- | --- | --- |
 | OpenCobolIDE | 4.7.6 modern12 | 4.7.6-12.2.fc44 | 4.7.6-12.2.mga10 |
-| Independent debugger | 0.1.0 | 0.1.0-2.fc44 | 0.1.0-2.mga10 |
+| Independent debugger | 0.1.0 | 0.1.0-4.fc44 | 0.1.0-4.mga10 |
 
 Debian test suffixes such as prefs5 and Debian revision -4 are not application versions and are not copied into RPM release numbers. Both target kits contain archives of the exact same committed IDE/debugger source revisions. Private .local-guidance files, environments, packages and generated outputs are excluded by git archive.
 

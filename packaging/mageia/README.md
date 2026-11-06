@@ -1,6 +1,6 @@
 # Building the OpenCobolIDE modern11.6 RPM on Mageia 10
 
-The tested script logic is retained with modern11.6 references. The consolidated RPM still requires a native build/test run on the Mageia 10 persistent USB. Use the source-matched transfer kit and [current collection plan](../RPM_MODERN11.6.md).
+The tested script logic is retained with modern11.6 references. The consolidated RPM still requires a native build/test run on the Mageia 10 persistent USB. Use the source-matched transfer kit and [archived modern11.6 collection plan](../RPM_MODERN11.6.md). For the current release, see the [modern12 RPM guide](../RPM_MODERN12.md).
 
 These instructions are for anyone who would like to help create and test a
 native Mageia 10 RPM of OpenCobolIDE 4.7.6 modern11.6.

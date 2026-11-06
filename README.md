@@ -11,7 +11,7 @@ The consolidated modern11.6 included the project1–project8 development package
 - [How to use modern11.6](HOWTO_MODERN11.6.md): installation, projects, copybooks, settings, compilation, listings, runtime and troubleshooting.
 - [Development review](REVIEW_MODERN11.6.md): changes from the earlier modern line and each modern11.6 project iteration, verification and remaining platform work.
 - [Release notes](RELEASE_NOTES_MODERN11.6.md).
-- [RPM build and USB collection plan](packaging/RPM_MODERN11.6.md).
+- [Current modern12 RPM build and collection plan](packaging/RPM_MODERN12.md).
 - [Source installation](INSTALL_FROM_SOURCE.md).
 
 ## What is included

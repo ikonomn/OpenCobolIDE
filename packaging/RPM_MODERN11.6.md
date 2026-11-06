@@ -1,3 +1,9 @@
+# Archived modern11.6 RPM instructions
+
+Use these instructions when rebuilding the archived **OpenCobolIDE 4.7.6 modern11.6** package. This workflow builds the IDE only. For the current release, use the [modern12 RPM guide](RPM_MODERN12.md), which builds both the IDE and COBGDB.
+
+## Historical notes
+
 > Compile Project now means changed files (Ctrl+F8); Rebuild Project means all
 > files (Ctrl+Shift+F8). See [build and shortcut verification](INCREMENTAL_BUILD_MODERN11.6.md).
 
@@ -7,7 +13,7 @@
 > src/config/project.json exists. See [the project-root fix](PROJECT_ROOT_FIX_MODERN11.6.md).
 > See [the verification and remaining native checks](NATIVE_FIX_MODERN11.6.md).
 
-# modern11.6 — Mageia 10 and Fedora 44 USB build/collection plan
+## Historical Mageia 10 and Fedora 44 USB build plan
 
 The existing persistent USB installations are the native build/test environments. Create the transfer kits on Mint from the committed modern11.6 source. Boot Mageia 10 to build its RPM, boot Fedora 44 to build its RPM, then return to Mint with the results. GitHub push/release uploads wait until both native results are collected and reviewed.
 
