@@ -4,6 +4,7 @@ This module contains the backend controller
 import logging
 import socket
 import sys
+import os
 from pyqode.qt import QtCore
 
 from pyqode.core.api.client import JsonTcpClient, BackendProcess
@@ -107,6 +108,9 @@ class BackendManager(Manager):
                 # interpreter
                 program = backend_script
                 pgm_args = [str(self._port)]
+                if sys.platform == 'win32' and not os.path.isfile(program):
+                    program = sys.executable
+                    pgm_args = ['--ocide-backend', os.path.basename(backend_script), str(self._port)]
             else:
                 program = interpreter
                 pgm_args = [backend_script, str(self._port)]

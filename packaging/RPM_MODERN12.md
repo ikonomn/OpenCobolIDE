@@ -4,8 +4,8 @@ This plan supersedes the modern11.6 transfer-kit plan for the current local sour
 
 | Application | Application version | Fedora RPM | Mageia RPM |
 | --- | --- | --- | --- |
-| OpenCobolIDE | 4.7.6 modern12 | 4.7.6-12.1.fc44 | 4.7.6-12.1.mga10 |
-| Independent debugger | 0.1.0 | 0.1.0-1.fc44 | 0.1.0-1.mga10 |
+| OpenCobolIDE | 4.7.6 modern12 | 4.7.6-12.2.fc44 | 4.7.6-12.2.mga10 |
+| Independent debugger | 0.1.0 | 0.1.0-2.fc44 | 0.1.0-2.mga10 |
 
 Debian test suffixes such as prefs5 and Debian revision -4 are not application versions and are not copied into RPM release numbers. Both target kits contain archives of the exact same committed IDE/debugger source revisions. Private .local-guidance files, environments, packages and generated outputs are excluded by git archive.
 
@@ -74,7 +74,7 @@ Verify both applications on the real desktop:
 9. IDE direct debugger launch, breakpoints, stepping, variables, input and flowchart/PDF.
 10. GixSQL separately if available; keep configuration/database paths relative to their intended cwd. Use disposable test data.
 
-Return binary/source RPMs, all logs, source revisions, environment details and actual test results to the development host. Publication waits for review. Native Windows results are independent of these RPM results.
+Return binary/source RPMs, all logs, source revisions, environment details and actual test results to the development host. Publication waits for review. Use the installed COBGDB to run the graphical example from its documentation. Check native terminal input and output alongside the program window. Native Windows results are independent of these RPM results.
 
 ## Windows release deliverables
 

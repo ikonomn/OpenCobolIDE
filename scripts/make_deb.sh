@@ -51,10 +51,10 @@ install -m 0644 share/OpenCobolIDE.png \
     "$package_root/usr/share/pixmaps/OpenCobolIDE.png"
 
 # The Help action opens this self-contained manual without network access.
-install -m 0644 doc/OpenCobolIDE-modern11.6.html \
+install -m 0644 doc/OpenCobolIDE-modern12.html \
     "$package_root/usr/share/doc/$package_name/manual.html"
 # Keep the source and installed Markdown guide names identical.
-for guide in MODERN12.md README.md HOWTO_MODERN11.6.md REVIEW_MODERN11.6.md RELEASE_NOTES_MODERN11.6.md INSTALL_FROM_SOURCE.md AUTHORS.rst LICENSE; do
+for guide in MODERN12.md RELEASE_NOTES_MODERN12.md README.md HOWTO_MODERN11.6.md REVIEW_MODERN11.6.md RELEASE_NOTES_MODERN11.6.md INSTALL_FROM_SOURCE.md AUTHORS.rst LICENSE; do
     install -m 0644 "$guide" "$package_root/usr/share/doc/$package_name/$guide"
 done
 mkdir -p "$package_root/usr/share/doc/$package_name/packaging"

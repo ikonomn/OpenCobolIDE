@@ -27,6 +27,14 @@ def debug_project(tmp_path, app):
     Settings().debugger_command = str(frontend)
     app.file.open_project(str(root))
     app.file.open_file(str(source))
+    assert (root / 'debug_data').is_dir()
+    data = config.load(root)
+    data['debug'] = {'enabled': True}
+    config.save(root, data)
+    artifacts = root / 'debug_data/src/main'
+    artifacts.mkdir(parents=True)
+    (artifacts / 'main.c').touch()
+    (artifacts / 'main.h').touch()
     program = Path(app.cobol._debug_executable_path())
     program.write_text('placeholder executable; never run by these tests')
     yield app, root, source, program, frontend
@@ -103,3 +111,14 @@ def test_open_debugger_without_arguments(debug_project, monkeypatch):
     app.cobol.open_debugger()
     assert calls[0][0][0] == [str(launcher)]
     assert calls[0][1]['start_new_session']
+
+
+def test_missing_debug_headers_prevent_project_launch(debug_project, monkeypatch):
+    from open_cobol_ide.controllers import cobol
+    app, root, source, program, launcher = debug_project
+    (root / 'debug_data/src/main/main.h').unlink()
+    warnings = []
+    monkeypatch.setattr(QtWidgets.QMessageBox, 'warning', lambda *args: warnings.append(args))
+    monkeypatch.setattr(cobol.subprocess, 'Popen', lambda *args, **kwargs: pytest.fail('Unexpected launch'))
+    app.cobol.debug_executable()
+    assert 'Enable Debug compilation' in warnings[0][2]

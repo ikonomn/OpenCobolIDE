@@ -6,6 +6,7 @@ import pickle
 import weakref
 import logging
 import os
+from pathlib import Path
 from pyqode.core import widgets
 from pyqode.qt import QtGui, QtWidgets
 from open_cobol_ide import system, project_config
@@ -282,6 +283,9 @@ class FileController(Controller):
         if views is None:
             return False
         try:
+            debug_folder = Path(path) / 'debug_data'
+            created_debug_folder = not debug_folder.is_dir()
+            debug_folder.mkdir(exist_ok=True)
             Settings().initialize_project_config(path)
         except (ValueError, OSError) as error:
             QtWidgets.QMessageBox.warning(self.main_window, 'Cannot open project', str(error))
@@ -302,6 +306,9 @@ class FileController(Controller):
         if not sources:
             self.main_window.setWindowTitle('%s [%s] - %s' % (os.path.basename(path), path, self.app.title))
         Settings().last_path = path
+        if created_debug_folder:
+            self.main_window.statusBar().showMessage(
+                'Created debug_data/. Enable Debug compilation and rebuild to generate C and headers.', 10000)
         if configure:
             self.show_project_setup()
             if not project_config.load(path).get('runtime', {}).get('accepted'):

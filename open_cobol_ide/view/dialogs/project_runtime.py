@@ -29,7 +29,7 @@ class RuntimeFoldersWidget(QtWidgets.QWidget):
         self.paths = QtWidgets.QPlainTextEdit()
         self.paths.setMaximumHeight(75)
         form.addRow('Data search folders (one per line):', self.paths)
-        self.debug = QtWidgets.QCheckBox('Debug compilation: retain generated .c and .h in debug_data/')
+        self.debug = QtWidgets.QCheckBox('Debug compilation: required for project debugging; retains C and headers in debug_data/')
         form.addRow(self.debug)
         layout.addLayout(form)
         rescan = QtWidgets.QPushButton('Rescan Project Folders')

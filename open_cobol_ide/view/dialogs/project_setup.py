@@ -25,8 +25,8 @@ class NewProjectDialog(QtWidgets.QDialog):
         row.addWidget(browse)
         form.addRow('Parent folder:', row)
         layout.addLayout(form)
-        note = QtWidgets.QLabel('Creates src, copybooks, bin, build, data and config folders. '
-                                'Existing project files are preserved.')
+        note = QtWidgets.QLabel('Creates src, copybooks, bin, build, data, config and debug_data folders. '
+                                'Debug builds put generated C and headers in debug_data. Existing files are preserved.')
         note.setWordWrap(True)
         layout.addWidget(note)
         buttons = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel)

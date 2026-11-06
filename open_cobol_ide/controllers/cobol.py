@@ -250,6 +250,14 @@ class CobolController(Controller):
     def _installed_debugger_launcher(self, command=None):
         launcher = os.path.expanduser(command if command is not None else Settings().debugger_command)
         launcher = launcher if os.path.isfile(launcher) else system.which(launcher)
+        if not launcher and system.windows and command in (None, 'cobgdb-python-gui', 'cobgdb-python-gui.exe'):
+            import winreg
+            key = r'Software\Microsoft\Windows\CurrentVersion\App Paths\cobgdb-python-gui.exe'
+            try:
+                with winreg.OpenKey(winreg.HKEY_CURRENT_USER, key) as entry:
+                    launcher = winreg.QueryValueEx(entry, '')[0]
+            except OSError:
+                pass
         if not launcher or not os.access(launcher, os.X_OK):
             raise ValueError('Install cobgdb-python and choose its GUI launcher in Preferences → Debugger.')
         return launcher
@@ -270,9 +278,20 @@ class CobolController(Controller):
         try:
             if not os.path.isfile(program):
                 raise ValueError('Build the executable before debugging: ' + program)
+            root = settings.project_root_for_source(source)
+            if root:
+                from pathlib import Path
+                from open_cobol_ide import project_config
+                project = Path(root).resolve()
+                artifacts = project / 'debug_data' / Path(source).resolve().relative_to(project).with_suffix('')
+                if (not project_config.debug_enabled(root) or
+                        not any(artifacts.glob('*.c')) or not any(artifacts.glob('*.h'))):
+                    raise ValueError('Project debugging needs a debug build and matching C/header files in '
+                                     + str(artifacts) + '. Enable Debug compilation in Preferences → Debugger '
+                                     'and rebuild the program before launching.')
             launcher = self._installed_debugger_launcher()
             from open_cobol_ide.project_runtime import launch_settings
-            cwd, runtime = launch_settings(settings.project_root_for_source(source),
+            cwd, runtime = launch_settings(root,
                 settings.working_dir or os.path.dirname(program), settings.run_environemnt)
             environment = GnuCobolCompiler.setup_process_environment(source)
             env = {key: environment.value(key) for key in environment.keys()}
@@ -724,7 +743,8 @@ class CobolController(Controller):
         cobc_run_insert_pos = 1
         if pyqode_console is None:
             from pyqode.core.tools import console
-            pyqode_console = [sys.executable, console.__file__]
+            argument = '--ocide-console' if getattr(sys, 'frozen', False) else console.__file__
+            pyqode_console = [sys.executable, argument]
             cobc_run_insert_pos = 2
         else:
             pyqode_console = [pyqode_console]

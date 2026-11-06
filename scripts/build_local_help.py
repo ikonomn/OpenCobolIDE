@@ -16,9 +16,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / 'doc' / 'source'
-OUTPUT = ROOT / 'doc' / 'OpenCobolIDE-modern11.6.html'
+OUTPUT = ROOT / 'doc' / 'OpenCobolIDE-modern12.html'
 PAGES = (
     ('index', 'Documentation overview'),
+    ('modern12', 'Modern12 guide and improvements since 4.7.6'),
     ('getting_started', 'Getting started'),
     ('settings', 'Application preferences'),
     ('advanced', 'Advanced topics'),
@@ -91,9 +92,42 @@ def image_html(relative_path, alt):
             f'alt="{html.escape(alt, quote=True)}" loading="lazy"></figure>')
 
 
+def review_lines():
+    """Translate the limited Markdown used in MODERN12.md to manual blocks."""
+    lines = []
+    literal = False
+    for text in (ROOT / 'MODERN12.md').read_text(encoding='utf-8').splitlines():
+        if text.startswith('```'):
+            if not literal:
+                lines.extend(['::', ''])
+            literal = not literal
+            if not literal:
+                lines.append('')
+        elif literal:
+            lines.append('    ' + text)
+        elif text.startswith('# '):
+            continue
+        elif text.startswith('## '):
+            heading = text[3:]
+            lines.extend([heading, '-' * len(heading)])
+        elif text.startswith('| ---'):
+            continue
+        elif text.startswith('|'):
+            cells = [cell.strip() for cell in text.strip('|').split('|')]
+            if cells[0] != 'Folder':
+                lines.append('- ' + ' — '.join(cells))
+        else:
+            text = re.sub(r'\[([^]]+)\]\([^)]+\)', r'\1', text)
+            lines.append(re.sub(r'`([^`]+)`', r'``\1``', text))
+    return lines
+
+
 def render_page(name, title):
     path = SOURCE / f'{name}.rst'
-    lines = path.read_text(encoding='utf-8').splitlines()
+    if name == 'modern12':
+        lines = review_lines()
+    else:
+        lines = path.read_text(encoding='utf-8').splitlines()
     links = {}
     for line in lines:
         match = re.match(r'^\.\. _`?([^`:]+)`?:\s+(\S+)', line)
@@ -245,7 +279,7 @@ def build():
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>OpenCobolIDE 4.7.6 modern11.6 manual</title>
+<title>OpenCobolIDE 4.7.6 modern12 manual</title>
 <style>
 :root {{ color-scheme: light dark; --accent:#2878b5; --paper:#fff; --ink:#20242a;
   --muted:#66717d; --panel:#f2f5f7; --border:#d7dde2; }}
@@ -280,7 +314,7 @@ footer {{ margin-top:3rem; padding-top:1rem; border-top:1px solid var(--border);
 </style>
 </head>
 <body><main>
-<header><h1>OpenCobolIDE 4.7.6 modern11.6 manual</h1>
+<header><h1>OpenCobolIDE 4.7.6 modern12 manual</h1>
 <p class="subtitle">Offline documentation for the Debian-family Linux compatibility build.</p>
 <p>This unofficial compatibility polish preserves the original OpenCobolIDE authorship and
 maintainer attribution. The modernization was completed with assistance from OpenAI Codex.</p>

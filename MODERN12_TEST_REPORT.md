@@ -76,3 +76,9 @@ The package was extracted and all **241 shipped Python/shell files** compared wi
 - Tests cover default/missing/unaccepted settings, accepted sections without cwd, explicit root override, standalone fallback, resolution before first build and discovery of data folders without overriding bin.
 - Both runtime resolvers were checked against an isolated copy of gixsql-example with its runtime section removed. SQLite connection and SELECT succeeded from bin; the user's database was not used.
 - Local packages: opencobolide 4.7.6+modern12+prefs5 and cobgdb-python 0.1.0-4. Not installed or published. Existing explicit configurations are not batch rewritten.
+
+## 6 November 2026 follow-up
+
+The focused IDE suite passed 121 tests covering Help, portable projects, project lifecycle, runtime review, Preferences, shortcuts and debugger launch. Qt reported backend-process teardown warnings after the suite. The independent debugger suite passed 39 tests. On the Linux desktop, a real GNOME Terminal received a menu choice typed into COBOL ACCEPT. GDB reported the value at the following breakpoint. The graphical COBOL score example opened its X11 window under GDB. A click reached the next COBOL breakpoint, and stepping changed score from 5 to 6 before normal exit.
+
+The modern12 HTML manual was regenerated and checked for local links. Windows launcher worker dispatch was exercised as Python source. Windows 11 EXE/Inno Setup compilation and native Fedora 44/Mageia 10 RPM builds remain to be performed on the corresponding targets.

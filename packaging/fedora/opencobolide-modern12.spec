@@ -1,6 +1,6 @@
 Name:           opencobolide
 Version:        4.7.6
-Release:        12.1%{?dist}
+Release:        12.2%{?dist}
 Summary:        COBOL IDE with portable projects for modern Python and PyQt5
 License:        GPL-3.0-or-later
 URL:            https://github.com/ikonomn/OpenCobolIDE
@@ -37,8 +37,8 @@ executable/module detection, GixSQL routing and cross-reference listings.
 install -Dpm 0644 share/OpenCobolIDE.desktop %{buildroot}%{_datadir}/applications/OpenCobolIDE.desktop
 install -Dpm 0644 share/OpenCobolIDE.png %{buildroot}%{_datadir}/pixmaps/OpenCobolIDE.png
 install -Dpm 0644 share/opencobolide.1 %{buildroot}%{_mandir}/man1/opencobolide.1
-install -Dpm 0644 doc/OpenCobolIDE-modern11.6.html %{buildroot}%{_docdir}/%{name}/manual.html
-install -pm 0644 MODERN12.md README.md HOWTO_MODERN11.6.md REVIEW_MODERN11.6.md RELEASE_NOTES_MODERN11.6.md INSTALL_FROM_SOURCE.md AUTHORS.rst LICENSE %{buildroot}%{_docdir}/%{name}/
+install -Dpm 0644 doc/OpenCobolIDE-modern12.html %{buildroot}%{_docdir}/%{name}/manual.html
+install -pm 0644 MODERN12.md RELEASE_NOTES_MODERN12.md README.md HOWTO_MODERN11.6.md REVIEW_MODERN11.6.md RELEASE_NOTES_MODERN11.6.md INSTALL_FROM_SOURCE.md AUTHORS.rst LICENSE %{buildroot}%{_docdir}/%{name}/
 install -d %{buildroot}%{_docdir}/%{name}/packaging
 install -pm 0644 packaging/RPM_MODERN12.md packaging/RPM_MODERN11.6.md packaging/NATIVE_FIX_MODERN11.6.md packaging/PROJECT_ROOT_FIX_MODERN11.6.md packaging/INCREMENTAL_BUILD_MODERN11.6.md %{buildroot}%{_docdir}/%{name}/packaging/
 cp -a examples %{buildroot}%{_docdir}/%{name}/
@@ -71,6 +71,10 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/OpenCobolIDE.desktop
 %{_mandir}/man1/opencobolide.1*
 
 %changelog
+* Fri Nov 06 2026 OpenCobolIDE modern build <noreply@opencobolide.invalid> - 4.7.6-12.2
+- Create debug_data when opening a project and explain retained C/header prerequisites.
+- Install the cumulative modern12 offline Help and release notes.
+
 * Wed Nov 04 2026 OpenCobolIDE modern build <noreply@opencobolide.invalid> - 4.7.6-12.1
 - Package modern12 Preferences, separate GixSQL controls and interface icons.
 - Launch installed independent debugger; preserve executable/no-argument modes.

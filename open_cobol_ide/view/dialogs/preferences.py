@@ -287,7 +287,7 @@ class DlgPreferences(QtWidgets.QDialog, dlg_preferences_ui.Ui_Dialog):
                 debugger.addWidget(self.project_controls.debug)
                 note = QtWidgets.QLabel(
                     'Adds -g -fsource-location -ftraceall -O0 -save-temps. '
-                    'Generated C/header files remain in debug_data/. '
+                    'Project debugging requires the matching generated C and header files in debug_data/. '
                     'The independent debugger opens externally on the selected executable.')
                 note.setWordWrap(True)
                 debugger.addWidget(note)

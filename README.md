@@ -164,6 +164,8 @@ cp -a /usr/share/doc/opencobolide/examples/project-demo "$HOME/OpenCobolIDE-demo
 
 The example compiles `test01` and `worker.so`, uses `copybooks/copybook.cpy`, demonstrates a source-specific flag override, and produces separate cross-reference listings. It includes no precompiled binaries or old listings.
 
+See [the modern12 IDE and Help review](MODERN12.md) and [release notes](RELEASE_NOTES_MODERN12.md).
+
 ## Linux targets and Windows release packages
 
 Current modern12 RPM definitions and matched two-application transfer kits target **Mageia 10** and **Fedora 44**. The original modern11.6 files remain historical. The native RPM builds/install/desktop tests are pending; a kit is not a tested RPM release. See [modern12 packaging instructions](packaging/RPM_MODERN12.md).

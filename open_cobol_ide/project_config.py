@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 import tempfile
 
-FOLDERS = ('src', 'copybooks', 'bin', 'build', 'data', 'config')
+FOLDERS = ('src', 'copybooks', 'bin', 'build', 'data', 'config', 'debug_data')
 _active_root = None
 
 
