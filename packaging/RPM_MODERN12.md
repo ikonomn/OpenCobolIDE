@@ -80,9 +80,9 @@ Verify both applications on the real desktop:
 
 Return binary/source RPMs, all logs, source revisions, environment details and actual test results to the development host. Publication waits for review. Use the installed COBGDB to run the graphical example from its documentation. Check native terminal input and output alongside the program window. Native Windows results are independent of these RPM results.
 
-## Windows release deliverables
+## Release archives
 
-For each application, publish a standalone .exe and an Inno Setup .exe installer when Windows builds/tests are complete. Use the same application versions (IDE 4.7.6 modern12, debugger 0.1.0), with installer/build revisions kept separate. Do not claim Windows support from Linux/headless results. Windows executable and installer builds are still pending.
+Keep the exact build source in the dedicated OpenCobolIDE and COBGDB source archives. The Fedora and Mageia transfer kits are internal build inputs. For the separate Windows build, use the [Windows build guide](windows/README.md) in the IDE source archive and the corresponding guide in the COBGDB source archive.
 
 ## Packaging references
 

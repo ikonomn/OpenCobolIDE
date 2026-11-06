@@ -174,7 +174,7 @@ Planned application versions are **OpenCobolIDE 4.7.6 modern12** and **independe
 
 ## Source installation and verification
 
-Use the supplied consolidated source archive or the local `modern11.6` checkout:
+Use the dedicated `opencobolide-4.7.6-modern12.tar.gz` source archive or the local `modern12` checkout:
 
 ```bash
 ./scripts/install_from_source.sh

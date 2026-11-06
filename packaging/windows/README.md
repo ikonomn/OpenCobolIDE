@@ -1,5 +1,7 @@
 # OpenCobolIDE modern12 for Windows 11 x64
 
+Extract the dedicated `opencobolide-4.7.6-modern12.tar.gz` source archive and work from its root. Build Windows separately on Windows 11 x64. The Windows release downloads are the standalone executable and Inno Setup installer.
+
 On Windows 11, use 64-bit Python in a build environment with PyQt5, Pygments and PyInstaller 6.9 or newer. Install Inno Setup 6.3 or newer and locate its command-line compiler, ISCC.exe.
 
 ```powershell
