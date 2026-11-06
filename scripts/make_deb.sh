@@ -173,7 +173,7 @@ printf '%s\n' \
     'Architecture: all' \
     'Depends: python3 (>= 3.8), python3-pyqt5 (>= 5.15), python3-pygments (>= 2.11)' \
     'Recommends: gnucobol' \
-    'Suggests: cobgdb-python (>= 0.1.0-4)' \
+    'Suggests: cobgdb-python (>= 0.1.0-5)' \
     "Installed-Size: $installed_size" \
     'Maintainer: Colin Duquesnoy <colin.duquesnoy@gmail.com>' \
     'Homepage: https://github.com/OpenCobolIDE/OpenCobolIDE' \
