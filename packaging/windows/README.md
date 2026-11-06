@@ -2,12 +2,14 @@
 
 Extract the dedicated `opencobolide-4.7.6-modern12.tar.gz` source archive and work from its root. Build Windows separately on Windows 11 x64. The Windows release downloads are the standalone executable and Inno Setup installer.
 
-On Windows 11, use 64-bit Python in a build environment with PyQt5, Pygments and PyInstaller 6.9 or newer. Install Inno Setup 6.3 or newer and locate its command-line compiler, ISCC.exe.
+On Windows 11, use 64-bit Python in a build environment with PyQt5, Pygments and PyInstaller 6.9 or newer. Use your installed Inno Setup 7 command-line compiler, ISCC.exe.
 
 ```powershell
 python -m pip install "PyQt5>=5.15,<6" "Pygments>=2.11,<3" "PyInstaller>=6.9,<7"
-.\packaging\windows\build.ps1 -InnoCompiler 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe'
+.\packaging\windows\build.ps1 -InnoCompiler 'C:\Program Files\Inno Setup 7\ISCC.exe'
 ```
+
+Adjust the compiler path to match your Inno Setup 7 installation.
 
 The script produces opencobolide.exe, OpenCobolIDE-modern12-win11-x64-setup.exe and SHA256SUMS in dist/windows by default. The executable bundles Python, Qt, the offline manual and editor backend workers. The build uses a console-capable executable so the bundled console worker can use standard input and output. GnuCOBOL remains a separate toolchain. The current IDE project builder also requires compatible Bash, Python 3 and Unix tools on PATH, such as a matching MSYS2 environment. GixSQL is needed for SQL builds. Configure the compiler and runtime tools before testing.
 
