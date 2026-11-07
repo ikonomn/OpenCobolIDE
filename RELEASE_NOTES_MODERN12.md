@@ -7,7 +7,7 @@
 - Added project switching with unsaved-edit protection, copybook editing, fixed/free format detection, persistent program arguments and improved diagnostics.
 - Consolidated Compiler, Projects, Debugger and GixSQL preferences. Added project runtime review and preserved bin as the default runtime working directory.
 - Made debug_data a project folder and made the IDE explain the generated C/header prerequisites when starting COBGDB. Debug builds retain those files by source under debug_data.
-- Added direct COBGDB launch with or without a selected program. The independent debugger uses a native terminal for program input and output where available.
+- Added direct COBGDB launch with or without a selected program. The independent debugger uses its Program output pane and embedded Linux input controls.
 - Rebuilt offline Help from the bundled manual and the full modern12 structure and workflow review.
 
 ## Target builds
