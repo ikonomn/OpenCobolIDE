@@ -1,6 +1,6 @@
 Name:           opencobolide
 Version:        4.7.6
-Release:        12.2%{?dist}
+Release:        12.3%{?dist}
 Summary:        COBOL IDE with portable projects for modern Python and PyQt5
 License:        GPL-3.0-or-later
 URL:            https://github.com/ikonomn/OpenCobolIDE
@@ -71,6 +71,9 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/OpenCobolIDE.desktop
 %{_mandir}/man1/opencobolide.1*
 
 %changelog
+* Sat Nov 07 2026 OpenCobolIDE modern build <noreply@opencobolide.invalid> - 4.7.6-12.3
+- Align modern12 Help and native build instructions with the restored COBGDB console.
+
 * Fri Nov 06 2026 OpenCobolIDE modern build <noreply@opencobolide.invalid> - 4.7.6-12.2
 - Create debug_data when opening a project and explain retained C/header prerequisites.
 - Install the cumulative modern12 offline Help and release notes.

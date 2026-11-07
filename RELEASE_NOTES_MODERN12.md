@@ -14,8 +14,8 @@
 
 | Target | Planned deliverables | Status |
 | --- | --- | --- |
-| Fedora 44 | 4.7.6-12.2.fc44 binary and source RPMs | Native build and desktop verification pending |
-| Mageia 10 | 4.7.6-12.2.mga10 binary and source RPMs | Native build and desktop verification pending |
+| Fedora 44 | 4.7.6-12.3.fc44 binary and source RPMs | Native build and desktop verification pending |
+| Mageia 10 | 4.7.6-12.3.mga10 binary and source RPMs | Native build and desktop verification pending |
 | Windows 11 x64 | opencobolide.exe and Inno Setup installer | Native build and installer verification pending |
 
 See [the IDE review](MODERN12.md), [RPM guide](packaging/RPM_MODERN12.md) and [Windows build instructions](packaging/windows/README.md). On the tested GnuCOBOL runtime, use one data search directory. The current multi-directory COB_FILE_PATH handling remains limited.
