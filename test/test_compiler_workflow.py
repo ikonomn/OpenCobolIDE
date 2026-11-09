@@ -12,9 +12,9 @@ mod=importlib.util.module_from_spec(spec)
 spec.loader.exec_module(mod)
 
 @pytest.mark.parametrize('flags,auto,syntax,expected',[
- ([],False,False,[]),([],True,False,['-T','payapply1.prn']),
- (['-T'],False,False,['-T','payapply1.prn']),
- (['-T','-Wall'],False,False,['-T','payapply1.prn','-Wall']),
+ ([],False,False,[]),([],True,False,['-T','payapply1.lst']),
+ (['-T'],False,False,['-T','payapply1.lst']),
+ (['-T','-Wall'],False,False,['-T','payapply1.lst','-Wall']),
  (['-T','custom listing.prn'],True,False,['-T','custom listing.prn']),
  (['-T','{stem}.prn'],False,False,['-T','payapply1.prn']),
  (['-t','custom.prn','-Wall'],True,True,['-Wall']),
@@ -141,7 +141,7 @@ def test_command_uses_source_override_and_automatic_listing(tmp_path):
         _, command = GnuCobolCompiler().make_command(
             ['first.cbl'], FileType.EXECUTABLE, 'bin', source_path=source)
         assert '-debug' in command and '-Wall' not in command
-        assert command[command.index('-T') + 1] == 'first.prn'
+        assert command[command.index('-T') + 1] == 'first.lst'
         settings.set_source_flags(source, None)
         _, command = GnuCobolCompiler().make_command(
             ['first.cbl'], FileType.EXECUTABLE, 'bin', source_path=source)
@@ -150,3 +150,27 @@ def test_command_uses_source_override_and_automatic_listing(tmp_path):
         settings.set_source_flags(source, None)
         settings.compiler_flags = original_flags
         settings.automatic_listing = original_auto
+
+
+@pytest.mark.parametrize('suffix', ['.lst', '.prn'])
+def test_listing_tab_skips_source_classification(suffix):
+    from unittest.mock import Mock
+    from open_cobol_ide.controllers.cobol import CobolController
+
+    class ListingEditor:
+        file = SimpleNamespace(path='listing' + suffix)
+
+        @property
+        def file_type(self):
+            pytest.fail('A listing must not be classified as COBOL source')
+
+    editor = ListingEditor()
+    controller = SimpleNamespace(
+        app=SimpleNamespace(edit=SimpleNamespace(current_editor=editor)),
+        enable_compile=Mock(), enable_run=Mock(),
+    )
+    controller._can_build_current_source = lambda: CobolController._can_build_current_source(controller)
+    CobolController.display_file_type(controller, editor)
+    assert CobolController._debug_executable_path(controller) is None
+    controller.enable_compile.assert_called_once_with(False)
+    controller.enable_run.assert_called_once_with(False)

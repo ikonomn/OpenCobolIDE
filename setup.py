@@ -42,6 +42,9 @@ class CleanBuildPy(_build_py):
         if os.path.isdir(package_build_dir):
             shutil.rmtree(package_build_dir)
         super().run()
+        shutil.copytree(ROOT / 'examples' / 'common',
+                        os.path.join(package_build_dir, 'example_templates'),
+                        ignore=shutil.ignore_patterns('__pycache__', '*.pyc', '.gitkeep', '.gitignore'))
 
 
 cmdclass['build_py'] = CleanBuildPy

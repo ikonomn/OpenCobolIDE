@@ -8,7 +8,7 @@ import logging
 import os
 from pathlib import Path
 from pyqode.core import widgets
-from pyqode.qt import QtGui, QtWidgets
+from pyqode.qt import QtCore, QtGui, QtWidgets
 from open_cobol_ide import system, project_config
 from open_cobol_ide.view.editors import CobolCodeEdit
 from open_cobol_ide.settings import Settings
@@ -287,6 +287,25 @@ class FileController(Controller):
             created_debug_folder = not debug_folder.is_dir()
             debug_folder.mkdir(exist_ok=True)
             Settings().initialize_project_config(path)
+            if not (Path(path) / 'bin').is_dir():
+                from open_cobol_ide.project_outputs import discover
+                data = project_config.load(path)
+                selected = dict(data.get('output_directories', {}))
+                for kind, choices in discover(path).items():
+                    if kind in selected or not choices:
+                        continue
+                    if len(choices) == 1:
+                        selected[kind] = choices[0]
+                    else:
+                        choice, accepted = QtWidgets.QInputDialog.getItem(
+                            self.main_window, 'Project output folder',
+                            'Choose the folder for ' + kind + ':', choices, 0, False)
+                        if not accepted:
+                            return False
+                        selected[kind] = choice
+                if selected != data.get('output_directories', {}):
+                    data['output_directories'] = selected
+                    project_config.save(path, data)
         except (ValueError, OSError) as error:
             QtWidgets.QMessageBox.warning(self.main_window, 'Cannot open project', str(error))
             return False
@@ -309,6 +328,15 @@ class FileController(Controller):
         if created_debug_folder:
             self.main_window.statusBar().showMessage(
                 'Created debug_data/. Enable Debug compilation and rebuild to generate C and headers.', 10000)
+            notice = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Information,
+                'Debug folder created',
+                'Debug folder created at ' + str(debug_folder) +
+                '.\nGenerated C and header files will be saved here after a successful debug build. '
+                'Enable Compile with debug in Project compiler settings and rebuild. '
+                'Existing executable and library folders are preserved.',
+                QtWidgets.QMessageBox.Ok, self.main_window)
+            notice.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+            notice.open()
         if configure:
             self.show_project_setup()
             if not project_config.load(path).get('runtime', {}).get('accepted'):

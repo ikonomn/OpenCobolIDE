@@ -192,3 +192,71 @@ OpenCobolIDE retains its original authors, Colin Duquesnoy's original project at
 Modern compatibility, project-workflow, packaging and verification work was developed with assistance from OpenAI Codex. This is an unofficial community-maintained modern build, provided under the existing licence without a warranty of suitability for every platform.
 
 Project compilation and the complete keyboard shortcut table are explained in [the How-to guide](HOWTO_MODERN11.6.md#18-keyboard-shortcuts).
+
+
+Writable examples
+-----------------
+On first launch, examples are copied into `~/OpenCobolIDE-examples` on every supported platform. Help → Open examples folder opens this writable copy. Existing user files are preserved; new packaged files are added on later launches. The package retains read-only templates. If copying fails, the application logs the failure; the examples action reports the problem.
+
+
+Release transfer folders
+------------------------
+Successful native package builds create `<system>-<YYYY-MM-DD>-release` and a matching `.tar.gz` plus SHA256 checksum. Copy the complete folder or archive back to Mint. It contains native packages, current source snapshots, Git history/provenance when available, build scripts, and build logs. Each application has its own subfolder; repeated builds preserve earlier results. Set `RELEASE_OUTPUT_BASE` to choose a shared destination (or use the existing output option on Windows). `RELEASE_DATE` can explicitly override the local build date. Collection never commits, pushes, installs, or publishes. Review lint results, native tests, source changes and release notes on Mint before publishing.
+
+
+## COBOL callers with C helpers
+
+Project builds detect literal `CALL "function"` and `CALL STATIC "function"` statements and look for a matching C function definition in the project. Matched C files are linked into that caller's output automatically. Generated build/debug folders, hidden folders and virtual environments are excluded. If several C files define a function, select the helper explicitly instead of letting the IDE guess. Dynamic calls, macro-generated C definitions, calls inside COPY books and arbitrary external-library dependencies need explicit settings.
+
+The **caller COBOL filename** determines the output: `score.cob` produces `score` on Linux or `score.exe` on Windows, even when its PROGRAM-ID is `gui-score` and the helper is `score_window.c`. Existing project output-folder settings are respected. In **Preferences → Compiler → File compiler settings**, **Executable name (optional)** overrides the output filename for that caller. Build, successful-output messages, Run, Debug and incremental checks all use that saved name; folders and drive names are not allowed in this field.
+
+The default helper detection is enabled for every project. Uncheck **Detect C helpers from literal COBOL CALLs** to enter **Manual C helper sources**, with one project-relative C filename per line. An empty manual list disables helpers for the caller. Use the existing **Libraries** and **Extra compiler flags** fields for other dependencies. **Preview proposed C build command** shows the current caller, output name, helpers and libraries before saving. The actual builder also adds listing/diagnostic and retained-debug-source options and logs its complete command. These controls save with OK; Cancel leaves settings unchanged.
+
+Supported automatic library mappings are deliberately limited: helpers including `X11/...` headers add `-lX11` on Linux; helpers using `MessageBox`, `MessageBoxA` or `MessageBoxW` add `-luser32` on Windows. Already supplied libraries are not added again. X11 development headers/libraries or the matching Windows toolchain must already be installed. No dependencies are installed automatically. The compiler remains authoritative for conditional C code, unsupported libraries and missing symbols.
+
+For the bundled [C GUI example](examples/common/gui/README.md), open the folder as a project. The source declares Free format. The essential Linux command is:
+
+```bash
+cobc -free -x -o score score.cob score_window.c -lX11
+```
+
+With an executable-name override of `gui-score`, the command uses `-o gui-score`. On Windows it uses the `.exe` suffix and `-luser32`. Enable **Compile with debug** to retain the generated COBOL C/header companions under `debug_data/`. C helper and locally quoted header changes participate in incremental rebuild checks. The same caller-to-helper association is recomputed for each build; manual choices and name overrides are portable in `config/project.json`:
+
+```json
+"sources": {
+  "score.cob": {
+    "output_name": "gui-score",
+    "c_sources": ["score_window.c"],
+    "libraries": []
+  }
+}
+```
+
+Omit `c_sources` or set it to null for automatic matching. These are IDE project-build features; independent COBOL Debugger rebuild support for these additional settings has not been added in this change. Debug an IDE-built executable with its matching retained sources.
+
+## Building GTK3 and GTK4 programs
+
+For a COBOL source that calls GTK directly, OpenCobolIDE looks for literal calls specific to one GTK version. For example, `gtk_main` and `gtk_widget_show_all` select GTK3. Calls such as `gtk_window_set_child` and `gtk_box_append` select GTK4. The IDE queries the selected package with `pkg-config --libs` and adds GnuCOBOL's `--static` to the compile command. The proposed command preview shows the resolved flags.
+
+If the source only uses calls shared by both versions, uses dynamic call names, or contains conflicting version clues, specify the library under **Preferences → Compiler → File compiler settings → Extra compiler flags**. Explicit GTK library settings take precedence over detection. Use the expression for the version you want:
+
+| GTK version | Extra compiler flags |
+| --- | --- |
+| GTK3 | `$(pkg-config --libs gtk+-3.0)` |
+| GTK4 | `$(pkg-config --libs gtk4)` |
+
+The IDE also accepts backticks, for example `` `pkg-config --libs gtk4` ``. It resolves these queries at build time using the configured tools environment. Install `pkg-config` and the development files for the selected package in that environment. For C headers as well as libraries, use `$(pkg-config --cflags --libs gtk4)`. Queries can include multiple packages, version requirements, and options such as `--static` or `--libs-only-l`. GnuCOBOL's `--static` controls call generation, while `pkg-config --static` asks for additional link dependencies.
+
+If the program calls `gtk_builder_new_from_file` with a relative `.ui` filename, the file must be available in the application's working directory when it runs. To embed it, compile and link a GLib GResource and load it with `gtk_builder_new_from_resource`.
+
+## Common examples
+
+Open **Help → Open examples folder** to find the same five projects shipped with
+COBOL Debugger. The [examples index](examples/common/README.md) links to each
+build and debugging guide. Open an example folder as a project to use its
+saved compiler and runtime settings.
+
+The IDE ships the source snapshot in `examples/common/`. When updating the
+snapshot, copy the files listed in COBOL Debugger's `scripts/example-files.txt`
+from its `examples/` directory into `examples/common/`. Keep generated output
+out of the templates. The older IDE examples remain available in the source tree.

@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "name": "gixsql",
+  "defaults": {
+    "enabled": true,
+    "flags": null,
+    "environment": {},
+    "copybook_paths": [
+      "copybooks"
+    ],
+    "listing": {
+      "enabled": true,
+      "filename": "build/{stem}.lst"
+    }
+  },
+  "sources": {},
+  "runtime": {
+    "accepted": true,
+    "working_directory": "bin",
+    "data_directories": []
+  },
+  "output_directories": {
+    "executables": "bin"
+  }
+}

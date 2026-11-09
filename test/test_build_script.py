@@ -27,6 +27,8 @@ def test_internal_builder_handles_nested_sources_without_project_script(tmp_path
     source.write_text('IDENTIFICATION DIVISION.')
     Settings().register_project(str(project))
     assert compilers.find_build_script(str(source)).endswith('/build_tools/build.sh')
+    assert compilers.get_build_script_output_directory(str(source)) == str(project)
+    (project / 'bin').mkdir()
     assert compilers.get_build_script_output_directory(str(source)) == str(project / 'bin')
 
 

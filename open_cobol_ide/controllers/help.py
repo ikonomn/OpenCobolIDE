@@ -36,12 +36,23 @@ class HelpController(Controller):
 
     def __init__(self, app):
         super().__init__(app)
+        self.examples_action = self.ui.menu.addAction('Open examples folder')
+        self.examples_action.triggered.connect(self.open_examples)
         self.ui.actionHelp.triggered.connect(self.show_help_contents)
         self.ui.actionAbout.triggered.connect(self.show_about_dlg)
         self.ui.btAbout.clicked.connect(self.show_about_dlg)
         self.ui.actionReport_a_bug.triggered.connect(self.report_bug)
         self.ui.actionRestore_factory_defaults.triggered.connect(
             self.restore_factory_defaults)
+
+    def open_examples(self):
+        from open_cobol_ide.user_examples import examples_directory
+        folder = examples_directory()
+        if folder is None:
+            QtWidgets.QMessageBox.warning(self.main_window, 'Examples',
+                                          'Could not prepare writable examples.')
+        else:
+            QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(str(folder)))
 
     def show_help_contents(self):
         """

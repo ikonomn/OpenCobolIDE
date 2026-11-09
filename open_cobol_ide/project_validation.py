@@ -67,7 +67,7 @@ def validate_project(root, settings, document=None, sources=None):
             if flag in ('-x', '-m'):
                 report('error', label, 'Remove %s: executable/module mode is detected automatically.' % flag)
             if flag == '-o':
-                report('error', label, 'Remove -o: the IDE manages output filenames in bin/.')
+                report('error', label, 'Remove -o: use the Executable name field; the IDE manages output filenames.')
             if flag in ('-E', '-C', '-S', '-c', '-fsyntax-only'):
                 report('error', label, 'Remove %s: it prevents a complete project build.' % flag)
             if flag in ('-Xrefr', '--Xrefr'):
@@ -137,7 +137,11 @@ def validate_project(root, settings, document=None, sources=None):
         # Determine the same automatic mode as the compiler, without executing a source.
         from .compilers import get_file_type, GnuCobolCompiler
         extension = GnuCobolCompiler().extension_for_type(get_file_type(path))
-        collision(outputs, os.path.join(root, 'bin', Path(path).stem + extension), label, 'Output filename')
+        from .c_helpers import output_name
+        from .project_outputs import output_directory
+        from .enums import FileType
+        collision(outputs, os.path.join(output_directory(root, get_file_type(path) != FileType.EXECUTABLE),
+                  output_name(path, source, extension)), label, 'Output filename')
         if Path(path).suffix.lower() not in ('.cbl', '.cob', '.pco'):
             continue
         try:

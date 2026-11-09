@@ -250,9 +250,9 @@ class EditController(Controller):
             # update file type menu
             self.app.cobol.display_file_type(editor)
             # update cobol related actions (run/compile
+            can_build = self.app.cobol._can_build_current_source()
             try:
-                is_executable = (self.app.edit.current_editor.file_type ==
-                                 FileType.EXECUTABLE)
+                is_executable = can_build and editor.file_type == FileType.EXECUTABLE
             except (AttributeError, UnicodeDecodeError):
                 # not a cobol editor, or not file not loaded due to an
                 # encoding error
@@ -261,7 +261,7 @@ class EditController(Controller):
                 self.app.cobol.enable_run(False)
             else:
                 self.ui.menuCobol.setEnabled(True)
-                self.ui.menuProgramType.setEnabled(os.path.splitext(editor.file.path)[1].lower() != '.cpy')
+                self.ui.menuProgramType.setEnabled(can_build)
                 self.app.cobol.enable_compile(
                     not self.ui.consoleOutput.is_running)
                 self.app.cobol.enable_run(

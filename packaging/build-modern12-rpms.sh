@@ -46,3 +46,14 @@ set -e
 printf '%s\n' "$lint_status" > "$output/RPMLINT_STATUS.txt"
 (cd "$output" && sha256sum ./*.rpm > SHA256SUMS)
 printf 'Build completed. Review native install/GUI tests and rpmlint before release: %s\n' "$output"
+
+transfer_history=()
+for file in "$script_dir"/*.bundle; do
+    if [[ -f "$file" ]]; then transfer_history+=("$file"); fi
+done
+python3 "$script_dir/release_bundle.py" --system "$target" --app modern12 \
+    --output "${RELEASE_OUTPUT_BASE:-$script_dir}" --source "$script_dir" \
+    --files "${packages[@]}" "${transfer_history[@]}" "$script_dir"/*.tar.gz "$script_dir"/*.spec \
+    "$script_dir/build-rpms.sh" "$script_dir/release_bundle.py" \
+    "$script_dir/SOURCE_REVISIONS.json" "$output"/*.log \
+    "$output/BUILD_ENVIRONMENT.txt" "$output/RPMLINT_STATUS.txt"

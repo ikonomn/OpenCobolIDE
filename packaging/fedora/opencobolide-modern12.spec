@@ -1,6 +1,6 @@
 Name:           opencobolide
 Version:        4.7.6
-Release:        12.3%{?dist}
+Release:        12.10%{?dist}
 Summary:        COBOL IDE with portable projects for modern Python and PyQt5
 License:        GPL-3.0-or-later
 URL:            https://github.com/ikonomn/OpenCobolIDE
@@ -17,7 +17,7 @@ Requires:       python3-qt5-base >= 5.15
 Requires:       bash
 Requires:       python3-pygments >= 2.11
 Recommends:     gnucobol
-Suggests:       cobgdb-python >= 0.1.0
+Suggests:       cobol-debugger >= 0.1.0
 BuildRequires:  pyproject-rpm-macros
 
 %description
@@ -41,7 +41,7 @@ install -Dpm 0644 doc/OpenCobolIDE-modern12.html %{buildroot}%{_docdir}/%{name}/
 install -pm 0644 MODERN12.md RELEASE_NOTES_MODERN12.md README.md HOWTO_MODERN11.6.md REVIEW_MODERN11.6.md RELEASE_NOTES_MODERN11.6.md INSTALL_FROM_SOURCE.md AUTHORS.rst LICENSE %{buildroot}%{_docdir}/%{name}/
 install -d %{buildroot}%{_docdir}/%{name}/packaging
 install -pm 0644 packaging/RPM_MODERN12.md packaging/RPM_MODERN11.6.md packaging/NATIVE_FIX_MODERN11.6.md packaging/PROJECT_ROOT_FIX_MODERN11.6.md packaging/INCREMENTAL_BUILD_MODERN11.6.md %{buildroot}%{_docdir}/%{name}/packaging/
-cp -a examples %{buildroot}%{_docdir}/%{name}/
+cp -a examples/common %{buildroot}%{_docdir}/%{name}/examples
 find %{buildroot}%{_docdir}/%{name}/examples -type f \( -name '.gitkeep' -o -name '.gitignore' -o -name '*.pyc' \) -delete
 find %{buildroot}%{_docdir}/%{name}/examples -type d -name __pycache__ -prune -exec rm -rf {} +
 # Documentation scripts are examples, invoked explicitly with bash/python3.
@@ -71,6 +71,28 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/OpenCobolIDE.desktop
 %{_mandir}/man1/opencobolide.1*
 
 %changelog
+* Mon Nov 09 2026 Local build <noreply@opencobolide.invalid> - 4.7.6-12.9
+- Ship EU Cities and GeoNames attribution in the common examples.
+
+* Mon Nov 09 2026 Local build <noreply@opencobolide.invalid> - 4.7.6-12.8
+- Ship the shared GnuCOBOL / COBOL Debugger examples.
+
+* Mon Nov 09 2026 Local build <noreply@opencobolide.invalid> - 4.7.6-12.7
+- Discover the renamed COBOL Debugger launcher.
+- Include GTK detection, file debug settings, and listing fixes.
+
+* Sun Nov 08 2026 Local build <noreply@opencobolide.invalid> - 4.7.6-12.6
+- Automatically link matched C helpers into the COBOL caller output.
+- Add per-source output naming, command preview and C/header dependency tracking.
+
+* Sun Nov 08 2026 Local build <noreply@opencobolide.invalid> - 4.7.6-12.5
+- Add project Compile with debug checkbox and deduplicate required debug flags.
+- Discover existing output folders; allow projects without bin and notify about debug_data.
+
+* Sat Nov 07 2026 Local build <noreply@opencobolide.invalid> - 12.4
+- Provide writable per-user examples and preserve existing user files.
+- Correct project build failure totals and GixSQL library discovery.
+
 * Sat Nov 07 2026 OpenCobolIDE modern build <noreply@opencobolide.invalid> - 4.7.6-12.3
 - Align modern12 Help and native build instructions with the restored COBGDB console.
 

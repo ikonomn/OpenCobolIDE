@@ -82,7 +82,9 @@ def snapshot(source):
     compiler = GnuCobolCompiler()
     options = settings.effective_build_options(str(source))
     mode = get_file_type(str(source))
-    pgm, args = compiler.make_command([source.name], mode, 'bin', source_path=str(source),
+    from .compilers import get_build_script_output_directory
+    output_dir = get_build_script_output_directory(str(source))
+    pgm, args = compiler.make_command([source.name], mode, output_dir, source_path=str(source),
         default_listing=str(Path(root)/'build'/(source.stem+'.lst')))
     env = compiler.setup_process_environment(str(source))
     free = read_source_format(str(source))
@@ -100,6 +102,11 @@ def snapshot(source):
         elif arg.startswith('-I') and len(arg)>2: directories.append(arg[2:])
     directories = [str(Path(root)/p) if not os.path.isabs(p) else p for p in directories]
     inputs = {str(p): digest(p) for p in dependencies(source, directories, free)}
+    from .c_helpers import plan, output_name
+    from . import c_helpers, system
+    helper_plan = plan(source, root, options, free, system.windows, directories)
+    for path in helper_plan['dependencies'] + [c_helpers.__file__]:
+        inputs[path] = digest(path)
     for name in ('build.sh', 'detect_sql.py'):
         path = Path(script).parent/name
         inputs[str(path)] = digest(path)
@@ -107,11 +114,10 @@ def snapshot(source):
     for command in (pgm, env.value('GIXPP') or 'gixpp'):
         path = shutil.which(command, path=env.value('PATH'))
         tools[command] = [path, artifact_stamp(path)] if path else None
-    from . import project_config
-    debug = project_config.debug_enabled(root)
-    payload = [1, inputs, pgm, args, sorted(env.toStringList()), tools, options, mode, debug]
+    debug = settings.debug_build_enabled(str(source))
+    payload = [1, inputs, pgm, args, sorted(env.toStringList()), tools, options, mode, debug, helper_plan]
     fingerprint = hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()
-    outputs = [str(Path(root)/'bin'/(source.stem+compiler.extension_for_type(mode)))]
+    outputs = [str(Path(output_dir)/(output_name(source, options, compiler.extension_for_type(mode))))]
     if options['listing'].get('enabled', True):
         for i, arg in enumerate(args[:-1]):
             if arg in ('-T', '-t'):
