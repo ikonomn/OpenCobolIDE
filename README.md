@@ -197,11 +197,6 @@ Writable examples
 On first launch, examples are copied into `~/OpenCobolIDE-examples` on every supported platform. Help → Open examples folder opens this writable copy. Existing user files are preserved; new packaged files are added on later launches. The package retains read-only templates. If copying fails, the application logs the failure; the examples action reports the problem.
 
 
-Release transfer folders
-------------------------
-Successful native package builds create `<system>-<YYYY-MM-DD>-release` and a matching `.tar.gz` plus SHA256 checksum. Copy the complete folder or archive back to Mint. It contains native packages, current source snapshots, Git history/provenance when available, build scripts, and build logs. Each application has its own subfolder; repeated builds preserve earlier results. Set `RELEASE_OUTPUT_BASE` to choose a shared destination (or use the existing output option on Windows). `RELEASE_DATE` can explicitly override the local build date. Collection never commits, pushes, installs, or publishes. Review lint results, native tests, source changes and release notes on Mint before publishing.
-
-
 ## COBOL callers with C helpers
 
 Project builds detect literal `CALL "function"` and `CALL STATIC "function"` statements and look for a matching C function definition in the project. Matched C files are linked into that caller's output automatically. Generated build/debug folders, hidden folders and virtual environments are excluded. If several C files define a function, select the helper explicitly instead of letting the IDE guess. Dynamic calls, macro-generated C definitions, calls inside COPY books and arbitrary external-library dependencies need explicit settings.
