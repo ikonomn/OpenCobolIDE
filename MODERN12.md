@@ -1,6 +1,6 @@
 # OpenCobolIDE 4.7.6 modern12
 
-Modern12 is the continuation of the archived 4.7.6 IDE. The version shown in About identifies the modern release. The application retains the Qt editor and the original COBOL editing workflow. It adds portable projects, a project compiler and a connection to the independent COBGDB debugger.
+Modern12 is the continuation of the archived 4.7.6 IDE. The version shown in About identifies the modern release. The application retains the Qt editor and the original COBOL editing workflow. It adds portable projects, a project compiler and a connection to the independent COBOL Debugger debugger.
 
 ## Workspace and Help
 
@@ -14,7 +14,7 @@ The modern branch updates compatibility with Python 3 and PyQt5, uses maintained
 - The modern9 through modern11 updates added offline Help, layout recovery, optional project build scripts, the GixSQL example, source installation and the per-file program arguments dialog.
 - Modern11.1 through modern11.5 added lifecycle and crash tracing fixes, ordered compiler flags, SQL-only preprocessing, executable/module mode detection, per-source build settings, fixed/free format directives and improved runtime and compiler diagnostics.
 - Modern11.6 added portable projects, safe project switching, copybook creation and editing, internal project builds, COPY dependency tracking, incremental compilation, rebuild shortcuts and target-specific RPM recipes.
-- Modern12 added runtime discovery and review, retained C/header files, distinct Preferences pages, menu icons, direct COBGDB launch, a consistent bin runtime default and the current debug folder prerequisite. The debugger can use the system terminal while the program's graphical windows stay interactive.
+- Modern12 added runtime discovery and review, retained C/header files, distinct Preferences pages, menu icons, direct COBOL Debugger launch, a consistent bin runtime default and the current debug folder prerequisite. The debugger can use the system terminal while the program's graphical windows stay interactive.
 
 ## Project layout
 
@@ -27,6 +27,8 @@ The modern branch updates compatibility with Python 3 and PyQt5, uses maintained
 | `bin/` | Executables and modules. Default runtime working directory |
 | `build/` | Listings, SQL-preprocessed sources and incremental build state |
 | `debug_data/` | Generated C and headers needed for project debugging |
+
+Existing projects do not require `bin/`. When opening a project without it, the IDE looks for COBOL executables and libraries in the existing tree, saves their output folders in `config/project.json`, and asks you to choose if several locations match. With no outputs yet, the project root is used. Builds, incremental checks and executable launching use the selected folders. An older accepted runtime default of `bin` falls back to the detected executable folder if `bin/` is missing; other explicit runtime folders remain unchanged. Opening creates only a missing `debug_data/` folder (plus portable configuration if needed), and displays a message explaining that C/header files appear after a successful debug build. Compilation may also create its intermediate `build/` directory.
 
 New Project creates these folders. Open Project creates a missing `debug_data/` and opens recognized sources. Copybooks can be created and edited as COBOL files. They participate in builds through COPY dependencies. Generated output and hidden directories are excluded from source discovery. Close Project and switching projects protect unsaved edits with Save, Discard and Cancel.
 
@@ -46,10 +48,68 @@ The data search field accepts one directory per line, with project-relative path
 
 ## Debugging a project
 
-Enable **Debug compilation** in **Preferences → Debugger** and rebuild. The compiler uses `-g -fsource-location -ftraceall -O0 -save-temps`. The builder retains generated C and headers in `debug_data/<source-relative-path-without-extension>/`. For `src/main.cbl`, look in `debug_data/src/main/`. These are compiler-generated companions to your COBOL program. COBGDB uses them to map stops to COBOL statements and interpret variables. Keep the executable, COBOL source and C/headers from the same successful build together. Rebuild if any generated files are missing or the executable was built separately.
+Enable **Compile with debug** in **Preferences → Compiler → Project compiler settings**. The checkbox shares the existing project debug setting with Preferences → Debugger and Review Project Folders. OK saves it; Cancel leaves the project unchanged. The next project build recompiles affected sources when this setting changes; Rebuild Project forces a complete rebuild. The compiler adds `-g -fsource-location -ftraceall -O0 -save-temps` by default. Matching debug switches are used once. Explicit optimization such as `-O2` is preserved instead of adding `-O0`; optimized debugging can make stepping and variable inspection less predictable. The dialog previews the debug options without rewriting extra compiler flags. With `-O0`, hardened toolchains such as Mageia may warn that `_FORTIFY_SOURCE` requires optimization. Compiler warnings remain visible; the IDE does not disable hardening or silently change optimization. Explicit extra debug flags remain active even when the checkbox is off. The builder retains generated C and headers in `debug_data/<source-relative-path-without-extension>/`. For `src/main.cbl`, look in `debug_data/src/main/`. These are compiler-generated companions to your COBOL program. COBOL Debugger uses them to map stops to COBOL statements and interpret variables. Keep the executable, COBOL source and C/headers from the same successful build together. Rebuild if any generated files are missing or the executable was built separately.
 
-Choose **COBOL → Debug executable** to open the installed COBGDB on the built executable and original source. A project executable requires Debug compilation and its retained C and header files. The IDE reports the expected directory when these are missing. **Preferences → Debugger → Open installed debugger** opens COBGDB for manual selection. With COBGDB, set a breakpoint, click Run, then read program output in COBGDB’s Program output pane. On Linux, enter values in the debugger input box and click Send input. Graphical programs use their own windows.
+Choose **COBOL → Debug executable** to open the installed COBOL Debugger on the built executable and original source. A project executable requires Debug compilation and its retained C and header files. The IDE reports the expected directory when these are missing. **Preferences → Debugger → Open installed debugger** opens COBOL Debugger for manual selection. With COBOL Debugger, set a breakpoint, click Run, then read program output in COBOL Debugger’s Program output pane. On Linux, enter values in the debugger input box and click Send input. Graphical programs use their own windows.
 
 ## Verification and release files
 
 The offline Help is generated from the bundled documentation and this review. See the [release notes](RELEASE_NOTES_MODERN12.md) for changes, local verification and native test status. The [RPM guide](packaging/RPM_MODERN12.md) covers the matched Mageia 10 and Fedora 44 kits. The [Windows build guide](packaging/windows/README.md) covers the Windows 11 standalone executable and Inno Setup installer.
+
+
+## COBOL callers with C helpers
+
+Project builds detect literal `CALL "function"` and `CALL STATIC "function"` statements and look for a matching C function definition in the project. Matched C files are linked into that caller's output automatically. Generated build/debug folders, hidden folders and virtual environments are excluded. If several C files define a function, select the helper explicitly instead of letting the IDE guess. Dynamic calls, macro-generated C definitions, calls inside COPY books and arbitrary external-library dependencies need explicit settings.
+
+The **caller COBOL filename** determines the output: `score.cob` produces `score` on Linux or `score.exe` on Windows, even when its PROGRAM-ID is `gui-score` and the helper is `score_window.c`. Existing project output-folder settings are respected. In **Preferences → Compiler → File compiler settings**, **Executable name (optional)** overrides the output filename for that caller. Build, successful-output messages, Run, Debug and incremental checks all use that saved name; folders and drive names are not allowed in this field.
+
+The default helper detection is enabled for every project. Uncheck **Detect C helpers from literal COBOL CALLs** to enter **Manual C helper sources**, with one project-relative C filename per line. An empty manual list disables helpers for the caller. Use the existing **Libraries** and **Extra compiler flags** fields for other dependencies. **Preview proposed C build command** shows the current caller, output name, helpers and libraries before saving. The actual builder also adds listing/diagnostic and retained-debug-source options and logs its complete command. These controls save with OK; Cancel leaves settings unchanged.
+
+Supported automatic library mappings are deliberately limited: helpers including `X11/...` headers add `-lX11` on Linux; helpers using `MessageBox`, `MessageBoxA` or `MessageBoxW` add `-luser32` on Windows. Already supplied libraries are not added again. X11 development headers/libraries or the matching Windows toolchain must already be installed. No dependencies are installed automatically. The compiler remains authoritative for conditional C code, unsupported libraries and missing symbols.
+
+For the bundled [C GUI example](examples/common/gui/README.md), open the folder as a project. The source declares Free format. The essential Linux command is:
+
+```bash
+cobc -free -x -o score score.cob score_window.c -lX11
+```
+
+With an executable-name override of `gui-score`, the command uses `-o gui-score`. On Windows it uses the `.exe` suffix and `-luser32`. Enable **Compile with debug** to retain the generated COBOL C/header companions under `debug_data/`. C helper and locally quoted header changes participate in incremental rebuild checks. The same caller-to-helper association is recomputed for each build; manual choices and name overrides are portable in `config/project.json`:
+
+```json
+"sources": {
+  "score.cob": {
+    "output_name": "gui-score",
+    "c_sources": ["score_window.c"],
+    "libraries": []
+  }
+}
+```
+
+Omit `c_sources` or set it to null for automatic matching. These are IDE project-build features; independent COBOL Debugger rebuild support for these additional settings has not been added in this change. Debug an IDE-built executable with its matching retained sources.
+
+## Building GTK3 and GTK4 programs
+
+For a COBOL source that calls GTK directly, OpenCobolIDE looks for literal calls specific to one GTK version. For example, `gtk_main` and `gtk_widget_show_all` select GTK3. Calls such as `gtk_window_set_child` and `gtk_box_append` select GTK4. The IDE queries the selected package with `pkg-config --libs` and adds GnuCOBOL's `--static` to the compile command. The proposed command preview shows the resolved flags.
+
+If the source only uses calls shared by both versions, uses dynamic call names, or contains conflicting version clues, specify the library under **Preferences → Compiler → File compiler settings → Extra compiler flags**. Explicit GTK library settings take precedence over detection. Use the expression for the version you want:
+
+| GTK version | Extra compiler flags |
+| --- | --- |
+| GTK3 | `$(pkg-config --libs gtk+-3.0)` |
+| GTK4 | `$(pkg-config --libs gtk4)` |
+
+The IDE also accepts backticks, for example `` `pkg-config --libs gtk4` ``. It resolves these queries at build time using the configured tools environment. Install `pkg-config` and the development files for the selected package in that environment. For C headers as well as libraries, use `$(pkg-config --cflags --libs gtk4)`. Queries can include multiple packages, version requirements, and options such as `--static` or `--libs-only-l`. GnuCOBOL's `--static` controls call generation, while `pkg-config --static` asks for additional link dependencies.
+
+If the program calls `gtk_builder_new_from_file` with a relative `.ui` filename, the file must be available in the application's working directory when it runs. To embed it, compile and link a GLib GResource and load it with `gtk_builder_new_from_resource`.
+
+## Common examples
+
+Open **Help → Open examples folder** to find the same five projects shipped with
+COBOL Debugger. The [examples index](examples/common/README.md) links to each
+build and debugging guide. Open an example folder as a project to use its
+saved compiler and runtime settings.
+
+The IDE ships the source snapshot in `examples/common/`. When updating the
+snapshot, copy the files listed in COBOL Debugger's `scripts/example-files.txt`
+from its `examples/` directory into `examples/common/`. Keep generated output
+out of the templates. The older IDE examples remain available in the source tree.

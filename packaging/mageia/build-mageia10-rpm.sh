@@ -18,7 +18,7 @@ if ! grep -qE 'Mageia release 10([[:space:]]|$)' /etc/mageia-release; then
     exit 1
 fi
 
-for command_name in rpmbuild rpmdev-setuptree rpmlint python3; do
+for command_name in rpmbuild rpmspec rpmdev-setuptree rpmlint python3; do
     if ! command -v "$command_name" >/dev/null 2>&1; then
         echo "Error: required command is missing: $command_name" >&2
         echo "Install task-packager and the dependencies from the instructions." >&2
@@ -48,9 +48,11 @@ rpmbuild -ba \
     --define "_topdir $top_dir" \
     "$top_dir/SPECS/opencobolide.spec" 2>&1 | tee "$output_dir/rpmbuild.log"
 
+rpm_version=$(rpmspec -q --srpm --qf '%{VERSION}' "$spec_file")
+rpm_release=$(rpmspec -q --srpm --qf '%{RELEASE}' "$spec_file")
 mapfile -t packages < <(
     find "$top_dir/RPMS" "$top_dir/SRPMS" \
-        -type f -iname 'opencobolide-4.7.6-11.6.3*.rpm' -print | sort
+        -type f -iname "opencobolide-${rpm_version}-${rpm_release}*.rpm" -print | sort
 )
 
 if [ "${#packages[@]}" -lt 2 ]; then
@@ -63,7 +65,7 @@ for package in "${packages[@]}"; do
 done
 
 set +e
-rpmlint "${packages[@]}" | tee "$output_dir/rpmlint.log"
+rpmlint "${packages[@]}" 2>&1 | tee "$output_dir/rpmlint.log"
 rpmlint_status="${PIPESTATUS[0]}"
 set -e
 (cd "$output_dir" && sha256sum ./*.rpm > SHA256SUMS)
@@ -72,3 +74,15 @@ echo
 echo "Mageia 10 RPM build completed."
 echo "Results: $output_dir"
 echo "rpmlint exit status: $rpmlint_status (see rpmlint.log)"
+
+collector="$script_dir/release_bundle.py"
+[[ -f "$collector" ]] || collector="$script_dir/../../scripts/release_bundle.py"
+source_root="$script_dir"
+if [[ -d "$script_dir/../../.git" ]]; then source_root=$(cd "$script_dir/../.." && pwd); fi
+transfer_history=()
+for file in "$script_dir"/*.bundle "$script_dir"/SOURCE_REVISION.txt; do
+    if [[ -f "$file" ]]; then transfer_history+=("$file"); fi
+done
+python3 "$collector" --system mageia10 --app opencobolide \
+    --output "${RELEASE_OUTPUT_BASE:-$script_dir}" --source "$source_root" \
+    --files "${packages[@]}" "${transfer_history[@]}" "$source_file" "$spec_file" "$script_dir/build-mageia10-rpm.sh" "$output_dir"/*.log

@@ -21,6 +21,7 @@ if ! git -C "$project_root" diff --quiet --ignore-submodules -- || \
 fi
 
 mkdir -p "$working_dir/$kit_name" "$output_dir"
+git -C "$project_root" bundle create "$working_dir/$kit_name/opencobolide-history.bundle" HEAD
 
 git -C "$project_root" archive \
     --format=tar.gz \
@@ -32,6 +33,7 @@ install -m 0644 "$script_dir/opencobolide-modern11.6.spec" \
     "$working_dir/$kit_name/"
 install -m 0755 "$script_dir/build-mageia10-rpm.sh" \
     "$working_dir/$kit_name/"
+install -m 0644 "$project_root/scripts/release_bundle.py" "$working_dir/$kit_name/"
 install -m 0644 "$script_dir/README.md" \
     "$working_dir/$kit_name/README.md"
 

@@ -4,7 +4,7 @@ from pyqode.core.api.syntax_highlighter import PYGMENTS_STYLES, ColorScheme
 from pyqode.qt import QtCore, QtGui, QtWidgets
 from open_cobol_ide import system, compilers
 from open_cobol_ide.enums import GnuCobolStandard
-from open_cobol_ide.settings import Settings
+from open_cobol_ide.settings import DEFAULT_COMPILER_FLAGS, DEFAULT_DEBUGGER_COMMAND, Settings
 from open_cobol_ide.view.forms import dlg_preferences_ui
 from open_cobol_ide.view.dialogs.check_compiler import DlgCheckCompiler
 from open_cobol_ide.view.dialogs.cobc_help import DlgCobcHelp
@@ -193,7 +193,7 @@ class DlgPreferences(QtWidgets.QDialog, dlg_preferences_ui.Ui_Dialog):
             lambda: self.project_controller.open_debugger(self.debugger_command.text()))
         debugger.addWidget(self.open_debugger_button)
         note = QtWidgets.QLabel(
-            'Select the installed cobgdb-python-gui launcher (version 0.1.0-2 or later). '
+            'Select the installed COBOL Debugger launcher (cobol-debugger). '
             'Use COBOL → Debug executable to open the current binary. '
             'Enable debug compilation and rebuild for source-level debugging.')
         note.setWordWrap(True)
@@ -286,7 +286,7 @@ class DlgPreferences(QtWidgets.QDialog, dlg_preferences_ui.Ui_Dialog):
                 self.project_controls.layout().removeWidget(self.project_controls.debug)
                 debugger.addWidget(self.project_controls.debug)
                 note = QtWidgets.QLabel(
-                    'Adds -g -fsource-location -ftraceall -O0 -save-temps. '
+                    'Adds missing -g -fsource-location -ftraceall -save-temps flags. Uses -O0 unless optimization is explicitly set. '
                     'Project debugging requires the matching generated C and header files in debug_data/. '
                     'The independent debugger opens externally on the selected executable.')
                 note.setWordWrap(True)
@@ -714,7 +714,7 @@ class DlgPreferences(QtWidgets.QDialog, dlg_preferences_ui.Ui_Dialog):
         settings = Settings()
         index = self.tabWidget.currentIndex()
         if self.tabWidget.currentWidget() is self.tabDebugger:
-            self.debugger_command.setText('cobgdb-python-gui')
+            self.debugger_command.setText(DEFAULT_DEBUGGER_COMMAND)
             if self.project_controls:
                 self.project_controls.debug.setChecked(False)
             return
@@ -761,7 +761,7 @@ class DlgPreferences(QtWidgets.QDialog, dlg_preferences_ui.Ui_Dialog):
             settings.free_format = False
             settings.cobol_standard = GnuCobolStandard.default
             settings.compiler_path = 'cobc.exe' if system.windows else 'cobc'
-            settings.compiler_flags = ['-debug', '-Wall']
+            settings.compiler_flags = list(DEFAULT_COMPILER_FLAGS)
             settings.copybook_paths = ''
             settings.library_search_path = ''
             settings.libraries = ''
@@ -794,7 +794,7 @@ class DlgPreferences(QtWidgets.QDialog, dlg_preferences_ui.Ui_Dialog):
             settings.esqloc_extensions = ['.sqb']
         if self.project_controls and self.tabWidget.currentWidget() is self.tabProjects:
             self.project_controls.use_runtime.setChecked(False)
-            self.project_controls.cwd.setCurrentText('bin')
+            self.project_controls.cwd.setCurrentIndex(0)
             self.project_controls.paths.clear()
             return
         if self.project_controls and self.tabWidget.currentWidget() is self.tabDebugger:

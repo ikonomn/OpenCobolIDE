@@ -63,7 +63,7 @@ def get_file_type(path):
         ftype = Settings().get_file_type(path)
     except KeyError:
         ftype = FileType.EXECUTABLE
-        with open(path, 'r', encoding=encoding) as f:
+        with open(path, 'r', encoding=encoding, errors='replace') as f:
             from .source_format import detect_source_format
             source = f.read()
             free = detect_source_format(source)
@@ -166,7 +166,9 @@ def find_build_script(file_path):
 def get_build_script_output_directory(file_path):
     """Project artifacts belong to the project, never the IDE install folder."""
     if find_build_script(file_path) is not None:
-        return os.path.join(Settings().project_root_for_source(file_path), 'bin')
+        from .project_outputs import output_directory
+        return output_directory(Settings().project_root_for_source(file_path),
+                                get_file_type(file_path) != FileType.EXECUTABLE)
     return None
 
 
@@ -184,12 +186,14 @@ def compile_with_build_script(file_path, output_callback=None):
     env = compiler.setup_process_environment(source)
     env.insert('OCIDE_COMPILE_MODE', '-x' if file_type == FileType.EXECUTABLE else '-m')
     env.insert('OCIDE_OUTPUT_EXTENSION', compiler.extension_for_type(file_type))
+    output_dir = get_build_script_output_directory(source)
+    env.insert('OCIDE_OUTPUT_DIR', output_dir)
     pgm, args = compiler.make_command(
-        [os.path.basename(source)], file_type, 'bin', source_path=source,
+        [os.path.basename(source)], file_type, output_dir, source_path=source,
         default_listing=os.path.join(working_dir, 'build',
-                                     os.path.splitext(os.path.basename(source))[0] + '.lst'))
-    from . import project_config
-    env.insert('OCIDE_DEBUG_BUILD', '1' if project_config.debug_enabled(working_dir) else '0')
+                                     os.path.splitext(os.path.basename(source))[0] + '.lst'),
+        output_callback=output_callback)
+    env.insert('OCIDE_DEBUG_BUILD', '1' if Settings().debug_build_enabled(source) else '0')
     env.insert('OCIDE_PROJECT_DIR', working_dir)
     env.insert('COBC', pgm)
     build_options = Settings().effective_build_options(source)
@@ -202,6 +206,17 @@ def compile_with_build_script(file_path, output_callback=None):
     if '-free' in args: free = True
     if '-fixed' in args: free = False
     env.insert('OCIDE_SOURCE_FORMAT', 'free' if free else 'fixed')
+    from .c_helpers import plan, output_name
+    helper_plan = plan(source, working_dir, build_options, free, system.windows,
+                       build_options['copybook_paths'])
+    if output_callback is not None and helper_plan['sources']:
+        label = ('Detected C helpers' if build_options.get('c_sources') is None
+                 else 'Configured C helpers')
+        names = ', '.join(helper_plan['sources'])
+        output_callback('%s: %s\n' % (label, names))
+    env.insert('OCIDE_C_SOURCES', json.dumps(helper_plan['sources']))
+    env.insert('OCIDE_C_LIBRARIES', json.dumps(helper_plan['libraries']))
+    env.insert('OCIDE_OUTPUT_NAME', output_name(source, build_options, compiler.extension_for_type(file_type)))
     env.insert('OCIDE_COMPILER_FLAGS', json.dumps(args[3:-1]))
     status, output = run_command('bash', [script, source], working_dir=working_dir,
                                  process_environment=env)
@@ -584,14 +599,15 @@ class GnuCobolCompiler(QtCore.QObject):
         else:
             inputs = [filename]
         # ensure bin dir exists
-        output_full_path = os.path.join(
-            output_dir, self.get_output_filename(inputs, file_type))
+        from .c_helpers import output_name
+        output_full_path = os.path.join(output_dir, output_name(file_path,
+            Settings().effective_build_options(file_path), self.extension_for_type(file_type)))
         # Rebuild so source-specific or global option changes take effect.
         self.prepare_bin_dir(output_dir, output_full_path)
 
         pgm, options = self.make_command(
             inputs, file_type, original_output_dir, additional_options,
-            source_path=file_path)
+            source_path=file_path, output_callback=self.output_available.emit)
         self.started.emit(' '.join([pgm] + options))
         status, output = run_command(
             pgm, options, working_dir=path,
@@ -618,7 +634,8 @@ class GnuCobolCompiler(QtCore.QObject):
             file_type)
 
     def make_command(self, input_file_names, file_type, output_dir=None,
-                     additional_options=None, source_path=None, default_listing=None):
+                     additional_options=None, source_path=None, default_listing=None,
+                     output_callback=None):
         """
         Makes the command needed to compile the specified file.
 
@@ -635,6 +652,10 @@ class GnuCobolCompiler(QtCore.QObject):
         settings = Settings()
         output_file_name = self.get_output_filename(
             input_file_names, file_type)
+        if source_path:
+            from .c_helpers import output_name
+            output_file_name = output_name(source_path, settings.effective_build_options(source_path),
+                                           self.extension_for_type(file_type))
         options = []
         if file_type == FileType.EXECUTABLE:
             options.append('-x')
@@ -647,15 +668,34 @@ class GnuCobolCompiler(QtCore.QObject):
         standard = GnuCobolStandard(settings.cobol_standard)
         if standard != GnuCobolStandard.none:
             options.append('-std=%s' % gnucobol_standard_name(standard))
-        from .compiler_options import listing_options
+        from .compiler_options import gtk_link_flags, listing_options
         from .project_config import source_options
         source = source_path or input_file_names[0]
         build = settings.effective_build_options(source)
         listing = build['listing']
         flags = settings.effective_flags(source)
+        from .source_format import read_source_format
+        source_format = read_source_format(source)
+        if source_format is None:
+            selected = build['source_format']
+            source_format = settings.free_format if selected == 'inherit' else selected == 'free'
+        if '-free' in flags:
+            source_format = True
+        if '-fixed' in flags:
+            source_format = False
+        flags = gtk_link_flags(source, flags, build['libraries'], source_format, output_callback)
+        if any(flag.startswith(('`', '$(')) for flag in flags):
+            from .compiler_options import expand_pkg_config
+            environment = dict(entry.split('=', 1) for entry in
+                               self.setup_process_environment(source).toStringList())
+            directory = settings.project_root_for_source(source) or os.path.dirname(os.path.abspath(source))
+            flags = expand_pkg_config(flags, cwd=directory, env=environment)
         explicit_source = source_options(source) or {}
         if explicit_source.get('listing', {}).get('filename') and explicit_source.get('flags') is None:
             flags = listing_options(flags, source, syntax_only=True)
+        if settings.debug_build_enabled(source):
+            from .compiler_options import with_debug_flags
+            flags = with_debug_flags(flags)
         listing_default = listing.get('filename') or default_listing
         if listing_default:
             listing_default = listing_default.replace('{stem}', os.path.splitext(os.path.basename(source))[0])

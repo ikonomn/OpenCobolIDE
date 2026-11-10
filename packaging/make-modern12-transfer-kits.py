@@ -37,7 +37,20 @@ def main():
             archive = temporary/filename
             subprocess.run(['git', '-C', str(repo), 'archive', '--format=tar.gz',
                             '--prefix='+prefix, '-o', str(archive), 'HEAD'], check=True)
+            if repo == debugger:
+                # Examples are a complete local tree, including ignored runtime data.
+                original = archive.read_bytes()
+                import io
+                with tarfile.open(fileobj=io.BytesIO(original), mode='r:gz') as old, tarfile.open(archive, 'w:gz') as new:
+                    for member in old:
+                        if member.name == prefix + 'examples' or member.name.startswith(prefix + 'examples/'):
+                            continue
+                        new.addfile(member, old.extractfile(member) if member.isfile() else None)
+                    new.add(repo/'examples', arcname=prefix+'examples')
             sources.append(archive)
+            bundle = temporary/(repo.name+'-history.bundle')
+            subprocess.run(['git', '-C', str(repo), 'bundle', 'create', str(bundle), 'HEAD'], check=True)
+            sources.append(bundle)
         for target, distro in [('fedora44', 'fedora'), ('mageia10', 'mageia')]:
             name = f'modern12-{target}-rpm-kit'
             kit = temporary/name
@@ -47,6 +60,7 @@ def main():
             shutil.copy2(ide/f'packaging/{distro}/opencobolide-modern12.spec', kit)
             shutil.copy2(debugger/f'packaging/{distro}/cobgdb-python.spec', kit)
             shutil.copy2(ide/'packaging/build-modern12-rpms.sh', kit/'build-rpms.sh')
+            shutil.copy2(ide/'scripts/release_bundle.py', kit/'release_bundle.py')
             shutil.copy2(ide/'packaging/RPM_MODERN12.md', kit/'README.md')
             (kit/'TARGET').write_text(target+'\n')
             (kit/'SOURCE_REVISIONS.json').write_text(json.dumps(revisions, indent=2)+'\n')

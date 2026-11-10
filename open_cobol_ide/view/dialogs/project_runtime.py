@@ -2,6 +2,7 @@
 import os
 from pyqode.qt import QtWidgets
 from open_cobol_ide import project_config as config
+from open_cobol_ide.project_outputs import output_directory
 from open_cobol_ide.project_runtime import scan
 from open_cobol_ide.settings import Settings
 
@@ -29,7 +30,7 @@ class RuntimeFoldersWidget(QtWidgets.QWidget):
         self.paths = QtWidgets.QPlainTextEdit()
         self.paths.setMaximumHeight(75)
         form.addRow('Data search folders (one per line):', self.paths)
-        self.debug = QtWidgets.QCheckBox('Debug compilation: required for project debugging; retains C and headers in debug_data/')
+        self.debug = QtWidgets.QCheckBox('Compile with debug (also available in Project compiler settings)')
         form.addRow(self.debug)
         layout.addLayout(form)
         rescan = QtWidgets.QPushButton('Rescan Project Folders')
@@ -61,8 +62,14 @@ class RuntimeFoldersWidget(QtWidgets.QWidget):
         if accept_runtime or (accepted, cwd, paths) != self._runtime_initial:
             accepted = accepted or accept_runtime
             if accepted:
-                for path in [cwd] + paths:
-                    if not path or not os.path.isdir(config.resolve_path(self.root, path)):
+                resolved_cwd = config.resolve_path(self.root, cwd)
+                # The compiler creates its output folder on the first build.
+                future_output = (not os.path.lexists(resolved_cwd) and
+                                 resolved_cwd == output_directory(self.root))
+                if not cwd or not (os.path.isdir(resolved_cwd) or future_output):
+                    raise ValueError('Choose an existing folder: ' + cwd)
+                for path in paths:
+                    if not os.path.isdir(config.resolve_path(self.root, path)):
                         raise ValueError('Choose an existing folder: ' + path)
             runtime = dict(data.get('runtime', {}))
             runtime.update(accepted=accepted, working_directory=config.portable_path(self.root, cwd),
@@ -83,7 +90,8 @@ class RuntimeFoldersWidget(QtWidgets.QWidget):
                 self.table.setItem(i, j, QtWidgets.QTableWidgetItem(value))
         self.table.resizeColumnsToContents()
         self.cwd.clear()
-        self.cwd.addItems(list(dict.fromkeys(['bin', result['working_directory'], '.'] + result['folders'])))
+        output = config.portable_path(self.root, output_directory(self.root))
+        self.cwd.addItems(list(dict.fromkeys([output, result['working_directory'], '.'] + result['folders'])))
         self.paths.setPlainText('\n'.join(result['folders']))
 
 class RuntimeFoldersDialog(QtWidgets.QDialog):

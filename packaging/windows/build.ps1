@@ -13,6 +13,7 @@ $Output = (New-Item -ItemType Directory -Force $Output).FullName
 $InnoCompiler = (Resolve-Path $InnoCompiler).Path
 $Work = Join-Path ([IO.Path]::GetTempPath()) ("cobol-build-" + [guid]::NewGuid())
 New-Item -ItemType Directory $Work | Out-Null
+Start-Transcript -Path (Join-Path $Work "build.log") | Out-Null
 Push-Location $Repo
 try {
     $Extra = @()
@@ -24,6 +25,7 @@ try {
     $Extra = @("--paths", $Vendor, "--collect-submodules", "pyqode",
                "--collect-submodules", "qcrash", "--collect-all", "qdarkstyle",
                "--hidden-import", "PyQt5.QtNetwork",
+               "--add-data", "${Repo}/examples/common:open_cobol_ide/example_templates",
                "--add-data", "${Repo}/doc/OpenCobolIDE-modern12.html:doc",
                "--add-data", "${Repo}/open_cobol_ide/build_tools:open_cobol_ide/build_tools",
                "--icon", (Join-Path $Repo "forms/rc/silex-icon.ico"))
@@ -38,6 +40,10 @@ try {
     $Hashes = Get-FileHash -Algorithm SHA256 $Binary,$Installer
     $Hashes | ForEach-Object { "$($_.Hash.ToLower())  $(Split-Path -Leaf $_.Path)" } |
         Set-Content -Encoding ascii (Join-Path $Output "SHA256SUMS")
+    Stop-Transcript | Out-Null
+    & $Python (Join-Path $Repo "scripts/release_bundle.py") --system windows11-x64 --app opencobolide `
+        --output $Output --source $Repo --files $Binary $Installer (Join-Path $Output "SHA256SUMS") (Join-Path $Work "build.log")
+    if ($LASTEXITCODE -ne 0) { throw "Release collection failed. Build files remain in $Output" }
     Write-Host "Build artifacts: $Output"
 } finally {
     Pop-Location

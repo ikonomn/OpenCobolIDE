@@ -11,7 +11,7 @@ if [[ "${ID:-}" != fedora || "${VERSION_ID:-}" != 44 ]]; then
     echo 'Error: build and test this package on Fedora 44.' >&2
     exit 1
 fi
-for command_name in rpmbuild rpmlint python3 sha256sum; do
+for command_name in rpmbuild rpmspec rpmlint python3 sha256sum; do
     command -v "$command_name" >/dev/null || { echo "Missing command: $command_name" >&2; exit 1; }
 done
 [[ -f "$source_file" && -f "$spec_file" ]] || { echo 'Missing source archive or spec.' >&2; exit 1; }
@@ -21,8 +21,10 @@ install -m 0644 "$source_file" "$top_dir/SOURCES/"
 install -m 0644 "$spec_file" "$top_dir/SPECS/opencobolide.spec"
 rpmbuild -ba --define "_topdir $top_dir" --define 'dist .fc44' \
     "$top_dir/SPECS/opencobolide.spec" 2>&1 | tee "$output_dir/rpmbuild.log"
+rpm_version=$(rpmspec -q --srpm --qf '%{VERSION}' "$spec_file")
+rpm_release=$(rpmspec -q --srpm --qf '%{RELEASE}' --define "dist .fc44" "$spec_file")
 mapfile -t packages < <(find "$top_dir/RPMS" "$top_dir/SRPMS" \
-    -type f -name 'opencobolide-4.7.6-11.6.3*.rpm' -print | sort)
+    -type f -name "opencobolide-${rpm_version}-${rpm_release}*.rpm" -print | sort)
 [[ ${#packages[@]} -ge 2 ]] || { echo 'Expected binary and source RPMs were not found.' >&2; exit 1; }
 for package in "${packages[@]}"; do install -m 0644 "$package" "$output_dir/"; done
 set +e
@@ -31,3 +33,15 @@ lint_status=${PIPESTATUS[0]}
 set -e
 (cd "$output_dir" && sha256sum ./*.rpm > SHA256SUMS)
 printf 'Fedora 44 RPM build complete. Results: %s\nrpmlint status: %s\n' "$output_dir" "$lint_status"
+
+collector="$script_dir/release_bundle.py"
+[[ -f "$collector" ]] || collector="$script_dir/../../scripts/release_bundle.py"
+source_root="$script_dir"
+if [[ -d "$script_dir/../../.git" ]]; then source_root=$(cd "$script_dir/../.." && pwd); fi
+transfer_history=()
+for file in "$script_dir"/*.bundle "$script_dir"/SOURCE_REVISION.txt; do
+    if [[ -f "$file" ]]; then transfer_history+=("$file"); fi
+done
+python3 "$collector" --system fedora44 --app opencobolide \
+    --output "${RELEASE_OUTPUT_BASE:-$script_dir}" --source "$source_root" \
+    --files "${packages[@]}" "${transfer_history[@]}" "$source_file" "$spec_file" "$script_dir/build-fedora44-rpm.sh" "$output_dir"/*.log

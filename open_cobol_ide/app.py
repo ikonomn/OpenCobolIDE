@@ -53,6 +53,9 @@ class Application(QtCore.QObject):
     def __init__(self, parse_args=True):
         super().__init__()
         self._closed = False
+        if parse_args:
+            from .user_examples import examples_directory
+            examples_directory()
         trace_log.event('application.init.enter', parse_args=parse_args,
                         qt_api=QT_API)
         if system.darwin:

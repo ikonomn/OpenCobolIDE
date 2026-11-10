@@ -71,10 +71,17 @@ def validate_options(options):
     if options.get('flags') is not None and (not isinstance(options['flags'], list) or
             not all(isinstance(item, str) for item in options['flags'])):
         raise ValueError('Compiler flags must be a list of strings or null.')
-    for key in ('copybook_paths', 'library_paths', 'libraries'):
+    for key in ('copybook_paths', 'library_paths', 'libraries', 'c_sources'):
         if options.get(key) is not None and (not isinstance(options[key], list) or
                 not all(isinstance(item, str) for item in options[key])):
             raise ValueError(key + ' must be a list of strings or null.')
+    if 'output_name' in options:
+        if not isinstance(options['output_name'], str):
+            raise ValueError('Executable name must be a string.')
+        from .c_helpers import output_name
+        output_name('source.cob', options)
+    if 'compile_debug' in options and not isinstance(options['compile_debug'], bool):
+        raise ValueError('Compile with debug must be true or false.')
     if 'enabled' in options and not isinstance(options['enabled'], bool):
         raise ValueError('enabled must be true or false.')
     environment = options.get('environment', {})
@@ -101,6 +108,11 @@ def validate_schema(data):
         raise ValueError('Project configuration requires name and sources.')
     from .project_runtime import validate_runtime
     if 'runtime' in data: validate_runtime(data['runtime'])
+    outputs = data.get('output_directories', {})
+    if not isinstance(outputs, dict) or any(
+            key not in ('executables', 'libraries') or not isinstance(value, str) or not value.strip()
+            for key, value in outputs.items()):
+        raise ValueError('Output directories must map executables/libraries to folder paths.')
     debug = data.get('debug', {})
     if not isinstance(debug, dict) or not isinstance(debug.get('enabled', False), bool):
         raise ValueError('Debug enabled must be true or false.')
@@ -221,7 +233,7 @@ def portable_options(root, options):
     options = copy.deepcopy(options)
     if 'flags' in options:
         options['flags'] = map_flags(options['flags'], root, portable=True)
-    for key in ('copybook_paths', 'library_paths'):
+    for key in ('copybook_paths', 'library_paths', 'c_sources'):
         if options.get(key) is not None:
             options[key] = [portable_path(root, path) for path in options[key]]
     env = options.get('environment', {})
@@ -238,7 +250,9 @@ def portable_options(root, options):
 
 
 def has_overrides(options):
-    if options.get('flags') is not None:
+    if options.get('compile_debug'):
+        return True
+    if options.get('flags') is not None or options.get('output_name') or options.get('c_sources') is not None:
         return True
     if any(options.get(key) is not None for key in ('copybook_paths', 'library_paths', 'libraries')):
         return True

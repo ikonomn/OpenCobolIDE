@@ -99,8 +99,13 @@ def launch_settings(root, fallback, environment):
     env = dict(environment)
     runtime = config.load(root).get('runtime', {}) if root and config.config_path(root).is_file() else {}
     if not runtime.get('accepted'):
-        return (config.resolve_path(root, 'bin') if root else fallback), env
+        from .project_outputs import output_directory
+        return (output_directory(root) if root else fallback), env
     cwd = config.resolve_path(root, runtime.get('working_directory', 'bin'))
+    # Older accepted defaults may still name a bin folder the project never had.
+    if runtime.get('working_directory', 'bin') == 'bin' and not os.path.isdir(cwd):
+        from .project_outputs import output_directory
+        cwd = output_directory(root)
     paths = [config.resolve_path(root, p) for p in runtime.get('data_directories', [])]
     for path in [cwd] + paths:
         if not os.path.isdir(path):

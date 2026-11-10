@@ -20,7 +20,7 @@ def debug_project(tmp_path, app):
     source = root / 'src/main.cbl'
     source.write_text('       identification division.\n       program-id. main.\n'
                       '       procedure division.\n           stop run.\n')
-    frontend = tmp_path / 'Installed Debugger' / 'cobgdb-python-gui'
+    frontend = tmp_path / 'Installed Debugger' / 'cobol-debugger'
     frontend.parent.mkdir()
     frontend.write_text('#!/bin/sh\nexit 0\n')
     frontend.chmod(0o755)
@@ -121,4 +121,4 @@ def test_missing_debug_headers_prevent_project_launch(debug_project, monkeypatch
     monkeypatch.setattr(QtWidgets.QMessageBox, 'warning', lambda *args: warnings.append(args))
     monkeypatch.setattr(cobol.subprocess, 'Popen', lambda *args, **kwargs: pytest.fail('Unexpected launch'))
     app.cobol.debug_executable()
-    assert 'Enable Debug compilation' in warnings[0][2]
+    assert 'Enable Compile with debug' in warnings[0][2]

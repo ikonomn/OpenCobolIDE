@@ -110,7 +110,7 @@ class CompilationThread(QtCore.QThread):
         _logger().info('running compilation thread: %r', files)
 
         states = {}
-        built, skipped = 0, 0
+        built, failed, skipped = 0, 0, 0
         for f in dict.fromkeys(files):
             state, inputs = None, None
             try:
@@ -129,7 +129,6 @@ class CompilationThread(QtCore.QThread):
                         self.output_available.emit('Up to date: %s\n' % f)
                         continue
                     state.invalidate(f)
-                built += 1
                 trace_log.event('compile.file.start', source=f)
                 build_script = find_build_script(f)
                 if build_script:
@@ -143,6 +142,7 @@ class CompilationThread(QtCore.QThread):
                 else:
                     status, messages = cobc.compile(f, get_file_type(f))
             except Exception as e:
+                failed += 1
                 trace_log.event('compile.file.exception', source=f,
                                 exception=repr(e))
                 _logger().exception('exception while compiling')
@@ -150,8 +150,13 @@ class CompilationThread(QtCore.QThread):
             else:
                 trace_log.event('compile.file.finished', source=f,
                                 status=status, messages=len(messages))
-                if state is not None and status == 0 and not any(
-                        message[1] == CheckerMessages.ERROR for message in messages):
+                successful = status == 0 and not any(
+                    message[1] == CheckerMessages.ERROR for message in messages)
+                if successful:
+                    built += 1
+                else:
+                    failed += 1
+                if state is not None and successful:
                     try:
                         refreshed = snapshot(f)
                         if (inputs is not None and refreshed is not None and
@@ -161,7 +166,7 @@ class CompilationThread(QtCore.QThread):
                         pass
                 self.file_compiled.emit(f, status, messages)
         if self.incremental:
-            self.output_available.emit('Project build: %d compiled, %d up to date.\n' % (built, skipped))
+            self.output_available.emit('Project build: %d compiled, %d failed, %d up to date.\n' % (built, failed, skipped))
         trace_log.event('compile.thread.finished', files_count=len(files))
         self.finished.emit()
 
@@ -244,22 +249,24 @@ class CobolController(Controller):
             output_dir = Settings().output_directory
             if not os.path.isabs(output_dir):
                 output_dir = os.path.join(os.path.dirname(source), output_dir)
-        filename = os.path.splitext(editor.file.name)[0] + GnuCobolCompiler().extension_for_type(FileType.EXECUTABLE)
+        from open_cobol_ide.c_helpers import output_name
+        filename = output_name(source, Settings().effective_build_options(source),
+                               GnuCobolCompiler().extension_for_type(FileType.EXECUTABLE))
         return os.path.abspath(os.path.join(output_dir, filename))
 
     def _installed_debugger_launcher(self, command=None):
         launcher = os.path.expanduser(command if command is not None else Settings().debugger_command)
         launcher = launcher if os.path.isfile(launcher) else system.which(launcher)
-        if not launcher and system.windows and command in (None, 'cobgdb-python-gui', 'cobgdb-python-gui.exe'):
+        if not launcher and system.windows and command in (None, 'cobol-debugger', 'cobol-debugger.exe'):
             import winreg
-            key = r'Software\Microsoft\Windows\CurrentVersion\App Paths\cobgdb-python-gui.exe'
+            key = r'Software\Microsoft\Windows\CurrentVersion\App Paths\cobol-debugger.exe'
             try:
                 with winreg.OpenKey(winreg.HKEY_CURRENT_USER, key) as entry:
                     launcher = winreg.QueryValueEx(entry, '')[0]
             except OSError:
                 pass
         if not launcher or not os.access(launcher, os.X_OK):
-            raise ValueError('Install cobgdb-python and choose its GUI launcher in Preferences → Debugger.')
+            raise ValueError('Install COBOL Debugger and choose its launcher in Preferences → Debugger.')
         return launcher
 
     def open_debugger(self, command=None):
@@ -281,13 +288,12 @@ class CobolController(Controller):
             root = settings.project_root_for_source(source)
             if root:
                 from pathlib import Path
-                from open_cobol_ide import project_config
                 project = Path(root).resolve()
                 artifacts = project / 'debug_data' / Path(source).resolve().relative_to(project).with_suffix('')
-                if (not project_config.debug_enabled(root) or
+                if (not settings.debug_build_enabled(source) or
                         not any(artifacts.glob('*.c')) or not any(artifacts.glob('*.h'))):
                     raise ValueError('Project debugging needs a debug build and matching C/header files in '
-                                     + str(artifacts) + '. Enable Debug compilation in Preferences → Debugger '
+                                     + str(artifacts) + '. Enable Compile with debug in File or Project Compiler Settings '
                                      'and rebuild the program before launching.')
             launcher = self._installed_debugger_launcher()
             from open_cobol_ide.project_runtime import launch_settings
@@ -312,9 +318,11 @@ class CobolController(Controller):
         from open_cobol_ide.view.dialogs.source_compiler_options import SourceCompilerOptionsDialog
         settings = Settings()
         options = settings.project_options(root)
+        from open_cobol_ide import project_config as config
         dialog = SourceCompilerOptionsDialog(
             root, settings.compiler_flags, options.get('flags'),
-            options.get('environment', {}), self.main_window, project=True, options=options)
+            options.get('environment', {}), self.main_window, project=True, options=options,
+            debug_enabled=config.debug_enabled(root))
         enabled = QtWidgets.QCheckBox('Use these project settings')
         enabled.setChecked(options.get('enabled', True))
         dialog.layout().insertWidget(1, enabled)
@@ -329,7 +337,10 @@ class CobolController(Controller):
                 candidate['defaults'] = config.portable_options(root, updated)
                 if not self.validate_project_settings(root, candidate):
                     continue
-                settings.set_project_options(root, updated)
+                debug = dict(candidate.get('debug', {}))
+                debug['enabled'] = dialog.debug.isChecked()
+                candidate['debug'] = debug
+                config.save(root, candidate)
             except (ValueError, OSError) as error:
                 QtWidgets.QMessageBox.warning(
                     self.main_window, 'Invalid project settings', str(error))
@@ -431,6 +442,10 @@ class CobolController(Controller):
         the file type drop down menu).
 
         """
+        if not self._can_build_current_source():
+            self.enable_compile(False)
+            self.enable_run(False)
+            return
         try:
             ftype = editor.file_type
         except (AttributeError, UnicodeDecodeError):
@@ -654,7 +669,7 @@ class CobolController(Controller):
         if len(messages) == 0 and status == 0:
             ext = GnuCobolCompiler().extension_for_type(
                 get_file_type(filename))
-            name = os.path.splitext(os.path.split(filename)[1])[0]
+            from open_cobol_ide.c_helpers import output_name
             output_dir = get_build_script_output_directory(filename)
             if output_dir is None:
                 output_dir = Settings().output_directory
@@ -662,7 +677,8 @@ class CobolController(Controller):
                     path = os.path.dirname(filename)
                     output_dir = os.path.abspath(os.path.join(
                         path, output_dir))
-            path = os.path.join(output_dir, name + ext)
+            path = os.path.join(output_dir, output_name(filename,
+                Settings().effective_build_options(filename), ext))
             self.ui.errorsTable.add_message(
                 CheckerMessage(
                     'Compilation succeeded (output: %s)' % path,
@@ -832,8 +848,9 @@ class CobolController(Controller):
             QtWidgets.QMessageBox.warning(self.main_window, 'Project runtime folders', str(error))
             self.enable_run(True)
             return
-        filename = os.path.splitext(editor.file.name)[0] + \
-            GnuCobolCompiler().extension_for_type(file_type)
+        from open_cobol_ide.c_helpers import output_name
+        filename = output_name(editor.file.path, Settings().effective_build_options(editor.file.path),
+                               GnuCobolCompiler().extension_for_type(file_type))
         program = os.path.join(output_dir, filename)
         if not os.path.exists(program):
             trace_log.event('run.program.missing', program=program)
@@ -879,7 +896,8 @@ class CobolController(Controller):
 
     def _can_build_current_source(self):
         editor = self.app.edit.current_editor
-        return editor is not None and os.path.splitext(editor.file.path or '')[1].lower() != '.cpy'
+        return editor is not None and os.path.splitext(editor.file.path or '')[1].lower() not in (
+            '.cpy', '.lst', '.prn')
 
     def enable_compile(self, enable):
         enable = enable and self._can_build_current_source()

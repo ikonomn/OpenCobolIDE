@@ -11,6 +11,10 @@ from open_cobol_ide import system
 from open_cobol_ide.enums import FileType, GnuCobolStandard
 
 
+DEFAULT_COMPILER_FLAGS = ('-debug', '-Wall', '-ftcmd')
+DEFAULT_DEBUGGER_COMMAND = 'cobol-debugger'
+
+
 class Settings(object):
     """
     Wraps QSettings to give an intuitive and easy access to the application
@@ -27,7 +31,10 @@ class Settings(object):
 
     @property
     def debugger_command(self):
-        return str(self._settings.value('debugger/command', 'cobgdb-python-gui'))
+        command = str(self._settings.value('debugger/command', DEFAULT_DEBUGGER_COMMAND))
+        if command in ('cobgdb-python-gui', 'cobgdb-python-gui.exe'):
+            return DEFAULT_DEBUGGER_COMMAND
+        return command
 
     @debugger_command.setter
     def debugger_command(self, value):
@@ -467,7 +474,7 @@ class Settings(object):
 
     @property
     def compiler_flags(self):
-        lst = eval(self._settings.value('compilerFlags', '["-debug", "-Wall"]'))
+        lst = eval(self._settings.value('compilerFlags', repr(DEFAULT_COMPILER_FLAGS)))
         ret_val = []
         for v in lst:
             if v:
@@ -697,6 +704,11 @@ class Settings(object):
         key = hashlib.sha256(os.path.normcase(os.path.realpath(path)).encode('utf-8')).hexdigest()
         return json.loads(self._settings.value('compiler/source_build_options/' + key, '{}'))
 
+    def debug_build_enabled(self, path):
+        from .project_config import debug_enabled
+        return (self.source_build_options(path).get('compile_debug', False)
+                or debug_enabled(self.project_root_for_source(path)))
+
     def effective_build_options(self, path):
         from open_cobol_ide import project_config as config
         root = self.project_root_for_source(path)
@@ -720,6 +732,10 @@ class Settings(object):
         if listing.get('filename'):
             listing['filename'] = config.resolve_path(root, listing['filename'])
         result['listing'] = listing
+        result['output_name'] = source.get('output_name', '')
+        result['c_sources'] = source.get('c_sources')
+        if result['c_sources'] is not None:
+            result['c_sources'] = [config.resolve_path(root, value) for value in result['c_sources']]
         return result
 
     @property
